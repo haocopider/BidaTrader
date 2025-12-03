@@ -1,0 +1,31 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime JSRuntime
+
+<div class="page-wrapper">
+    @* 1. Thêm Header *@
+    <Header OnToggleSidebar="ToggleSidebar" />
+
+    @* 2. Thêm Sidebar *@
+    <Sidebar />
+
+    @* 3. Phần nội dung chính *@
+    <main id="main" class="main">
+        @Body
+    </main>
+
+    @* 4. Footer (Nếu có) *@
+    <footer id="footer" class="footer">
+        <div class="copyright">
+            &copy; Copyright <strong><span>BidaStore</span></strong>. All Rights Reserved
+        </div>
+    </footer>
+</div>
+
+@code {
+    // Hàm gọi JavaScript để thêm/bớt class 'toggle-sidebar' vào body
+    // (Đây là cách hoạt động chuẩn của template NiceAdmin bạn đang dùng)
+    private async Task ToggleSidebar()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.body.classList.toggle('toggle-sidebar')");
+    }
+}

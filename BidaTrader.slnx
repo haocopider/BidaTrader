@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BidaTrader.Client/BidaTrader.Client.csproj" />
+  <Project Path="BidaTrader.Server/BidaTrader.Server.csproj" />
+  <Project Path="BidaTraderShared.Data/BidaTraderShared.Data.csproj" />
+</Solution>

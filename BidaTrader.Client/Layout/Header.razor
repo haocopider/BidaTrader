@@ -1,0 +1,149 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@using System.Security.Claims
+@using System.Globalization
+
+<header id="header" class="header fixed-top d-flex align-items-center shadow-sm">
+
+    <!-- Left: Logo + Toggle -->
+    <div class="d-flex align-items-center justify-content-between w-auto pe-3">
+        <a href="/" class="logo d-flex align-items-center text-decoration-none">
+            <img src="img/logo.png" alt="Logo" class="me-2" style="height: 36px;">
+            <span class="fw-bold fs-5 text-dark d-none d-lg-block">BidaTrader</span>
+        </a>
+
+        <!-- Sidebar button -->
+        <i class="bi bi-list toggle-sidebar-btn ms-3 fs-3 text-dark" @onclick="HandleToggleSidebar"></i>
+    </div>
+
+    <!-- Right Side Navigation -->
+    <nav class="header-nav ms-auto">
+        <ul class="d-flex align-items-center gap-3 m-0">
+
+            <!-- Search icon (mobile only) -->
+            <li class="nav-item d-block d-lg-none">
+                <a class="nav-link nav-icon search-bar-toggle" href="#">
+                    <i class="bi bi-search fs-5"></i>
+                </a>
+            </li>
+
+            <!-- Time display (desktop only) -->
+            <li class="nav-item d-none d-md-block">
+                <span class="datetime-pill px-3 py-1 rounded-pill bg-light border text-dark fw-semibold">
+                    @CurrentTime · @CurrentDate
+                </span>
+            </li>
+
+            <AuthorizeView>
+                <NotAuthorized>
+                    <li class="">
+                        <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="ShowLoginForm">
+                            <span> Đăng nhập</span>
+                        </button>
+                    </li>
+                    <li class="">
+                        <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="ShowRegisterForm">
+                            <span>/Đăng ký</span>
+                        </button>
+                    </li>
+                </NotAuthorized>
+            </AuthorizeView>
+
+
+            <!-- Authenticated User -->
+            <AuthorizeView>
+                <Authorized>
+                    <!-- Greeting -->
+                    <li class="nav-item d-none d-md-block">
+                        @if (userName != null)
+                        {
+                            <span class="navbar-text text-dark fw-semibold">
+                                👋 Chào, @userName
+                            </span>
+                        }
+                    </li>
+                    <!-- Profile Dropdown -->
+                    <li class="nav-item dropdown pe-2">
+                        <a class="nav-link nav-profile d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+
+                            <img src="img/avt/my-profile-img.jpg"
+                                 alt="Profile"
+                                 class="rounded-circle shadow-sm"
+                                 style="width: 36px; height: 36px; object-fit: cover;">
+
+                            <span class="d-none d-md-block dropdown-toggle ps-2 fw-medium">
+                                @context.User.FindFirst(ClaimTypes.Name)?.Value
+                            </span>
+                        </a>
+
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile shadow">
+
+                            <li class="dropdown-header text-center">
+                                <h6 class="fw-bold">@context.User.FindFirst(ClaimTypes.Name)?.Value</h6>
+                                <span class="text-secondary">@context.User.FindFirst(ClaimTypes.Role)?.Value</span>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li>
+                                <NavLink class="dropdown-item d-flex align-items-center" href="/profile">
+                                    <i class="bi bi-person me-2"></i>
+                                    <span>Trang cá nhân</span>
+                                </NavLink>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li>
+                                <button class="dropdown-item d-flex align-items-center text-danger" @onclick="HandleLogout">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    <span>Đăng xuất</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
+
+        </ul>
+    </nav>
+</header>
+
+@code {
+    public string CurrentTime => DateTime.Now.ToString("hh:mm");
+    public string CurrentDate => DateTime.Now.ToString("dddd ',' dd 'thg' M", new CultureInfo("vi-VN"));
+
+    private string? userName;
+    private string? role;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Lấy tên người dùng từ local storage
+        userName = await LocalStorage.GetItemAsync<string>("userName");
+        role = await LocalStorage.GetItemAsync<string>("userRole");
+    }
+
+    [Parameter]
+    public EventCallback OnToggleSidebar { get; set; }
+
+    private async Task HandleToggleSidebar()
+    {
+        await OnToggleSidebar.InvokeAsync();
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        NavigationManager.NavigateTo("/login", true);
+    }
+    private void ShowLoginForm(MouseEventArgs args)
+    {
+        throw new NotImplementedException();
+    }
+    private void ShowRegisterForm(MouseEventArgs args)
+    {
+        throw new NotImplementedException();
+    }
+}

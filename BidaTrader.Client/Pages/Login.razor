@@ -1,0 +1,82 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject BidaTrader.Client.Services.IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<h3>Login</h3>
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">@errorMessage</div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Username</label>
+        <InputText @bind-Value="loginModel.UserName" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.UserName)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.Password)" />
+    </div>
+
+    <button class="btn btn-primary" type="submit" disabled="@isSubmitting">
+        @if (isSubmitting)
+        {
+            <span>Logging in...</span>
+        }
+        else
+        {
+            <span>Login</span>
+        }
+    </button>
+</EditForm>
+
+@code {
+    private class LoginModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private LoginModel loginModel = new LoginModel();
+    private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = string.Empty;
+        isSubmitting = true;
+
+        try
+        {
+            var success = await AuthService.Login(loginModel.UserName, loginModel.Password);
+            if (success)
+            {
+                // Redirect to home (or another page for testing)
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Login failed: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

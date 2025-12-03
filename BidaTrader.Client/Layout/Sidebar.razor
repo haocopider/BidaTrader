@@ -1,0 +1,247 @@
+﻿@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+        @* ==========================================================
+           ROLE: ADMIN
+           ========================================================== *@
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+
+                <li class="nav-heading">Quản trị hệ thống</li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/admin/dashboard">
+                        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link collapsed" data-bs-target="#admin-manage" data-bs-toggle="collapse">
+                        <i class="bi bi-gear"></i><span>Quản lý hệ thống</span><i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+                    <ul id="admin-manage" class="nav-content collapse">
+                        <li>
+                            <NavLink href="/admin/users"><i class="bi bi-circle"></i><span>Người dùng</span></NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/admin/store"><i class="bi bi-circle"></i><span>Cửa hàng</span></NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/admin/logs"><i class="bi bi-circle"></i><span>Nhật ký hệ thống</span></NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/admin/settings"><i class="bi bi-circle"></i><span>Cấu hình</span></NavLink>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
+                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
+                    </button>
+                </li>
+
+            </Authorized>
+        </AuthorizeView>
+
+        @* ==========================================================
+           ROLE: STORE (Nhân viên cửa hàng / Chủ shop)
+           ========================================================== *@
+        <AuthorizeView Roles="Store">
+            <Authorized>
+
+                <li class="nav-heading mt-3">Quản lý cửa hàng</li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/store/dashboard">
+                        <i class="bi bi-shop"></i><span>Dashboard cửa hàng</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link collapsed" data-bs-target="#store-manage" data-bs-toggle="collapse">
+                        <i class="bi bi-box-seam"></i><span>Sản phẩm</span><i class="bi bi-chevron-down ms-auto"></i>
+                    </a>
+                    <ul id="store-manage" class="nav-content collapse">
+                        <li><NavLink href="/store/products"><i class="bi bi-circle"></i><span>Danh sách</span></NavLink></li>
+                        <li><NavLink href="/store/product/add"><i class="bi bi-circle"></i><span>Thêm mới</span></NavLink></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link collapsed" href="/store/orders">
+                        <i class="bi bi-cart-check"></i><span>Đơn hàng</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link collapsed" href="/store/statistics">
+                        <i class="bi bi-bar-chart"></i><span>Thống kê</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
+                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
+                    </button>
+                </li>
+
+            </Authorized>
+        </AuthorizeView>
+
+        @* ==========================================================
+           ROLE: CUSTOMER
+           ========================================================== *@
+        <AuthorizeView Roles="Customer">
+            <Authorized>
+
+                <li class="nav-heading mt-3">Tài khoản của tôi</li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link collapsed" href="/profile">
+                        <i class="bi bi-person-circle"></i><span>Hồ sơ cá nhân</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link collapsed" href="/my-orders">
+                        <i class="bi bi-bag-check"></i><span>Đơn hàng</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <NavLink class="nav-link collapsed" href="/wishlist">
+                        <i class="bi bi-heart"></i><span>Yêu thích</span>
+                    </NavLink>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
+                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
+                    </button>
+                </li>
+
+            </Authorized>
+        </AuthorizeView>
+
+        @* ==========================================================
+           NOT LOGGED IN (Khách)
+           ========================================================== *@
+        <li class="nav-heading">Cửa Hàng</li>
+
+        @* 1. Trang Chủ *@
+        <li class="nav-item">
+            <NavLink class="nav-link collapsed" href="/" Match="NavLinkMatch.All">
+                <i class="bi bi-shop"></i>
+                <span>Trang chủ</span>
+            </NavLink>
+        </li>
+
+        @* 2. LOẠI SẢN PHẨM (Flyout Menu) *@
+        <li class="nav-item nav-item-flyout">
+            <a class="nav-link collapsed" href="Products" style="cursor: pointer;">
+                <i class="bi bi-menu-button-wide"></i>
+                <span>Danh Mục Sản Phẩm</span>
+                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8em;"></i>
+            </a>
+
+            @* Menu con hiển thị bên phải khi hover *@
+            <ul class="flyout-menu">
+                <li class="flyout-header">Chọn loại sản phẩm</li>
+                @if (categories != null && categories.Any())
+                {
+                    @foreach (var cat in categories)
+                    {
+                        <li>
+                            <a href="@($"products?categoryId={cat.Id}")">@cat.Name</a>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li><a href="#">@(categories == null ? "Đang tải..." : "Chưa có danh mục")</a></li>
+                }
+            </ul>
+        </li>
+
+        @* 3. THƯƠNG HIỆU (Flyout Menu) *@
+        <li class="nav-item nav-item-flyout">
+            <a class="nav-link collapsed" href="Products" style="cursor: pointer;">
+                <i class="bi bi-tags"></i>
+                <span>Thương Hiệu</span>
+                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8em;"></i>
+            </a>
+
+            <ul class="flyout-menu">
+                <li class="flyout-header">Chọn nhà cung cấp</li>
+                @if (brands != null && brands.Any())
+                {
+                    @foreach (var brand in brands)
+                    {
+                        <li>
+                            <a href="@($"products?brandId={brand.Id}")">@brand.Name</a>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li><a href="#">@(brands == null ? "Đang tải..." : "Chưa có thương hiệu")</a></li>
+                }
+            </ul>
+        </li>
+
+        @* 4. Cộng đồng *@
+        <li class="nav-item">
+            <NavLink class="nav-link collapsed" href="posts">
+                <i class="bi bi-newspaper"></i>
+                <span>Tin tức & Cộng đồng</span>
+            </NavLink>
+        </li>
+    </ul>
+
+</aside>
+
+
+@code {
+    private bool isVisibleLogin { get; set; } = false;
+    private bool isVisibleRegister { get; set; } = false;
+
+    private List<Category>? categories;
+    private List<Brand>? brands;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMenuData();
+    }
+
+    private async Task LoadMenuData()
+    {
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading menu: {ex.Message}");
+        }
+    }
+
+    private void ShowLoginForm()
+    {
+        isVisibleLogin = true;
+    }
+
+    private void ShowRegisterForm()
+    {
+        isVisibleRegister = true;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        NavigationManager.NavigateTo("/login", true);
+    }
+}
