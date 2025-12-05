@@ -1,0 +1,102 @@
+﻿@page "/products/{Id:int}"
+@inject IService<Product> ProductService
+@inject NavigationManager NavigationManager
+
+<PageTitle>@product?.Name ?? "Product Detail"</PageTitle>
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="ms-2">Loading product details...</p>
+    </div>
+}
+else if (product == null)
+{
+    <div class="alert alert-warning">
+        <h4>Product Not Found</h4>
+        <p>The product with ID @Id could not be found or an error occurred while loading.</p>
+        <button class="btn btn-secondary" @onclick="GoBack">Back to Product List</button>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <img src="https://via.placeholder.com/600"
+                 class="img-fluid rounded" alt="@product.Name" style="max-height: 400px; object-fit: cover;" />
+        </div>
+
+        <div class="col-md-6">
+            <h1>@product.Name</h1>
+            <p class="text-muted">ID: @product.Id</p>
+
+            <hr />
+
+            <h2 class="text-danger">@product.Price VNĐ</h2>
+
+            <p class="lead mt-3">
+                @product.Description
+            </p>
+
+            <div class="mt-4">
+                <button class="btn btn-lg btn-success">
+                    <span class="oi oi-cart"></span> Add to Cart
+                </button>
+                <button class="btn btn-lg btn-secondary ms-3" @onclick="GoBack">
+                    Back to List
+                </button>
+            </div>
+
+            <div class="mt-3">
+                <span class="badge bg-info">Rating: @product.Rating / 5.0</span>
+                <span class="badge bg-light text-dark ms-2">Created: @product.CreatedAt?.ToShortDateString()</span>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product? product;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+
+        try
+        {
+            // GIẢ ĐỊNH: ProductService (lớp triển khai của IService<Product>)
+            // có phương thức riêng để lấy 1 item theo ID.
+            // Trong thực tế, bạn sẽ cần triển khai phương thức này trong ProductService.
+
+            // Ép kiểu sang ProductService để dùng phương thức GetByIdAsync (nếu có)
+            // Tuy nhiên, để giữ tính generic, chúng ta dùng HttpClient trực tiếp
+            // hoặc thêm phương thức này vào Interface cụ thể (IProductService).
+
+            // Để code chạy được, tôi sẽ thêm GetByIdAsync vào Service bạn đã định nghĩa:
+            var productService = (ProductService)ProductService;
+            product = await productService.GetItemByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            // Xử lý lỗi nếu API không tìm thấy hoặc có vấn đề kết nối
+            Console.WriteLine($"Error loading product: {ex.Message}");
+            product = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/Products");
+    }
+}

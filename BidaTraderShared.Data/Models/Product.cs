@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BidaTraderShared.Data.Models;
 
@@ -29,11 +30,12 @@ public partial class Product
 
     public DateTime? UpdatedAt { get; set; }
 
+    [NotMapped]
     public virtual Brand? Brand { get; set; }
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
-    public virtual Category Category { get; set; } = null!;
+    public virtual Category? Category { get; set; } = null!;
 
     public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
 
@@ -41,5 +43,6 @@ public partial class Product
 
     public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
-    public virtual Store Store { get; set; } = null!;
+    [NotMapped]
+    public virtual Store? Store { get; set; } = null!;
 }

@@ -20,7 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\Forms\" />
+    <Folder Include="Pages\AdminArea\" />
+    <Folder Include="Pages\CustomerArea\" />
   </ItemGroup>
 
 </Project>
