@@ -1,5 +1,122 @@
-﻿<h3>ManageStore</h3>
+﻿@page "/admin/stores"
+@inject IService<Store> StoreService
+
+<h3 class="mb-4">Quản lý Gian Hàng (Store Management)</h3>
+
+@if (isLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên Gian Hàng</th>
+                    <th>Số điện thoại</th>
+                    <th>Ngày tạo</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var store in stores)
+                {
+                    <tr>
+                        <td>@store.Id</td>
+                        <td>
+                            <strong>@store.StoreName</strong>
+                            <br />
+                            <small class="text-muted">@store.Description</small>
+                        </td>
+                        <td>@store.Phone</td>
+                        <td>@store.CreatedAt?.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (store.IsActive == true)
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Đã khóa</span>
+                            }
+                        </td>
+                        <td>
+                            @* Nút Khóa/Mở khóa *@
+                            <button class="btn btn-sm @(store.IsActive == true ? "btn-warning" : "btn-success")"
+                                    @onclick="() => ToggleStoreStatus(store)">
+                                @(store.IsActive == true ? "Khóa" : "Mở khóa")
+                            </button>
+
+                            @* Nút Xóa (Cẩn thận khi dùng) *@
+                            <button class="btn btn-sm btn-danger ms-1" @onclick="() => DeleteStore(store)">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @code {
+    private List<Store> stores = new();
+    private bool isLoading = true;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStores();
+    }
+
+    private async Task LoadStores()
+    {
+        isLoading = true;
+        try
+        {
+            // Giả định IService có method GetItemsAsync trả về List<Store>
+            stores = await StoreService.GetItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi tải dữ liệu: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleStoreStatus(Store store)
+    {
+        // Đảo ngược trạng thái
+        store.IsActive = !store.IsActive;
+        store.UpdatedAt = DateTime.Now;
+
+        try
+        {
+            // Gọi API Update
+            await StoreService.UpdateItemAsync(store);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi cập nhật: {ex.Message}");
+            // Revert lại nếu lỗi
+            store.IsActive = !store.IsActive;
+        }
+    }
+
+    private async Task DeleteStore(Store store)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn có chắc muốn xóa gian hàng: {store.StoreName}?");
+        if (confirmed)
+        {
+            await StoreService.DeleteItemAsync(store.Id);
+            await LoadStores();
+        }
+    }
 }
