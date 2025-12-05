@@ -1,10 +1,12 @@
 ﻿using BidaTrader.Client;
 using BidaTrader.Client.Auth;
 using BidaTrader.Client.Services;
+using BidaTraderShared.Data.Models;
+using BidaTraderShared.Data.Services;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -32,5 +34,6 @@ builder.Services.AddHttpClient("API", client =>
 
 // Provide default HttpClient for components that inject HttpClient
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
+builder.Services.AddScoped<IService<Product>, ProductService>();
 
 await builder.Build().RunAsync();

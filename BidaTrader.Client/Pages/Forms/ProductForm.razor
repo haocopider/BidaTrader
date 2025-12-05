@@ -1,0 +1,42 @@
+﻿<EditForm Model="Product" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label for="title" class="form-label">Tên sản phẩm</label>
+        <InputText id="title" @bind-Value="Product.Name" class="form-control" />
+        <ValidationMessage For="@(() => Product.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="content" class="form-label">Mô tả</label>
+        <InputTextArea id="content" @bind-Value="Product.Description" class="form-control" />
+        <ValidationMessage For="@(() => Product.Description)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="price" class="form-label">Giá</label>
+        <InputNumber id="price" @bind-Value="Product.Price" class="form-control" />
+        <ValidationMessage For="@(() => Product.Price)" />
+    </div>
+
+
+    <div class="mb-3">
+        <label for="brandId" class="form-label">Thương hiệu</label>
+        <InputNumber type="number" id="brandId" @bind-Value="Product.BrandId" class="form-control" />
+        <ValidationMessage For="@(() => Product.BrandId)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">@ButtonText</button>
+    <a href="/Products" class="btn btn-link">Huỷ</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Product Product { get; set; } = new();
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Lưu";
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+}

@@ -1,0 +1,166 @@
+﻿@page "/store/products"
+@inject IService<Product> ProductService
+
+@* ... (ProductModal component giữ nguyên) ... *@
+
+<h1 class="mb-3">Product List</h1>
+
+@* CHỈ HIỂN THỊ NÚT "CREATE" KHI ĐÃ ĐĂNG NHẬP *@
+<AuthorizeView>
+    <Authorized>
+        <div class="mb-3">
+            <button class="btn btn-success" @onclick="ShowCreateModal">
+                <span class="oi oi-plus" aria-hidden="true"></span> Create New Product
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+
+@if (products == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Price</th>
+                <th>Content</th>
+                <AuthorizeView>
+                    <Authorized>
+                        <th>Actions</th>
+                    </Authorized>
+                </AuthorizeView>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    @* ... (các <td> giữ nguyên) ... *@
+                    <td>...</td>
+                    <td>@product.Name</td>
+                    <td>@product.Price VNĐ</td>
+                    <td>@product.Description</td>
+
+                    @* CHỈ HIỂN THỊ CÁC NÚT NÀY KHI ĐÃ ĐĂNG NHẬP *@
+                    <AuthorizeView>
+                        <Authorized>
+                            <td>
+                                <button class="btn btn-sm btn-primary" @onclick="() => ShowEditModal(product)">
+                                    Edit
+                                </button>
+                                <button class_alias="btn btn-sm btn-danger" @onclick="() => DeleteProduct(product)">
+                                    Delete
+                                </button>
+                            </td>
+                        </Authorized>
+                    </AuthorizeView>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+<ProductModal IsVisible="isModalVisible"
+              Product="currentProduct"
+              OnClose="CloseModal"
+              OnSaveSuccess="HandleSaveSuccess" />
+
+@code {
+    private List<Product>? products;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // --- THÊM CÁC BIẾN TRẠNG THÁI CHO MODAL ---
+    private bool isModalVisible = false;
+    private Product currentProduct = new();
+    // ------------------------------------------
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync(); // Tải sản phẩm khi khởi tạo
+    }
+
+    // Tách logic tải sản phẩm ra hàm riêng
+    private async Task LoadProductsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            products = await ProductService.GetItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Không thể kết nối API. Lỗi chi tiết : {ex.Message}";
+        }
+    }
+
+    // --- CÁC HÀM XỬ LÝ MODAL ---
+
+    // Mở modal ở chế độ "Create"
+    private void ShowCreateModal()
+    {
+        currentProduct = new Product(); // Tạo sản phẩm mới, rỗng
+        isModalVisible = true;
+    }
+
+    // Mở modal ở chế độ "Edit"
+    private void ShowEditModal(Product productToEdit)
+    {
+        currentProduct = new Product
+        {
+            Id = productToEdit.Id,
+            Name= productToEdit.Name,
+            Description = productToEdit.Description,
+            Price = productToEdit.Price,
+            Rating = productToEdit.Rating,
+            CategoryId = productToEdit.CategoryId,
+            BrandId = productToEdit.BrandId,
+            StoreId = productToEdit.StoreId,
+            UpdatedAt = DateTime.Now,
+        };
+
+        isModalVisible = true;
+    }
+
+    // Được gọi khi ProductModal bị đóng
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
+
+    // Được gọi khi ProductModal lưu thành công
+    private async Task HandleSaveSuccess()
+    {
+        isModalVisible = false;     // Đóng modal
+        await LoadProductsAsync();  // Tải lại danh sách sản phẩm
+    }
+
+    // --- HÀM XỬ LÝ XOÁ (Đã có từ trước) ---
+    private async Task DeleteProduct(Product productToDelete)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn có chắc chắn muốn xoá sản phẩm: {productToDelete.Name}?");
+
+        if (confirmed)
+        {
+            try
+            {
+                await ProductService.DeleteItemAsync(productToDelete.Id);
+                await LoadProductsAsync();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Đã xảy ra lỗi khi xoá.");
+                Console.WriteLine($"Error deleting product: {ex.Message}");
+            }
+        }
+    }
+}
