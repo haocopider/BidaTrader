@@ -7,7 +7,6 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using System.Net.Http;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -35,5 +34,7 @@ builder.Services.AddHttpClient("API", client =>
 // Provide default HttpClient for components that inject HttpClient
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
 builder.Services.AddScoped<IService<Product>, ProductService>();
+builder.Services.AddScoped<IService<Category>, CategoryService>();
+builder.Services.AddScoped<IService<Brand>, BrandService>();
 
 await builder.Build().RunAsync();
