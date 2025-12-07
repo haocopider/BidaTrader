@@ -1,7 +1,155 @@
-﻿@page "/"
+﻿@page "/products"
+@inject IService<ProductListDto> ProductService
+@inject IService<Category> CategoryService
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="input-group">
+            <input type="text"
+                   class="form-control"
+                   placeholder="Nhập tên sản phẩm để tìm kiếm..."
+                   @bind-value="SearchTerm"
+                   @onkeyup="HandleSearchKeyup" />
+            <button class="btn btn-primary" @onclick="SearchProducts">Tìm Kiếm</button>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <h4>Danh mục</h4>
+        <ul class="list-group">
+            <li class="list-group-item @(selectedCatId == null ? "active" : "")"
+                style="cursor:pointer"
+                @onclick="() => FilterByCat(null)">Tất cả</li>
 
-<h1>Hello, world!</h1>
+            @if (categories != null)
+            {
+                foreach (var cat in categories)
+                {
+                    <li class="list-group-item @(selectedCatId == cat.Id ? "active" : "")"
+                        style="cursor:pointer"
+                        @onclick="() => FilterByCat(cat.Id)">
+                        @cat.Name
+                    </li>
+                }
+            }
+        </ul>
+    </div>
 
-Welcome to your new app.
+    <div class="col-md-9">
+        <div class="row">
+            @if (products == null)
+            {
+                <p>Đang tải...</p>
+            }
+            else if (products.Count == 0)
+            {
+                <p>Không có sản phẩm nào.</p>
+            }
+            else
+            {
+                foreach (var p in products)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name">
+                            <div class="card-body">
+                                <h5 class="card-title">@p.Name</h5>
+                                <p class="card-text text-danger fw-bold">@p.Price.ToString("N0") đ</p>
+                                <small class="text-muted">@p.CategoryName</small>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    List<Category>? categories;
+    List<ProductListDto>? products;
+    int? selectedCatId;
+    private string SearchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await CategoryService.GetItemsAsync();
+        LoadStateFromUrl();
+        await LoadProducts();
+    }
+
+    // Hàm gọi API lấy sản phẩm
+    async Task LoadProducts()
+    {
+        // Tạo chuỗi Query String chung
+        var queryParts = new List<string>();
+        if (selectedCatId.HasValue) queryParts.Add($"categoryId={selectedCatId.Value}");
+        if (!string.IsNullOrWhiteSpace(SearchTerm)) queryParts.Add($"search={SearchTerm}");
+
+        string queryString = queryParts.Any() ? $"?{string.Join("&", queryParts)}" : "";
+
+        products = await ProductService.GetItemsAsync(queryString);
+    }
+    // Xử lý khi bấm vào danh mục
+    void FilterByCat(int? id)
+    {
+        selectedCatId = id;
+        // Cập nhật URL (Query String) để người dùng có thể copy link
+        string url = id == null ? "/products" : $"/products?categoryId={id}";
+        Navigation.NavigateTo(url);
+        // Sau đó tải lại dữ liệu
+        _ = LoadProducts();
+    }
+
+    private void SearchProducts()
+    {
+        var uriBuilder = new System.Text.StringBuilder("/products");
+        var queryParts = new List<string>();
+
+        // 1. Thêm Category ID (Nếu có)
+        if (selectedCatId.HasValue)
+        {
+            queryParts.Add($"categoryId={selectedCatId.Value}");
+        }
+
+        // 2. Thêm Search Term (Nếu có)
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            // Mã hóa URL cho từ khóa tìm kiếm
+            queryParts.Add($"search={Uri.EscapeDataString(SearchTerm)}");
+        }
+
+        if (queryParts.Any())
+        {
+            uriBuilder.Append("?").Append(string.Join("&", queryParts));
+        }
+
+        Navigation.NavigateTo(uriBuilder.ToString());
+    }
+    private void HandleSearchKeyup(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SearchProducts();
+        }
+    }
+
+    void LoadStateFromUrl()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        // Đọc CategoryId
+        if (int.TryParse(query["categoryId"], out int catId))
+        {
+            selectedCatId = catId;
+        }
+        else
+        {
+            selectedCatId = null;
+        }
+
+        // ĐỌC SearchTerm (MỚI)
+        SearchTerm = query["search"] ?? string.Empty;
+    }
+}

@@ -1,6 +1,7 @@
 ﻿using BidaTrader.Client;
 using BidaTrader.Client.Auth;
 using BidaTrader.Client.Services;
+using BidaTraderShared.Data.DTOs;
 using BidaTraderShared.Data.Models;
 using BidaTraderShared.Data.Services;
 using Blazored.LocalStorage;
@@ -31,10 +32,16 @@ builder.Services.AddHttpClient("API", client =>
     client.BaseAddress = new Uri(apiBase);
 }).AddHttpMessageHandler<AuthHeaderHandler>();
 
-// Provide default HttpClient for components that inject HttpClient
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
-builder.Services.AddScoped<IService<Product>, ProductService>();
-builder.Services.AddScoped<IService<Category>, CategoryService>();
-builder.Services.AddScoped<IService<Brand>, BrandService>();
+// Provide default HttpClient for components that inject HttpClient
+void AddClientService<T>(string endpoint) where T : class
+{
+    builder.Services.AddScoped<IService<T>>(sp =>
+        new ClientGenericService<T>(sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"), endpoint));
+}
+
+// Category dùng Generic thuần -> Tự động gọi api/categories
+AddClientService<Category>("categories");
+AddClientService<ProductListDto>("products");
 
 await builder.Build().RunAsync();
