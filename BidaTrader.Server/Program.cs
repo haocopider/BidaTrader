@@ -1,4 +1,6 @@
-﻿using BidaTraderShared.Data.Models;
+﻿using BidaTrader.Server.Services;
+using BidaTraderShared.Data.Models;
+using BidaTraderShared.Data.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseSqlServer(connectionString);
 });
+
+builder.Services.AddScoped(typeof(IService<>), typeof(ServerGenericService<>));
+builder.Services.AddScoped<IService<Product>, ProductService>();
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -35,7 +41,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 // === KẾT THÚC CẤU HÌNH JWT ===
-
 // Cập nhật CORS Policy (sử dụng cấu hình an toàn hơn)
 builder.Services.AddCors(options =>
 {

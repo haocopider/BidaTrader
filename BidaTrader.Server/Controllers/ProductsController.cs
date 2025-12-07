@@ -1,85 +1,127 @@
-﻿using BidaTraderShared.Data.Models;
+﻿using BidaTrader.Server.Services;
+using BidaTraderShared.Data.DTOs;
+using BidaTraderShared.Data.Models;
+using BidaTraderShared.Data.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace BidaTrader.API.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class ProductsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductsController : ControllerBase
+    private readonly IService<Product> _productService;
+
+    public ProductsController(IService<Product> productService)
     {
-        private readonly AppDbContext _context;
+        _productService = productService;
+    }
 
-        public ProductsController(AppDbContext context) => _context = context;
+    [HttpGet]
+    public async Task<ActionResult<ProductPagedResponseDto>> GetAllProduct(
+        [FromQuery] int? categoryId,
+        [FromQuery] string? searchKey,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 10) // ⬅️ THAM SỐ PHÂN TRANG
+    {
+        // 1. GỌI SERVICE LẤY DỮ LIỆU VÀ TỔNG SỐ LƯỢNG (Tối ưu tại DB)
+        var (products, totalCount) = await ((ProductService)_productService).GetProductsForPaginationAsync(
+            categoryId, searchKey, pageIndex, pageSize);
 
-        [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetProducts()
+        if (products == null)
         {
-            var products = await _context.Products.OrderByDescending(c => c.Name).ToListAsync();
-            return Ok(products);
+            // Trả về DTO rỗng nếu không có dữ liệu
+            return Ok(new ProductPagedResponseDto());
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        // 2. Mapping Entity -> DTO (Output)
+        var dtos = products.Select(p => new ProductListDto
         {
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p => p.Id == id);
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            CategoryId = p.CategoryId,
+            // Đã được Include từ Service
+            CategoryName = p.Category?.Name ?? "N/A",
+            ImageUrl = p.ProductImages.FirstOrDefault()?.ImageUrl ?? "img/default.png"
+        }).ToList();
 
-            if (product == null) return NotFound();
-            return Ok(product);
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
+        // 3. Đóng gói vào PagedResponseDto
+        var pagedResponse = new ProductPagedResponseDto
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            Items = dtos,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
 
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
-        }
+        return Ok(pagedResponse); // ⬅️ TRẢ VỀ DTO PHÂN TRANG
+    }
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product product)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProductListDto>> GetProduct(int id)
+    {
+        var product = await _productService.GetItemByIdAsync(id);
+
+        // 1. Sửa Status Code: 404 Not Found là chuẩn cho tài nguyên không tồn tại
+        if (product == null) return NotFound("Không tìm thấy sản phẩm.");
+
+        // 2. Mapping Entity -> DTO (Output)
+        var dto = new ProductListDto
         {
-            if (id != product.Id) return BadRequest("Not found ID");
+            Id = product.Id,
+            Name = product.Name,
+            Price = product.Price,
+            CategoryId = product.CategoryId,
+            CategoryName = product.Category?.Name ?? "N/A",
+            ImageUrl = product.ProductImages.FirstOrDefault()?.ImageUrl ?? "img/default.png"
+        };
 
-            var existingProduct = _context.Products.Find(id);
-            if (existingProduct == null)
-            {
-                return NotFound();
-            }
-            // Cập nhật các thuộc tính từ product gửi lên
-            existingProduct.Name = product.Name;
-            existingProduct.Description = product.Description;
-            existingProduct.Price = product.Price;
-            existingProduct.Rating = product.Rating;
-            existingProduct.BrandId = product.BrandId;
-            existingProduct.CategoryId = product.CategoryId;
-            existingProduct.StoreId = product.StoreId;
-            existingProduct.UpdatedAt = DateTime.Now;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException) when (!_context.Products.Any(e => e.Id == id))
-            {
-                return NotFound();
-            }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        // 3. Trả về DTO
+        return Ok(dto);
+    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductCreateUpdateDto dto)
+    {
+        // Mapping DTO -> Entity
+        var productModel = new Product
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
+            Id = id,
+            Name = dto.Name,
+            Description = dto.Description,
+            Price = dto.Price,
+            CategoryId = dto.CategoryId,
+            StoreId = dto.StoreId
+        };
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+        // Gọi ProductService (Logic UpdatedAt sẽ chạy ở đây)
+        var result = await _productService.UpdateItemAsync(productModel);
 
-            return NoContent();
-        }
+        if (!result) return NotFound();
+        return NoContent();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreatePrduct([FromBody] ProductCreateUpdateDto dto)
+    {
+        // Mapping DTO -> Entity
+        var productModel = new Product
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            Price = dto.Price,
+            CategoryId = dto.CategoryId,
+            StoreId = dto.StoreId
+        };
+        // Gọi ProductService (Logic CreatedAt sẽ chạy ở đây)
+        var result = await _productService.CreateItemAsync(productModel);
+        if (!result) return BadRequest("Could not create product.");
+        return CreatedAtAction(nameof(GetAllProduct), new { id = productModel.Id }, productModel);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        bool pw = await _productService.DeleteItemAsync(id);
+        if (!pw) return BadRequest("Xóa sản phẩm thất bại");
+        return Ok();
     }
 }

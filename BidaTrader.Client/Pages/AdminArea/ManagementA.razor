@@ -1,0 +1,222 @@
+﻿@page "/admin/manage-data"
+@using System.Reflection
+@using System.Text.Json
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<h3 class="mb-4">Quản lý Dữ liệu Động (@(SelectedModelDisplayName))</h3>
+
+@* ---------------------------------------------------- *@
+@* KHU VỰC CHỌN MODEL (COMBOBOX) *@
+@* ---------------------------------------------------- *@
+<div class="mb-4">
+    <label for="modelSelector" class="form-label fw-bold">Chọn Model Quản lý:</label>
+    <select id="modelSelector" 
+            class="form-select w-auto" 
+            @onchange="HandleModelSelection">
+        <option value="">-- Chọn Model --</option>
+        @foreach (var kvp in AvailableModels)
+        {
+            <option value="@kvp.Key" selected="@(SelectedModelName == kvp.Key)">
+                @kvp.Value.displayName
+            </option>
+        }
+    </select>
+</div>
+
+@if (IsLoading)
+{
+    <div class="alert alert-info">Đang tải dữ liệu và cấu trúc...</div>
+}
+else if (Products.Count == 0 && SelectedModelType != null)
+{
+    <div class="alert alert-warning">Không có dữ liệu cho Model: @SelectedModelDisplayName.</div>
+}
+else if (SelectedModelType != null)
+{
+    @* ---------------------------------------------------- *@
+    @* BẢNG DỮ LIỆU ĐỘNG *@
+    @* ---------------------------------------------------- *@
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    @* HEADER: Lấy tên thuộc tính qua Reflection *@
+                    @foreach (var prop in DisplayProperties)
+                    {
+                        <th>@prop.Name</th>
+                    }
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* ROWS: Duyệt qua dữ liệu (Products là List<object>) *@
+                @foreach (var item in Products)
+                {
+                    <tr>
+                        @* CELLS: Lấy giá trị thuộc tính qua Reflection *@
+                        @foreach (var prop in DisplayProperties)
+                        {
+                            <td>
+                                @GetPropertyValue(item, prop)
+                            </td>
+                        }
+                        <td>
+                            <button class="btn btn-sm btn-primary">Edit</button>
+                            <button class="btn btn-sm btn-danger ms-1">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    // Dictionary ánh xạ Tên Endpoint/Tên Model -> Type và Tên hiển thị
+    private Dictionary<string, (Type type, string displayName)> AvailableModels = new()
+    {
+        {"products", (typeof(Product), "Sản phẩm")},
+        {"categories", (typeof(Category), "Danh mục")},
+        {"stores", (typeof(Store), "Gian hàng")},
+        {"customers", (typeof(Customer), "Khách hàng")}
+    };
+
+    private List<object> Products = new();
+    private bool IsLoading = false;
+    private string? SelectedModelName { get; set; }
+    private Type? SelectedModelType { get; set; }
+    private string? SelectedModelDisplayName =>
+        SelectedModelName != null && AvailableModels.ContainsKey(SelectedModelName) ? AvailableModels[SelectedModelName].displayName : "N/A";
+    private PropertyInfo[] DisplayProperties = Array.Empty<PropertyInfo>();
+
+    // 🏆 SỬA LỖI Ở ĐÂY: Sử dụng OnParametersSetAsync để phản ứng với Query String
+    protected override async Task OnParametersSetAsync()
+    {
+        // 1. Đọc Model được chọn từ Query String (URL)
+        LoadModelFromUrl();
+
+        // 2. Tải dữ liệu nếu Model Type đã được thiết lập
+        if (SelectedModelType != null)
+        {
+            await LoadData();
+        }
+        else
+        {
+            // Xóa dữ liệu nếu không có Model được chọn
+            Products.Clear();
+        }
+    }
+    // Xử lý khi chọn từ ComboBox
+    private void HandleModelSelection(ChangeEventArgs e)
+    {
+        var modelName = e.Value?.ToString();
+        
+        // Điều hướng tới URL mới: /admin/manage-data?model=products
+        if (modelName != null && AvailableModels.ContainsKey(modelName))
+        {
+            Navigation.NavigateTo($"/admin/manage-data?model={modelName}");
+        }
+        else
+        {
+             Navigation.NavigateTo("/admin/manage-data");
+        }
+    }
+
+    // Đọc URL và thiết lập Type
+    private void LoadModelFromUrl()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var modelName = query["model"];
+
+        if (modelName != null && AvailableModels.TryGetValue(modelName, out var modelInfo))
+        {
+            SelectedModelName = modelName;
+            SelectedModelType = modelInfo.type;
+            
+            // Dùng Reflection để lấy danh sách các thuộc tính công khai
+            // Trừ đi các Navigation Properties (ví dụ: ICollection)
+            DisplayProperties = modelInfo.type.GetProperties()
+                .Where(p => p.PropertyType.IsPrimitive || 
+                            p.PropertyType == typeof(string) || 
+                            p.PropertyType == typeof(decimal) ||
+                            p.PropertyType == typeof(DateTime?) ||
+                            p.PropertyType == typeof(bool))
+                .ToArray();
+        }
+        else
+        {
+            SelectedModelName = null;
+            SelectedModelType = null;
+            Products.Clear();
+            DisplayProperties = Array.Empty<PropertyInfo>();
+        }
+    }
+
+    // Hàm gọi API động
+    private async Task LoadData()
+    {
+        if (SelectedModelType == null) return;
+
+        IsLoading = true;
+        Products.Clear();
+
+        try
+        {
+            // Xây dựng URL API dựa trên tên Model (VD: api/products)
+            var endpoint = $"api/{SelectedModelName}";
+            
+            // Gọi API và Deserialize thành List<object> (sẽ chứa List<Product>, List<Category>...)
+            var json = await Http.GetStringAsync(endpoint);
+            
+            // Deserialize JSON thành List<T> tại runtime
+            var listType = typeof(List<>).MakeGenericType(SelectedModelType);
+            var listResult = JsonSerializer.Deserialize(json, listType, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            
+            // Chuyển kết quả sang List<object>
+            if (listResult is System.Collections.IEnumerable enumerableResult)
+            {
+                foreach (var item in enumerableResult)
+                {
+                    Products.Add(item);
+                }
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Lỗi gọi API {SelectedModelName}: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+             Console.WriteLine($"Lỗi Deserialization: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    // Hàm Helper để lấy giá trị thuộc tính (Xử lý Null và Format cơ bản)
+    private object? GetPropertyValue(object item, PropertyInfo prop)
+    {
+        var value = prop.GetValue(item);
+        if (value == null) return "-";
+        
+        // Định dạng cơ bản cho DateTime
+        if (prop.PropertyType == typeof(DateTime?))
+        {
+            return ((DateTime)value).ToString("dd/MM/yy HH:mm");
+        }
+        
+        // Định dạng cơ bản cho boolean
+        if (prop.PropertyType == typeof(bool))
+        {
+            return (bool)value ? "Có" : "Không";
+        }
+        
+        return value;
+    }
+}

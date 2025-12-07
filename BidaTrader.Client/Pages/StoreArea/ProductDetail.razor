@@ -1,5 +1,5 @@
 ﻿@page "/products/{Id:int}"
-@inject IService<Product> ProductService
+@inject IService<ProductListDto> ProductService
 @inject NavigationManager NavigationManager
 
 <PageTitle>@product?.Name ?? "Product Detail"</PageTitle>
@@ -38,7 +38,7 @@ else
             <h2 class="text-danger">@product.Price VNĐ</h2>
 
             <p class="lead mt-3">
-                @product.Description
+                @product.
             </p>
 
             <div class="mt-4">
@@ -62,7 +62,7 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private Product? product;
+    private ProductListDto? product;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -79,9 +79,7 @@ else
             // Tuy nhiên, để giữ tính generic, chúng ta dùng HttpClient trực tiếp
             // hoặc thêm phương thức này vào Interface cụ thể (IProductService).
 
-            // Để code chạy được, tôi sẽ thêm GetByIdAsync vào Service bạn đã định nghĩa:
-            var productService = (ProductService)ProductService;
-            product = await productService.GetItemByIdAsync(Id);
+            product = await ProductService.GetItemByIdAsync(Id);
         }
         catch (Exception ex)
         {
