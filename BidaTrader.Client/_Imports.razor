@@ -1,5 +1,7 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using System.Reflection
+@using System.Text.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
@@ -12,7 +14,13 @@
 @using BidaTrader.Client.Pages.CustomerArea
 @using BidaTrader.Client.Pages.AdminArea
 @using BidaTrader.Client.Pages.StoreArea
+
 @inject IJSRuntime JSRuntime
+@inject IAuthService AuthService
+@inject IService<ProductDto> ProductService
+@inject IService<CategoryDto> CategoryService
+@inject NavigationManager Navigation
+@inject HttpClient Http
 
 @using BidaTraderShared.Data.Models
 @using BidaTraderShared.Data.DTOs

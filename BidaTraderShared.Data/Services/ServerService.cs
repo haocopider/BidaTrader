@@ -1,15 +1,17 @@
 ﻿using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace BidaTrader.Server.Services
+namespace BidaTraderShared.Data.Services
 {
-    public class ServerGenericService<T> : IService<T> where T : class
+    public class ServerService<T> : IService<T> where T : class
     {
-        protected readonly AppDbContext _context; // Cho phép lớp con truy cập
+        protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        public ServerGenericService(AppDbContext context)
+        public ServerService(AppDbContext context)
         {
             _context = context;
             _dbSet = _context.Set<T>();
@@ -48,3 +50,4 @@ namespace BidaTrader.Server.Services
         }
     }
 }
+

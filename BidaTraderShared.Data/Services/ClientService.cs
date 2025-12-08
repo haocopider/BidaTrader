@@ -1,14 +1,16 @@
-﻿using BidaTraderShared.Data.Services;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http.Json;
+using System.Text;
 
-namespace BidaTrader.Client.Services
+namespace BidaTraderShared.Data.Services
 {
-    public class ClientGenericService<T> : IService<T> where T : class
+    public class ClientService<T> : IService<T> where T : class
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiEndpoint;
 
-        public ClientGenericService(HttpClient httpClient, string endpointName)
+        public ClientService(HttpClient httpClient, string endpointName)
         {
             _httpClient = httpClient;
             _apiEndpoint = $"api/{endpointName}";
@@ -19,7 +21,7 @@ namespace BidaTrader.Client.Services
             var url = _apiEndpoint;
             if (!string.IsNullOrEmpty(queryString))
             {
-                url += queryString; // Nối chuỗi truy vấn (VD: ?categoryId=5)
+                url += queryString;
             }
             try
             {
@@ -28,7 +30,6 @@ namespace BidaTrader.Client.Services
             catch { return null; }
         }
 
-        // ... Các method Create, Update, Delete giữ nguyên như cũ
         public async Task<T?> GetItemByIdAsync(int id) =>
             await _httpClient.GetFromJsonAsync<T>($"{_apiEndpoint}/{id}");
 
@@ -37,7 +38,6 @@ namespace BidaTrader.Client.Services
 
         public async Task<bool> UpdateItemAsync(T item)
         {
-            // Logic lấy ID qua reflection để gọi PUT /api/products/{id}
             var idProp = item.GetType().GetProperty("Id");
             var id = idProp?.GetValue(item);
             return (await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", item)).IsSuccessStatusCode;
@@ -45,5 +45,6 @@ namespace BidaTrader.Client.Services
 
         public async Task<bool> DeleteItemAsync(int id) =>
             (await _httpClient.DeleteAsync($"{_apiEndpoint}/{id}")).IsSuccessStatusCode;
+
     }
 }

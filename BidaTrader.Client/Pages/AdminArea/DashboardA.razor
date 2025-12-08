@@ -1,10 +1,5 @@
 ﻿@page "/store/product-table"
-@using System.Net.Http.Json
-@using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Store,Admin")]
-@inject HttpClient Http
-@inject IJSRuntime JSRuntime
-@inject NavigationManager Navigation
 
 <h3 class="mb-4">Quản lý Sản phẩm (Phân Trang)</h3>
 
@@ -89,7 +84,7 @@ else
 }
 
 @code {
-    private ProductPagedResponseDto? PagedProducts { get; set; }
+    private ProductPerPage? PagedProducts { get; set; }
     private bool IsLoading = true;
     private string? ErrorMessage;
 
@@ -117,7 +112,7 @@ else
 
             if (response.IsSuccessStatusCode)
             {
-                PagedProducts = await response.Content.ReadFromJsonAsync<ProductPagedResponseDto>();
+                PagedProducts = await response.Content.ReadFromJsonAsync<ProductPerPage>();
             }
             else
             {

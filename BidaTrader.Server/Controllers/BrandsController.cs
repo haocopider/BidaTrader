@@ -1,4 +1,7 @@
-﻿using BidaTraderShared.Data.Models;
+﻿using BidaTrader.Server.Services;
+using BidaTraderShared.Data.DTOs;
+using BidaTraderShared.Data.Models;
+using BidaTraderShared.Data.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,66 +11,81 @@ namespace BidaTrader.API.Controllers
     [ApiController]
     public class BrandsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IService<Brand> _brandService;
 
-        public BrandsController(AppDbContext context) => _context = context;
+        public BrandsController(IService<Brand> brandService) => _brandService = brandService;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Brand>>> GetBrands()
+        public async Task<ActionResult<BrandPerPage>> GetBrands(string? search, int pageIndex = 1, int pageSize = 10)
         {
-            var brands = await _context.Brands.OrderByDescending(b => b.Name).ToListAsync();
-            return Ok(brands);
+            var (items, total) = await ((BrandService)_brandService).GetItemsPerPage(search, pageIndex, pageSize);
+
+            var itemDtos = items.Select(p => new BrandDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                OwnerStoreId = p.OwnerStoreId,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
+            }).ToList();
+
+            var responese = new BrandPerPage
+            {
+                Items = itemDtos,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalCount = total
+            };
+            return Ok(responese);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Brand>> GetBrand(int id)
+        public async Task<ActionResult<BrandDto>> GetBrand(int id)
         {
-            var brand = await _context.Brands
-                .Include(b => b.Products)
-                .FirstOrDefaultAsync(b => b.Id == id);
-
+            var brand = await _brandService.GetItemByIdAsync(id);
             if (brand == null) return NotFound();
-            return Ok(brand);
+            var response = new BrandDto
+            {
+                Id = brand.Id,
+                Name = brand.Name,
+                Description = brand.Description,
+                OwnerStoreId = brand.OwnerStoreId,
+                CreatedAt = brand.CreatedAt,
+                UpdatedAt = brand.UpdatedAt
+            };
+            return Ok(response);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Brand>> CreateBrand([FromBody] Brand brand)
+        public async Task<IActionResult> CreateBrand([FromBody] BrandDto dto)
         {
-            _context.Brands.Add(brand);
-            await _context.SaveChangesAsync();
+            var item = new Brand
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                OwnerStoreId = dto.OwnerStoreId,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            return CreatedAtAction(nameof(GetBrand), new { id = brand.Id }, brand);
+            var created = await _brandService.CreateItemAsync(item);
+            if (!created) return BadRequest("Tạo mới thất bại");
+            return Ok("Tạo mới thành công");
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateBrand(int id, [FromBody] Brand brand)
+        public async Task<IActionResult> UpdateBrand(int id, [FromBody] BrandDto dto)
         {
-            if (id != brand.Id) return BadRequest();
-
-            _context.Entry(brand).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException) when (!_context.Brands.Any(e => e.Id == id))
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            var item = await _brandService.GetItemByIdAsync(id);
+            if (item == null) return NotFound("Không tìm thấy thương hiệu.");
+            item.Name = dto.Name;
+            item.Description = dto.Description;
+            item.OwnerStoreId = dto.OwnerStoreId;
+            item.UpdatedAt = DateTime.UtcNow;
+            var updated = await _brandService.UpdateItemAsync(item);
+            if (!updated) return BadRequest("Cập nhật thất bại");
+            return Ok("Cập nhật thành công");
         }
 
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteBrand(int id)
-        {
-            var brand = await _context.Brands.FindAsync(id);
-            if (brand == null) return NotFound();
-
-            _context.Brands.Remove(brand);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
     }
 }

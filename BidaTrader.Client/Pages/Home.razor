@@ -1,7 +1,4 @@
 ﻿@page "/products"
-@inject IService<ProductListDto> ProductService
-@inject IService<Category> CategoryService
-@inject NavigationManager Navigation
 
 <div class="row">
     <div class="col-12 mb-4">
@@ -66,14 +63,14 @@
 </div>
 
 @code {
-    List<Category>? categories;
-    List<ProductListDto>? products;
+    List<CategoryDto>? categories;
+    List<ProductDto>? products;
     int? selectedCatId;
     private string SearchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await CategoryService.GetItemsAsync();
+        categories = await CategoryService.GetItemsAsync("/all");
         LoadStateFromUrl();
         await LoadProducts();
     }
@@ -88,7 +85,7 @@
 
         string queryString = queryParts.Any() ? $"?{string.Join("&", queryParts)}" : "";
 
-        products = await ProductService.GetItemsAsync(queryString);
+        products = await ProductService.GetItemsAsync("/all" + queryString);
     }
     // Xử lý khi bấm vào danh mục
     void FilterByCat(int? id)
