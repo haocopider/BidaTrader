@@ -23,7 +23,8 @@
 	--heading-color: #1b2f45; /* Color for headings, subheadings and title throughout the website */
 	--accent-color: #56b8e6; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
 	--surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
-	--contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+	--contrast-color: #ffffff;
+	--glass: rgba(255,255,255,0.04) ;/* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
 }
 
 /* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
@@ -1368,3 +1369,77 @@ h6 {
 		font-size: 13px;
 		color: #012970;
 	}
+
+/*Button login */
+.loginbtn {
+    font-family: 'Raleway', sans-serif;
+    font-weight: bolder;
+    color: darkslateblue;
+    font-size: 14px;
+}
+/* Search bar */
+.search-wrapper {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.search {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	background: #ffffff;
+	padding: 1px 20px;
+	border-radius: 50px;
+	border: 1px solid #3b82f6;
+	box-shadow: 0 0 8px rgba(59,130,246,0.15);
+	transition: all .2s ease;
+}
+
+	.search:focus-within {
+		border-color: #2563eb;
+		box-shadow: 0 0 10px rgba(37,99,235,.25);
+	}
+
+	.search input {
+		flex: 1;
+		background: transparent;
+		border: 0;
+		outline: 0;
+		color: #1e293b;
+		font-size: 13px;
+		padding: 10px 12px;
+	}
+
+.btn {
+	background: transparent;
+	border: 0;
+	color: #64748b;
+	cursor: pointer;
+	padding: 8px;
+	border-radius: 8px;
+	transition: all .12s ease;
+}
+
+	.btn:hover {
+		color: #3b82f6;
+		transform: translateY(-2px);
+	}
+
+.search .left-icon {
+	color: #3b82f6;
+	font-size: 18px;
+	padding-left: 6px;
+}
+
+.search .clear {
+	opacity: 0;
+	transform: scale(.9);
+	transition: all .12s
+}
+
+.search input:focus + .clear,
+.search.has-value .clear {
+	opacity: 1;
+	transform: scale(1)
+}

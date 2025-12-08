@@ -9,17 +9,35 @@
 
     <!-- Left: Logo + Toggle -->
     <div class="d-flex align-items-center justify-content-between w-auto pe-3">
-        <a href="/" class="logo d-flex align-items-center text-decoration-none">
+        <a @onclick="HandleToggleSidebar" class="logo toggle-sidebar-btn d-flex align-items-center text-decoration-none">
             <img src="img/logo.png" alt="Logo" class="me-2" style="height: 36px;">
             <span class="fw-bold fs-5 text-dark d-none d-lg-block">BidaTrader</span>
         </a>
+    </div>
 
-        <!-- Sidebar button -->
-        <i class="bi bi-list toggle-sidebar-btn ms-3 fs-3 text-dark" @onclick="HandleToggleSidebar"></i>
+    <div class="d-flex align-items-center justify-content-between w-auto pe-3">
+        <form class="search-wrapper" role="search" aria-label="Site search" onsubmit="handleSubmit(event)">
+            <div class="search" id="searchBox">
+                <svg class="left-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+
+
+                <input id="q" name="q" type="search" autocomplete="off" placeholder="Tìm kiếm..." aria-label="Tìm kiếm" />
+
+
+                <button type="button" class="btn clear" id="clearBtn" title="Xóa" aria-label="Xóa ô tìm kiếm">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- Right Side Navigation -->
-    <nav class="header-nav ms-auto">
+    <nav class="header-nav ms-auto me-5">
         <ul class="d-flex align-items-center gap-3 m-0">
 
             <!-- Search icon (mobile only) -->
@@ -40,12 +58,7 @@
                 <NotAuthorized>
                     <li class="">
                         <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="ShowLoginForm">
-                            <span> Đăng nhập</span>
-                        </button>
-                    </li>
-                    <li class="">
-                        <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="ShowRegisterForm">
-                            <span>/Đăng ký</span>
+                            <span class="loginbtn"><i class="bi bi-person-circle"></i> ĐĂNG NHẬP</span>
                         </button>
                     </li>
                 </NotAuthorized>
@@ -74,15 +87,15 @@
                                  style="width: 36px; height: 36px; object-fit: cover;">
 
                             <span class="d-none d-md-block dropdown-toggle ps-2 fw-medium">
-                                @context.User.FindFirst(ClaimTypes.Name)?.Value
+                                @userName
                             </span>
                         </a>
 
                         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile shadow">
 
                             <li class="dropdown-header text-center">
-                                <h6 class="fw-bold">@context.User.FindFirst(ClaimTypes.Name)?.Value</h6>
-                                <span class="text-secondary">@context.User.FindFirst(ClaimTypes.Role)?.Value</span>
+                                <h6 class="fw-bold">@userName</h6>
+                                <span class="text-secondary">@role</span>
                             </li>
 
                             <li><hr class="dropdown-divider"></li>

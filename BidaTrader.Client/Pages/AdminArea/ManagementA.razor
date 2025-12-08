@@ -1,9 +1,5 @@
 ﻿@page "/admin/manage-data"
-@using System.Reflection
-@using System.Text.Json
 @attribute [Authorize(Roles = "Admin")]
-@inject NavigationManager Navigation
-@inject HttpClient Http
 
 <h3 class="mb-4">Quản lý Dữ liệu Động (@(SelectedModelDisplayName))</h3>
 

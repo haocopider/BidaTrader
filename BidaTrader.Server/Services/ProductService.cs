@@ -1,10 +1,10 @@
 ﻿using BidaTraderShared.Data.Models;
+using BidaTraderShared.Data.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace BidaTrader.Server.Services
 {
-    // Kế thừa ServerGenericService để tận dụng code cũ, nhưng implement IService<Product>
-    public class ProductService : ServerGenericService<Product>
+    public class ProductService : ServerService<Product>
     {
         public ProductService(AppDbContext context) : base(context) { }
 
@@ -81,14 +81,11 @@ namespace BidaTrader.Server.Services
             return await query.ToListAsync();
         }
 
-        public async Task<(List<Product> Products, int TotalCount)> GetProductsForPaginationAsync(
-    int? categoryId,
-    string? searchKey,
-    int pageIndex,
-    int pageSize)
+        public async Task<(List<Product> Products, int TotalCount)> 
+            GetProductsForPaginationAsync(int? categoryId, string? searchKey, int pageIndex,int pageSize)
         {
             var query = _context.Products
-                .Include(p => p.Category) // Phải Include Category để mapping DTO
+                .Include(p => p.Category)
                 .AsQueryable();
 
             // Lọc theo Category

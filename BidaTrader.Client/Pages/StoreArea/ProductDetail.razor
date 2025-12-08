@@ -1,6 +1,4 @@
 ﻿@page "/products/{Id:int}"
-@inject IService<ProductListDto> ProductService
-@inject NavigationManager NavigationManager
 
 <PageTitle>@product?.Name ?? "Product Detail"</PageTitle>
 
@@ -62,7 +60,7 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private ProductListDto? product;
+    private ProductDto? product;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -95,6 +93,6 @@ else
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/Products");
+        Navigation.NavigateTo("/Products");
     }
 }

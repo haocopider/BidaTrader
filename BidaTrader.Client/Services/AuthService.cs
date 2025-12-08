@@ -1,4 +1,5 @@
 ﻿using BidaTrader.Client.Auth;
+using BidaTraderShared.Data.DTOs;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -71,6 +72,22 @@ namespace BidaTrader.Client.Services
 
             // Thông báo cho Blazor biết trạng thái đã thay đổi
             await ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
+        }
+
+        public async Task<RegisterDto> Register(RegisterDto registerModel)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/Auth/register", registerModel);
+
+                // Đọc kết quả trả về từ Server
+                var result = await response.Content.ReadFromJsonAsync<RegisterDto>();
+                return result ?? new RegisterDto { IsSuccess = false, ErrorMessage = "Lỗi không xác định." };
+            }
+            catch (Exception ex)
+            {
+                return new RegisterDto { IsSuccess = false, ErrorMessage = ex.Message };
+            }
         }
     }
 }
