@@ -29,7 +29,7 @@ namespace BidaTrader.Client.Services
             _authStateProvider = authStateProvider;
         }
 
-        public async Task<bool> Login(string username, string password)
+        public async Task<bool> Login(LoginDto loginModel)
         {
             if (_httpClient.BaseAddress == null)
             {
@@ -37,7 +37,7 @@ namespace BidaTrader.Client.Services
                 throw new InvalidOperationException("HttpClient.BaseAddress is null. Configure the API base address in Program.cs (ApiBaseUrl) or register a client with a BaseAddress.");
             }
 
-            var loginRequest = new { UserName = username, Password = password };
+            var loginRequest = new { UserName = loginModel.UserName, Password = loginModel.Password };
 
             // Compose absolute Uri from the configured BaseAddress to avoid invalid request URI errors on WASM.
             var requestUri = new Uri(_httpClient.BaseAddress, "api/Auth/login");
@@ -60,7 +60,7 @@ namespace BidaTrader.Client.Services
             await _localStorage.SetItemAsync("userName", loginResponse.UserName);
 
             // Thông báo cho Blazor biết trạng thái xác thực đã thay đổi
-            await ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(loginResponse.Token);
+            await ((AuthStateProvider)_authStateProvider).NotifyUserAuthentication(loginResponse.Token);
 
             return true;
         }
@@ -71,7 +71,7 @@ namespace BidaTrader.Client.Services
             await _localStorage.RemoveItemAsync("userName");
 
             // Thông báo cho Blazor biết trạng thái đã thay đổi
-            await ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
+            await ((AuthStateProvider)_authStateProvider).NotifyUserLogout();
         }
 
         public async Task<RegisterDto> Register(RegisterDto registerModel)

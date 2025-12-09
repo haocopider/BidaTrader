@@ -19,7 +19,7 @@ builder.Services.AddScoped(typeof(IService<>), typeof(ServerService<>));
 builder.Services.AddScoped<IService<Product>, ProductService>();
 builder.Services.AddScoped<IService<Category>, CategoryService>();
 builder.Services.AddScoped<IService<Brand>, BrandService>();
-
+builder.Services.AddScoped<IService<Account>, AccountService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
