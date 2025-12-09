@@ -1,162 +1,128 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@inject IAuthService AuthService
-@inject NavigationManager NavigationManager
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-@using System.Security.Claims
-@using System.Globalization
-
-<header id="header" class="header fixed-top d-flex align-items-center shadow-sm">
-
-    <!-- Left: Logo + Toggle -->
-    <div class="d-flex align-items-center justify-content-between w-auto pe-3">
-        <a @onclick="HandleToggleSidebar" class="logo toggle-sidebar-btn d-flex align-items-center text-decoration-none">
-            <img src="img/logo.png" alt="Logo" class="me-2" style="height: 36px;">
-            <span class="fw-bold fs-5 text-dark d-none d-lg-block">BidaTrader</span>
+﻿<!-- Navbar -->
+<nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+     id="layout-navbar">
+    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+            <i class="bx bx-menu bx-sm"></i>
         </a>
     </div>
 
-    <div class="d-flex align-items-center justify-content-between w-auto pe-3">
-        <form class="search-wrapper" role="search" aria-label="Site search" onsubmit="handleSubmit(event)">
-            <div class="search" id="searchBox">
-                <svg class="left-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                    <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-
-
-                <input id="q" name="q" type="search" autocomplete="off" placeholder="Tìm kiếm..." aria-label="Tìm kiếm" />
-
-
-                <button type="button" class="btn clear" id="clearBtn" title="Xóa" aria-label="Xóa ô tìm kiếm">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
+    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+        <!-- Search -->
+        <div class="navbar-nav align-items-center">
+            <div class="nav-item d-flex align-items-center">
+                <i class="bx bx-search fs-4 lh-0"></i>
+                <input type="text"
+                       class="form-control border-0 shadow-none"
+                       placeholder="Search..."
+                       aria-label="Search..." />
             </div>
-        </form>
-    </div>
+        </div>
+        <!-- /Search -->
 
-    <!-- Right Side Navigation -->
-    <nav class="header-nav ms-auto me-5">
-        <ul class="d-flex align-items-center gap-3 m-0">
+        <ul class="navbar-nav flex-row align-items-center ms-auto">
 
-            <!-- Search icon (mobile only) -->
-            <li class="nav-item d-block d-lg-none">
-                <a class="nav-link nav-icon search-bar-toggle" href="#">
-                    <i class="bi bi-search fs-5"></i>
-                </a>
-            </li>
-
-            <!-- Time display (desktop only) -->
-            <li class="nav-item d-none d-md-block">
-                <span class="datetime-pill px-3 py-1 rounded-pill bg-light border text-dark fw-semibold">
-                    @CurrentTime · @CurrentDate
-                </span>
+            <!-- Place this tag where you want the button to render. -->
+            <li class="nav-item lh-1 me-3">
+                <a class="github-button"
+                   href="https://github.com/themeselection/sneat-html-admin-template-free"
+                   data-icon="octicon-star"
+                   data-size="large"
+                   data-show-count="true"
+                   aria-label="Star themeselection/sneat-html-admin-template-free on GitHub">Star</a>
             </li>
 
             <AuthorizeView>
                 <NotAuthorized>
                     <li class="">
-                        <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="ShowLoginForm">
+                        <a href="/login" class="nav-link collapsed w-100 text-start border-0 bg-transparent">
                             <span class="loginbtn"><i class="bi bi-person-circle"></i> ĐĂNG NHẬP</span>
-                        </button>
+                        </a>
                     </li>
                 </NotAuthorized>
             </AuthorizeView>
-
-
-            <!-- Authenticated User -->
+            <!-- User -->
             <AuthorizeView>
                 <Authorized>
-                    <!-- Greeting -->
-                    <li class="nav-item d-none d-md-block">
-                        @if (userName != null)
-                        {
-                            <span class="navbar-text text-dark fw-semibold">
-                                👋 Chào, @userName
-                            </span>
-                        }
-                    </li>
-                    <!-- Profile Dropdown -->
-                    <li class="nav-item dropdown pe-2">
-                        <a class="nav-link nav-profile d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-
-                            <img src="img/avt/my-profile-img.jpg"
-                                 alt="Profile"
-                                 class="rounded-circle shadow-sm"
-                                 style="width: 36px; height: 36px; object-fit: cover;">
-
-                            <span class="d-none d-md-block dropdown-toggle ps-2 fw-medium">
-                                @userName
-                            </span>
+                    <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                        <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                            <div class="avatar avatar-online">
+                                <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                            </div>
                         </a>
-
-                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile shadow">
-
-                            <li class="dropdown-header text-center">
-                                <h6 class="fw-bold">@userName</h6>
-                                <span class="text-secondary">@role</span>
-                            </li>
-
-                            <li><hr class="dropdown-divider"></li>
-
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li>
-                                <NavLink class="dropdown-item d-flex align-items-center" href="/profile">
-                                    <i class="bi bi-person me-2"></i>
-                                    <span>Trang cá nhân</span>
-                                </NavLink>
+                                <a class="dropdown-item" href="#">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar avatar-online">
+                                                <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <span class="fw-semibold d-block">@userName</span>
+                                            <small class="text-muted">@userRole</small>
+                                        </div>
+                                    </div>
+                                </a>
                             </li>
-
-                            <li><hr class="dropdown-divider"></li>
-
                             <li>
-                                <button class="dropdown-item d-flex align-items-center text-danger" @onclick="HandleLogout">
-                                    <i class="bi bi-box-arrow-right me-2"></i>
-                                    <span>Đăng xuất</span>
-                                </button>
+                                <div class="dropdown-divider"></div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bx bx-user me-2"></i>
+                                    <span class="align-middle">My Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bx bx-cog me-2"></i>
+                                    <span class="align-middle">Settings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <span class="d-flex align-items-center align-middle">
+                                        <i class="flex-shrink-0 bx bx-credit-card me-2"></i>
+                                        <span class="flex-grow-1 align-middle">Billing</span>
+                                        <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <div class="dropdown-divider"></div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" @onclick="HandleLogout">
+                                    <i class="bx bx-power-off me-2"></i>
+                                    <span class="align-middle">Log Out</span>
+                                </a>
                             </li>
                         </ul>
                     </li>
                 </Authorized>
             </AuthorizeView>
 
+            <!--/ User -->
         </ul>
-    </nav>
-</header>
+    </div>
+</nav>
+<!-- / Navbar -->
 
-@code {
-    public string CurrentTime => DateTime.Now.ToString("hh:mm");
-    public string CurrentDate => DateTime.Now.ToString("dddd ',' dd 'thg' M", new CultureInfo("vi-VN"));
-
-    private string? userName;
-    private string? role;
+@code{
+    private string? userName { get; set; }
+    private string? userRole { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        // Lấy tên người dùng từ local storage
         userName = await LocalStorage.GetItemAsync<string>("userName");
-        role = await LocalStorage.GetItemAsync<string>("userRole");
-    }
-
-    [Parameter]
-    public EventCallback OnToggleSidebar { get; set; }
-
-    private async Task HandleToggleSidebar()
-    {
-        await OnToggleSidebar.InvokeAsync();
+        userRole = await LocalStorage.GetItemAsync<string>("userRole");
     }
 
     private async Task HandleLogout()
     {
         await AuthService.Logout();
-        NavigationManager.NavigateTo("/login", true);
-    }
-    private void ShowLoginForm(MouseEventArgs args)
-    {
-        throw new NotImplementedException();
-    }
-    private void ShowRegisterForm(MouseEventArgs args)
-    {
-        throw new NotImplementedException();
+        Navigation.NavigateTo("/login", true);
     }
 }

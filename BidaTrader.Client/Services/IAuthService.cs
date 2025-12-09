@@ -4,7 +4,7 @@ namespace BidaTrader.Client.Services
 {
     public interface IAuthService
     {
-        Task<bool> Login(string username, string password);
+        Task<bool> Login(LoginDto loginModel);
         Task Logout();
         Task<RegisterDto> Register(RegisterDto registerModel);
     }

@@ -4,16 +4,15 @@
     <div class="card shadow-lg border-0 rounded-4 overflow-hidden" style="max-width: 900px; width: 100%;">
         <div class="row g-0">
             
-            @* --- ẢNH BÊN TRÁI (Ẩn trên mobile) --- *@
-            <div class="col-md-6 d-none d-md-flex align-items-center justify-content-center bg-primary bg-opacity-10 p-5">
+            <div style="background-color: rgba(105, 108, 255, 0.16);" class="col-md-6 d-none d-md-flex align-items-center justify-content-center bg-opacity-10 p-5">
                 <div class="text-center">
-                    <img src="img/logo.png" class="img-fluid mb-3" style="max-height: 200px;" alt="Logo" />
+                    <img src="../assets/img/logo.png" class="img-fluid mb-3" style="max-height: 200px;" alt="Logo" />
                     <h4 class="fw-bold text-primary">Chào mừng trở lại!</h4>
-                    <p class="text-muted">Đăng nhập để tiếp tục quản lý cửa hàng và mua sắm.</p>
+                    <p class="text-">Đăng nhập để tiếp tục quản lý cửa hàng và mua sắm.</p>
+                    <p class="text-dark">Đăng nhập để tiếp tục quản lý cửa hàng và mua sắm.</p>
                 </div>
             </div>
 
-            @* --- FORM BÊN PHẢI --- *@
             <div class="col-md-6 bg-white p-5">
                 <div class="d-flex align-items-center mb-4">
                     <img src="img/logo.png" class="img-fluid d-md-none me-3" style="width: 50px;" />
@@ -30,7 +29,6 @@
                 <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator />
                     
-                    @* Username *@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tên đăng nhập</label>
                         <div class="input-group">
@@ -40,7 +38,6 @@
                         <ValidationMessage For="@(() => loginModel.UserName)" />
                     </div>
 
-                    @* Password *@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Mật khẩu</label>
                         <div class="input-group">
@@ -53,7 +50,6 @@
                         <ValidationMessage For="@(() => loginModel.Password)" />
                     </div>
 
-                    @* Remember Me & Forgot Password *@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="form-check">
                             <InputCheckbox class="form-check-input" @bind-Value="loginModel.RememberMe" id="rememberMe" />
@@ -62,7 +58,6 @@
                         <a href="#" class="text-decoration-none text-primary small">Quên mật khẩu?</a>
                     </div>
 
-                    @* Submit Button *@
                     <div class="d-grid mb-4">
                         <button type="submit" class="btn btn-primary py-2 fw-bold" disabled="@isLoading">
                             @if (isLoading)
@@ -104,7 +99,7 @@
 
         try
         {
-            await AuthService.Login(loginModel.UserName, loginModel.Password);
+            await AuthService.Login(loginModel);
             Navigation.NavigateTo("/");
         }
         catch (Exception ex)

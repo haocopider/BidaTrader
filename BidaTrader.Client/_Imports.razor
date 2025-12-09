@@ -21,6 +21,7 @@
 @inject IService<CategoryDto> CategoryService
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 @using BidaTraderShared.Data.Models
 @using BidaTraderShared.Data.DTOs
@@ -30,4 +31,5 @@
 @using Blazored.LocalStorage
 @using BidaTrader.Client.Auth
 @using BidaTrader.Client.Services
-@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization\
+

@@ -17,7 +17,7 @@ builder.Services.AddBlazoredLocalStorage();
 
 // Authorization / authentication
 builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 
 // Auth service and HTTP handler
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -43,5 +43,6 @@ void AddClientService<T>(string endpoint) where T : class
 AddClientService<CategoryDto>("categories");
 AddClientService<ProductDto>("products");
 AddClientService<BrandDto>("brands");
+AddClientService<AccountDto>("accounts");
 
 await builder.Build().RunAsync();
