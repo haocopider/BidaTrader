@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BidaTraderShared.Data\BidaTraderShared.Data.csproj" />
+    <ProjectReference Include="..\BidaTrader.Shared\BidaTrader.Shared.csproj" />
   </ItemGroup>
 
 </Project>

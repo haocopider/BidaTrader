@@ -1,5 +1,6 @@
-﻿using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
+﻿using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace BidaTrader.Server.Services

@@ -1,5 +1,4 @@
-﻿@using BidaTraderShared.Data.Models
-
+﻿
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
      id="layout-navbar">
 
@@ -118,7 +117,7 @@
                                         <div class="flex-grow-1">
                                             <span class="fw-semibold d-block">@userName</span>
                                             @* Hiển thị Role lấy từ Claims nếu cần *@
-                                            <small class="text-muted">User</small>
+                                            <small class="text-muted">@role</small>
                                         </div>
                                     </div>
                                 </a>
@@ -164,6 +163,7 @@
 </nav>
 @code {
     private string? userName { get; set; }
+    private string? role { get; set; }
     private List<BrandDto>? brands;
     private int CartItemCount = 10;
 
@@ -190,6 +190,7 @@
     {
         // 1. Lấy thông tin User
         userName = await LocalStorage.GetItemAsync<string>("userName");
+        role = await LocalStorage.GetItemAsync<string>("userRole");
 
         // 2. Tải danh sách Brand để hiển thị trên Navbar
         try

@@ -1,4 +1,6 @@
-﻿using BidaTraderShared.Data.DTOs;
+﻿using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 
 namespace BidaTrader.Client.Services
 {

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using BidaTrader.Server.Services;
-using BidaTraderShared.Data.DTOs;
+using BidaTrader.Shared.DTOs;
 
 namespace BidaTrader.Server.Controllers
 {
@@ -27,7 +27,7 @@ namespace BidaTrader.Server.Controllers
             {
                 Id = p.Id,
                 UserName = p.UserName,
-                Password = p.PasswordHash,
+                PasswordHash = p.PasswordHash,
                 Role = p.Role,
                 IsActive = p.IsActive
             }).ToList();
@@ -56,7 +56,7 @@ namespace BidaTrader.Server.Controllers
             {
                 Id = account.Id,
                 UserName = account.UserName,
-                Password = account.PasswordHash,
+                PasswordHash = account.PasswordHash,
                 Role = account.Role,
                 IsActive = account.IsActive
             };
@@ -77,7 +77,7 @@ namespace BidaTrader.Server.Controllers
             }
 
             account.UserName = accountDto.UserName;
-            account.PasswordHash = accountDto.Password;
+            account.PasswordHash = accountDto.PasswordHash;
             account.Role = accountDto.Role;
             account.IsActive = accountDto.IsActive ?? account.IsActive;
             var updated =   await _accountService.UpdateItemAsync(account);
