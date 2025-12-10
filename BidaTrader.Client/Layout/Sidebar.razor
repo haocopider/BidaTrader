@@ -1,233 +1,72 @@
-﻿@inject IAuthService AuthService
-@inject NavigationManager NavigationManager
-
-@* <aside id="sidebar" class="sidebar">
-
-    <ul class="sidebar-nav" id="sidebar-nav">
-
-        <AuthorizeView Roles="Admin">
-            <Authorized>
-
-                <li class="nav-heading">Quản trị hệ thống</li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/admin/dashboard">
-                        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link collapsed" data-bs-target="#admin-manage" data-bs-toggle="collapse">
-                        <i class="bi bi-gear"></i><span>Quản lý hệ thống</span><i class="bi bi-chevron-down ms-auto"></i>
-                    </a>
-                    <ul id="admin-manage" class="nav-content collapse">
-                        <li>
-                            <NavLink href="/admin/users"><i class="bi bi-circle"></i><span>Người dùng</span></NavLink>
-                        </li>
-                        <li>
-                            <NavLink href="/admin/store"><i class="bi bi-circle"></i><span>Cửa hàng</span></NavLink>
-                        </li>
-                        <li>
-                            <NavLink href="/admin/logs"><i class="bi bi-circle"></i><span>Nhật ký hệ thống</span></NavLink>
-                        </li>
-                        <li>
-                            <NavLink href="/admin/settings"><i class="bi bi-circle"></i><span>Cấu hình</span></NavLink>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item">
-                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
-                    </button>
-                </li>
-
-            </Authorized>
-        </AuthorizeView>
-
-
-        <AuthorizeView Roles="Store">
-            <Authorized>
-
-                <li class="nav-heading mt-3">Quản lý cửa hàng</li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link" href="/store/dashboard">
-                        <i class="bi bi-shop"></i><span>Dashboard cửa hàng</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link collapsed" data-bs-target="#store-manage" data-bs-toggle="collapse">
-                        <i class="bi bi-box-seam"></i><span>Sản phẩm</span><i class="bi bi-chevron-down ms-auto"></i>
-                    </a>
-                    <ul id="store-manage" class="nav-content collapse">
-                        <li><NavLink href="/store/products"><i class="bi bi-circle"></i><span>Danh sách</span></NavLink></li>
-                        <li><NavLink href="/store/product/add"><i class="bi bi-circle"></i><span>Thêm mới</span></NavLink></li>
-                    </ul>
-                </li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link collapsed" href="/store/orders">
-                        <i class="bi bi-cart-check"></i><span>Đơn hàng</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link collapsed" href="/store/statistics">
-                        <i class="bi bi-bar-chart"></i><span>Thống kê</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
-                    </button>
-                </li>
-
-            </Authorized>
-        </AuthorizeView>
-
-        <AuthorizeView Roles="Customer">
-            <Authorized>
-
-                <li class="nav-heading mt-3">Tài khoản của tôi</li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link collapsed" href="/profile">
-                        <i class="bi bi-person-circle"></i><span>Hồ sơ cá nhân</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link collapsed" href="/my-orders">
-                        <i class="bi bi-bag-check"></i><span>Đơn hàng</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <NavLink class="nav-link collapsed" href="/wishlist">
-                        <i class="bi bi-heart"></i><span>Yêu thích</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item">
-                    <button class="nav-link collapsed w-100 text-start border-0 bg-transparent" @onclick="HandleLogout">
-                        <i class="bi bi-box-arrow-right"></i><span>Đăng xuất</span>
-                    </button>
-                </li>
-
-            </Authorized>
-        </AuthorizeView>
-
-        <li class="nav-heading">Cửa Hàng</li>
-
-        <li class="nav-item">
-            <NavLink class="nav-link collapsed" href="/" Match="NavLinkMatch.All">
-                <i class="bi bi-shop"></i>
-                <span>Trang chủ</span>
-            </NavLink>
-        </li>
-
-        <li class="nav-item nav-item-flyout">
-            <a class="nav-link collapsed" href="Products" style="cursor: pointer;">
-                <i class="bi bi-menu-button-wide"></i>
-                <span>Danh Mục Sản Phẩm</span>
-                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8em;"></i>
-            </a>
-
-            <ul class="flyout-menu">
-                <li class="flyout-header">Chọn loại sản phẩm</li>
-                @if (categories != null && categories.Any())
-                {
-                    @foreach (var cat in categories)
-                    {
-                        <li>
-                            <a href="@($"products?categoryId={cat.Id}")">@cat.Name</a>
-                        </li>
-                    }
-                }
-                else
-                {
-                    <li><a href="#">@(categories == null ? "Đang tải..." : "Chưa có danh mục")</a></li>
-                }
-            </ul>
-        </li>
-
-        <li class="nav-item nav-item-flyout">
-            <a class="nav-link collapsed" href="Products" style="cursor: pointer;">
-                <i class="bi bi-tags"></i>
-                <span>Thương Hiệu</span>
-                <i class="bi bi-chevron-right ms-auto" style="font-size: 0.8em;"></i>
-            </a>
-
-            <ul class="flyout-menu">
-                <li class="flyout-header">Chọn nhà cung cấp</li>
-                @if (brands != null && brands.Any())
-                {
-                    @foreach (var brand in brands)
-                    {
-                        <li>
-                            <a href="@($"products?brandId={brand.Id}")">@brand.Name</a>
-                        </li>
-                    }
-                }
-                else
-                {
-                    <li><a href="#">@(brands == null ? "Đang tải..." : "Chưa có thương hiệu")</a></li>
-                }
-            </ul>
-        </li>
-
-        <li class="nav-item">
-            <NavLink class="nav-link collapsed" href="posts">
-                <i class="bi bi-newspaper"></i>
-                <span>Tin tức & Cộng đồng</span>
-            </NavLink>
-        </li>
-    </ul>
-
-</aside> *@
-
-
+﻿
+@inject NavigationManager Navigation
 @code {
-    private bool isVisibleLogin { get; set; } = false;
-    private bool isVisibleRegister { get; set; } = false;
+    // --- KHAI BÁO BIẾN DỮ LIỆU ---
+    private List<CategoryDto>? categories;
 
-    private List<Category>? categories;
-    private List<Brand>? brands;
+    // --- BIẾN TRẠNG THÁI LỌC ---
+    private string SearchTerm { get; set; } = "";
+    private int? SelectedCategoryId { get; set; }
+    private int SelectedPriceRange { get; set; } = 0; // 0: All, 1: <1M, 2: 1-5M, ...
+    private decimal MaxPriceSlider { get; set; } = 20000000; // Giá trị mặc định slider
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadMenuData();
+        // Tải danh mục khi Sidebar khởi tạo
+        categories = await CategoryService.GetItemsAsync();
     }
 
-    private async Task LoadMenuData()
+    // Xử lý khi nhấn Enter ở ô tìm kiếm
+    private void HandleSearchEnter(KeyboardEventArgs e)
     {
-        try
+        if (e.Key == "Enter") ApplyFilters();
+    }
+
+    // Chọn danh mục và áp dụng ngay
+    private void SelectCategory(int? id)
+    {
+        SelectedCategoryId = id;
+        ApplyFilters();
+    }
+
+    // Chọn khoảng giá và áp dụng ngay
+    private void SelectPrice(int rangeOption)
+    {
+        SelectedPriceRange = rangeOption;
+        ApplyFilters();
+    }
+
+    // Hàm tổng hợp logic và điều hướng
+    private void ApplyFilters()
+    {
+        var queryParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+            queryParts.Add($"search={Uri.EscapeDataString(SearchTerm)}");
+
+        if (SelectedCategoryId.HasValue)
+            queryParts.Add($"categoryId={SelectedCategoryId.Value}");
+
+        // Logic xử lý khoảng giá (Backend cần xử lý tham số minPrice/maxPrice)
+        switch (SelectedPriceRange)
         {
-
+            case 1: queryParts.Add("maxPrice=1000000"); break;
+            case 2: queryParts.Add("minPrice=1000000&maxPrice=5000000"); break;
+            case 3: queryParts.Add("minPrice=5000000&maxPrice=10000000"); break;
+            case 4: queryParts.Add("minPrice=10000000"); break;
+            default:
+                // Nếu không chọn range radio thì kiểm tra slider (Logic ưu tiên radio trước)
+                if (SelectedPriceRange == 0 && MaxPriceSlider > 0 && MaxPriceSlider < 50000000)
+                {
+                    queryParts.Add($"maxPrice={MaxPriceSlider}");
+                }
+                break;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading menu: {ex.Message}");
-        }
-    }
 
-    private void ShowLoginForm()
-    {
-        isVisibleLogin = true;
-    }
+        var queryString = queryParts.Any() ? "?" + string.Join("&", queryParts) : "";
 
-    private void ShowRegisterForm()
-    {
-        isVisibleRegister = true;
-    }
-
-    private async Task HandleLogout()
-    {
-        await AuthService.Logout();
-        NavigationManager.NavigateTo("/login", true);
+        // Điều hướng sang trang danh sách sản phẩm với bộ lọc
+        Navigation.NavigateTo($"/products{queryString}");
     }
 }
 
@@ -248,7 +87,7 @@
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
         <li class="menu-item active">
-            <a href="index.html" class="menu-link">
+            <a href="admin/dashboard" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Trang chủ</div>
             </a>
@@ -258,7 +97,7 @@
         <AuthorizeView Roles="Admin">
             <Authorized>
                 <li class="menu-item">
-                    <a href="javascript:void(0);" class="menu-link menu-toggle">
+                    <a href="/admin/dashboard" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-layout"></i>
                         <div data-i18n="Layouts">Trang quản trị</div>
                     </a>
@@ -294,277 +133,130 @@
             </Authorized>
         </AuthorizeView>
 
+        <AuthorizeView Roles="Store">
+            <Authorized>
+                <li class="menu-header small text-uppercase">
+                    <span class="menu-header-text text-danger">Cửa hàng</span>
+                </li>
+                <li class="menu-item">
+                    <a href="javascript:void(0);" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-package"></i>
+                        <div>Sản phẩm</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="javascript:void(0);" class="menu-link">
+                        <i class="menu-icon tf-icons bx bxs-shopping-bag-alt"></i>
+                        <div data-i18n="Authentications">Đơn hàng</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="javascript:void(0);" class="menu-link">
+                        <i class="menu-icon tf-icons bi bi-clipboard2-data"></i>
+                        <div data-i18n="Misc">Thống kê</div>
+                    </a>
+                </li>
+
+            </Authorized>
+        </AuthorizeView>
+        
+        <AuthorizeView>
+            <Authorized>
+                <li class="menu-header small text-uppercase"><span class="menu-header-text text-danger">Tài khoản</span></li>
+                <!-- Cards -->
+                <li class="menu-item">
+                    <a href="cards-basic.html" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user"></i>
+                        <div data-i18n="Basic">Trang cá nhân</div>
+                    </a>
+                </li>
+                <!-- User interface -->
+                <li class="menu-item">
+                    <a href="javascript:void(0)" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-key"></i>
+                        <div data-i18n="User interface">Đổi mật khẩu</div>
+                    </a>
+                </li>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Customer">
+            <!-- Extended components -->
+            <li class="menu-item">
+                <a href="javascript:void(0)" class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bxs-shopping-bag-alt"></i>
+                    <div> Đơn hàng</div>
+                </a>
+                <ul class="menu-sub">
+                    <li class="menu-item">
+                        <a href="extended-ui-perfect-scrollbar.html" class="menu-link">
+                            <div data-i18n="Perfect Scrollbar">Chờ xác nhận</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="extended-ui-text-divider.html" class="menu-link">
+                            <div data-i18n="Text Divider">Chờ lấy hàng</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="extended-ui-text-divider.html" class="menu-link">
+                            <div data-i18n="Text Divider">Đang giao</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="extended-ui-text-divider.html" class="menu-link">
+                            <div data-i18n="Text Divider">Đánh giá</div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </AuthorizeView>
+
         <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Pages</span>
+            <span class="menu-header-text text-primary">Tìm kiếm & Lọc</span>
         </li>
+
+        @* 1. THANH TÌM KIẾM *@
         <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-dock-top"></i>
-                <div data-i18n="Account Settings">Account Settings</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="pages-account-settings-account.html" class="menu-link">
-                        <div data-i18n="Account">Account</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="pages-account-settings-notifications.html" class="menu-link">
-                        <div data-i18n="Notifications">Notifications</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="pages-account-settings-connections.html" class="menu-link">
-                        <div data-i18n="Connections">Connections</div>
-                    </a>
-                </li>
-            </ul>
+            <div class="p-2">
+                <div class="input-group input-group-merge">
+                    <input type="text" class="form-control" placeholder="Tên sản phẩm..."
+                           @bind="SearchTerm" @onkeyup="HandleSearchEnter" />
+                    <button class="btn btn-primary p-2" @onclick="ApplyFilters">
+                        <i class="bx bx-search"></i>
+                    </button>
+                </div>
+            </div>
         </li>
+
         <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-lock-open-alt"></i>
-                <div data-i18n="Authentications">Authentications</div>
+            <a href="javascript:void(0);" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-money"></i>
+                <div data-i18n="Price">Phân khúc</div>
             </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="auth-login-basic.html" class="menu-link" target="_blank">
-                        <div data-i18n="Basic">Login</div>
-                    </a>
+            <ul class="">
+                <li class="menu-item @(SelectedPriceRange == 1 ? "active" : "")">
+                    <a href="javascript:void(0)" class="menu-link" @onclick="() => SelectPrice(1)">  1 - 3 triệu</a>
                 </li>
-                <li class="menu-item">
-                    <a href="auth-register-basic.html" class="menu-link" target="_blank">
-                        <div data-i18n="Basic">Register</div>
-                    </a>
+                <li class="menu-item @(SelectedPriceRange == 2 ? "active" : "")">
+                    <a href="javascript:void(0)" class="menu-link" @onclick="() => SelectPrice(2)">  3 - 5 triệu</a>
                 </li>
-                <li class="menu-item">
-                    <a href="auth-forgot-password-basic.html" class="menu-link" target="_blank">
-                        <div data-i18n="Basic">Forgot Password</div>
-                    </a>
+                <li class="menu-item @(SelectedPriceRange == 3 ? "active" : "")">
+                    <a href="javascript:void(0)" class="menu-link" @onclick="() => SelectPrice(3)"> 5 - 10 triệu</a>
                 </li>
-            </ul>
-        </li>
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-cube-alt"></i>
-                <div data-i18n="Misc">Misc</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="pages-misc-error.html" class="menu-link">
-                        <div data-i18n="Error">Error</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="pages-misc-under-maintenance.html" class="menu-link">
-                        <div data-i18n="Under Maintenance">Under Maintenance</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <!-- Components -->
-        <li class="menu-header small text-uppercase"><span class="menu-header-text">Components</span></li>
-        <!-- Cards -->
-        <li class="menu-item">
-            <a href="cards-basic.html" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-collection"></i>
-                <div data-i18n="Basic">Cards</div>
-            </a>
-        </li>
-        <!-- User interface -->
-        <li class="menu-item">
-            <a href="javascript:void(0)" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-box"></i>
-                <div data-i18n="User interface">User interface</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="ui-accordion.html" class="menu-link">
-                        <div data-i18n="Accordion">Accordion</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-alerts.html" class="menu-link">
-                        <div data-i18n="Alerts">Alerts</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-badges.html" class="menu-link">
-                        <div data-i18n="Badges">Badges</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-buttons.html" class="menu-link">
-                        <div data-i18n="Buttons">Buttons</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-carousel.html" class="menu-link">
-                        <div data-i18n="Carousel">Carousel</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-collapse.html" class="menu-link">
-                        <div data-i18n="Collapse">Collapse</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-dropdowns.html" class="menu-link">
-                        <div data-i18n="Dropdowns">Dropdowns</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-footer.html" class="menu-link">
-                        <div data-i18n="Footer">Footer</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-list-groups.html" class="menu-link">
-                        <div data-i18n="List Groups">List groups</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-modals.html" class="menu-link">
-                        <div data-i18n="Modals">Modals</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-navbar.html" class="menu-link">
-                        <div data-i18n="Navbar">Navbar</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-offcanvas.html" class="menu-link">
-                        <div data-i18n="Offcanvas">Offcanvas</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-pagination-breadcrumbs.html" class="menu-link">
-                        <div data-i18n="Pagination &amp; Breadcrumbs">Pagination &amp; Breadcrumbs</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-progress.html" class="menu-link">
-                        <div data-i18n="Progress">Progress</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-spinners.html" class="menu-link">
-                        <div data-i18n="Spinners">Spinners</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-tabs-pills.html" class="menu-link">
-                        <div data-i18n="Tabs &amp; Pills">Tabs &amp; Pills</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-toasts.html" class="menu-link">
-                        <div data-i18n="Toasts">Toasts</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-tooltips-popovers.html" class="menu-link">
-                        <div data-i18n="Tooltips & Popovers">Tooltips &amp; popovers</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ui-typography.html" class="menu-link">
-                        <div data-i18n="Typography">Typography</div>
-                    </a>
+
+                @* Thanh kéo thả (Slider) - Lọc theo giá tối đa *@
+                <li class="menu-item p-3">
+                    <label for="priceRange" class="form-label small text-muted">Hoặc giá tối đa:</label>
+                    <input type="range" class="form-range" id="priceRange"
+                           min="0" max="50000000" step="500000"
+                           @bind="MaxPriceSlider" @bind:after="ApplyFilters">
+                    <div class="text-end small text-primary fw-bold">
+                        @MaxPriceSlider.ToString("N0") đ
+                    </div>
                 </li>
             </ul>
         </li>
 
-        <!-- Extended components -->
-        <li class="menu-item">
-            <a href="javascript:void(0)" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-copy"></i>
-                <div data-i18n="Extended UI">Extended UI</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="extended-ui-perfect-scrollbar.html" class="menu-link">
-                        <div data-i18n="Perfect Scrollbar">Perfect scrollbar</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="extended-ui-text-divider.html" class="menu-link">
-                        <div data-i18n="Text Divider">Text Divider</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-
-        <li class="menu-item">
-            <a href="icons-boxicons.html" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-crown"></i>
-                <div data-i18n="Boxicons">Boxicons</div>
-            </a>
-        </li>
-
-        <!-- Forms & Tables -->
-        <li class="menu-header small text-uppercase"><span class="menu-header-text">Forms &amp; Tables</span></li>
-        <!-- Forms -->
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-detail"></i>
-                <div data-i18n="Form Elements">Form Elements</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="forms-basic-inputs.html" class="menu-link">
-                        <div data-i18n="Basic Inputs">Basic Inputs</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="forms-input-groups.html" class="menu-link">
-                        <div data-i18n="Input groups">Input groups</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <li class="menu-item">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-detail"></i>
-                <div data-i18n="Form Layouts">Form Layouts</div>
-            </a>
-            <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="form-layouts-vertical.html" class="menu-link">
-                        <div data-i18n="Vertical Form">Vertical Form</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="form-layouts-horizontal.html" class="menu-link">
-                        <div data-i18n="Horizontal Form">Horizontal Form</div>
-                    </a>
-                </li>
-            </ul>
-        </li>
-        <!-- Tables -->
-        <li class="menu-item">
-            <a href="tables-basic.html" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-table"></i>
-                <div data-i18n="Tables">Tables</div>
-            </a>
-        </li>
-        <!-- Misc -->
-        <li class="menu-header small text-uppercase"><span class="menu-header-text">Misc</span></li>
-        <li class="menu-item">
-            <a href="https://github.com/themeselection/sneat-html-admin-template-free/issues"
-               target="_blank"
-               class="menu-link">
-                <i class="menu-icon tf-icons bx bx-support"></i>
-                <div data-i18n="Support">Support</div>
-            </a>
-        </li>
-        <li class="menu-item">
-            <a href="https://themeselection.com/demo/sneat-bootstrap-html-admin-template/documentation/"
-               target="_blank"
-               class="menu-link">
-                <i class="menu-icon tf-icons bx bx-file"></i>
-                <div data-i18n="Documentation">Documentation</div>
-            </a>
-        </li>
     </ul>
 </aside>

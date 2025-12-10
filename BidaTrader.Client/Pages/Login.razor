@@ -8,7 +8,6 @@
                 <div class="text-center">
                     <img src="../assets/img/logo.png" class="img-fluid mb-3" style="max-height: 200px;" alt="Logo" />
                     <h4 class="fw-bold text-primary">Chào mừng trở lại!</h4>
-                    <p class="text-">Đăng nhập để tiếp tục quản lý cửa hàng và mua sắm.</p>
                     <p class="text-dark">Đăng nhập để tiếp tục quản lý cửa hàng và mua sắm.</p>
                 </div>
             </div>
@@ -99,7 +98,12 @@
 
         try
         {
-            await AuthService.Login(loginModel);
+            var success = await AuthService.Login(loginModel);
+            if(!success)
+            {
+                errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                return;
+            };
             Navigation.NavigateTo("/");
         }
         catch (Exception ex)

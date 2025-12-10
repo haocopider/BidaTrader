@@ -1,0 +1,96 @@
+﻿@page "/admin/category/add"
+@page "/admin/category/edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="col-xxl">
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">@(Id == 0 ? "Thêm mới Danh mục" : "Chỉnh sửa Danh mục")</h5>
+            <small class="text-muted float-end">Quản lý danh mục sản phẩm</small>
+        </div>
+        <div class="card-body">
+            <EditForm Model="categoryModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                @* Tên Danh mục *@
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="cat-name">Tên danh mục</label>
+                    <div class="col-sm-10">
+                        <div class="input-group input-group-merge">
+                            <span class="input-group-text"><i class="bx bx-category"></i></span>
+                            <InputText id="cat-name" class="form-control" @bind-Value="categoryModel.Name" placeholder="Ví dụ: Gậy Bida, Bàn Bida..." />
+                        </div>
+                        <ValidationMessage For="@(() => categoryModel.Name)" class="text-danger small" />
+                    </div>
+                </div>
+
+                @* Mô tả *@
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="cat-desc">Mô tả</label>
+                    <div class="col-sm-10">
+                        <div class="input-group input-group-merge">
+                            <span class="input-group-text"><i class="bx bx-comment"></i></span>
+                            <InputTextArea id="cat-desc" class="form-control" @bind-Value="categoryModel.Description" placeholder="Mô tả ngắn về danh mục này..." />
+                        </div>
+                        <ValidationMessage For="@(() => categoryModel.Description)" class="text-danger small" />
+                    </div>
+                </div>
+
+                @* Nút Submit *@
+                <div class="row justify-content-end">
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-primary">@(Id == 0 ? "Thêm mới" : "Cập nhật")</button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" @onclick="GoBack">Hủy</button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private CategoryDto categoryModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0) // Chế độ Edit
+        {
+            var existingCat = await CategoryService.GetItemByIdAsync(Id);
+            if (existingCat != null)
+            {
+                categoryModel = existingCat;
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy danh mục!");
+                Navigation.NavigateTo("/admin/dashboard");
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool success;
+        if (Id == 0)
+        {
+            success = await CategoryService.CreateItemAsync(categoryModel);
+        }
+        else
+        {
+            success = await CategoryService.UpdateItemAsync(categoryModel);
+        }
+
+        if (success)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", Id == 0 ? "Thêm thành công!" : "Cập nhật thành công!");
+            GoBack();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Có lỗi xảy ra. Vui lòng thử lại.");
+        }
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/admin/dashboard");
+}

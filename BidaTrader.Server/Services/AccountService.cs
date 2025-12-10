@@ -11,13 +11,18 @@ namespace BidaTrader.Server.Services
         {
         }
 
-        public async Task<(List<Account> Accounts, int totalItems)> GetAccountWithPagination(string? search, int pageIndex=1, int pageSize =10)
+        public async Task<(List<Account> Accounts, int totalItems)> GetAccountWithPagination(string? username, string? role, int pageIndex=1, int pageSize = 10)
         {
             var query = _context.Accounts.AsQueryable();
 
-            if (!string.IsNullOrEmpty(search))
+            if (!string.IsNullOrEmpty(username))
             {
-                query = query.Where(a => a.UserName.Contains(search));
+                query = query.Where(a => a.UserName.Contains(username));
+            }
+
+            if (!string.IsNullOrEmpty(role))
+            {
+                query = query.Where(a => a.Role.Contains(role));
             }
 
             int totalItems = await query.CountAsync();

@@ -1,6 +1,9 @@
-﻿<!-- Navbar -->
+﻿@using BidaTraderShared.Data.Models
+
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
      id="layout-navbar">
+
+    @* Nút Menu Toggle trên Mobile *@
     <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
         <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
             <i class="bx bx-menu bx-sm"></i>
@@ -8,40 +11,93 @@
     </div>
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-        <!-- Search -->
-        <div class="navbar-nav align-items-center">
-            <div class="nav-item d-flex align-items-center">
-                <i class="bx bx-search fs-4 lh-0"></i>
+
+        <div class="navbar-nav align-items-center d-none d-md-flex">
+            <div class="nav-item d-flex align-items-center bg-light rounded-pill px-3 py-1">
+
+                @* --- ICON & INPUT TÌM KIẾM --- *@
+                <i class="bx bx-search fs-4 lh-0 me-2 text-muted"></i>
                 <input type="text"
-                       class="form-control border-0 shadow-none"
-                       placeholder="Search..."
-                       aria-label="Search..." />
+                       class="form-control border-0 shadow-none bg-transparent p-0"
+                       placeholder="Tìm thương hiệu..."
+                       style="min-width: 120px; max-width: 150px;"
+                       @bind="BrandSearchTerm"
+                       @bind:event="oninput" />
+
+                <div class="vr mx-2 h-100 text-muted"></div>
+
+                <div class="d-flex flex-wrap gap-2 align-items-center" style="max-height: 50px; overflow-y: hidden;">
+                    @if (brands != null)
+                    {
+                        // Sử dụng biến FilteredBrands thay vì brands gốc
+                        @if (FilteredBrands.Any())
+                        {
+                            @foreach (var brand in FilteredBrands.Take(10))
+                            {
+                                <a href="@($"products?brandId={brand.Id}")"
+                                   class="d-block"
+                                   title="@brand.Name"
+                                   data-bs-toggle="tooltip">
+                                    <img src="@brand.Description"
+                                         alt="@brand.Name"
+                                         class="rounded-circle border"
+                                         style="width: 50px; height: 50px; object-fit: contain; background-color: white;" />
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small fst-italic">Không tìm thấy...</span>
+                        }
+                    }
+                    else
+                    {
+                        <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                    }
+                </div>
             </div>
         </div>
-        <!-- /Search -->
-
         <ul class="navbar-nav flex-row align-items-center ms-auto">
-
-            <!-- Place this tag where you want the button to render. -->
-            <li class="nav-item lh-1 me-3">
-                <a class="github-button"
-                   href="https://github.com/themeselection/sneat-html-admin-template-free"
-                   data-icon="octicon-star"
-                   data-size="large"
-                   data-show-count="true"
-                   aria-label="Star themeselection/sneat-html-admin-template-free on GitHub">Star</a>
+            <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="bx bx-bell bx-sm"></i>
+                    @* Badge số lượng thông báo (Demo) *@
+                    <span class="badge bg-danger rounded-pill badge-notifications">0</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end py-0">
+                    <li class="dropdown-header border-bottom">
+                        <span class="fw-semibold lh-1 me-auto">Thông báo</span>
+                    </li>
+                    <li>
+                        <div class="dropdown-item d-flex align-items-center justify-content-center p-3">
+                            <span class="text-muted">Không có thông báo mới</span>
+                        </div>
+                    </li>
+                </ul>
             </li>
+
+            <AuthorizeView Roles="Customer">
+                <Authorized>
+                    <li class="nav-item navbar-dropdown dropdown me-3 me-xl-1">
+                        <a class="nav-link hide-arrow" href="/cart">
+                            <i class="bx bx-cart bx-sm text-danger"></i>
+                            @* Badge số lượng trong giỏ (Có thể bind biến sau) *@
+                            <span class="badge bg-primary rounded-pill badge-notifications">@CartItemCount</span>
+                        </a>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
 
             <AuthorizeView>
                 <NotAuthorized>
-                    <li class="">
-                        <a href="/login" class="nav-link collapsed w-100 text-start border-0 bg-transparent">
-                            <span class="loginbtn"><i class="bi bi-person-circle"></i> ĐĂNG NHẬP</span>
+                    <li class="nav-item">
+                        <a href="/login" class="btn btn-sm btn-primary">
+                            <i class="bi bi-person-circle me-1"></i> Đăng nhập
                         </a>
                     </li>
                 </NotAuthorized>
             </AuthorizeView>
-            <!-- User -->
+
             <AuthorizeView>
                 <Authorized>
                     <li class="nav-item navbar-dropdown dropdown-user dropdown">
@@ -61,63 +117,89 @@
                                         </div>
                                         <div class="flex-grow-1">
                                             <span class="fw-semibold d-block">@userName</span>
-                                            <small class="text-muted">@userRole</small>
+                                            @* Hiển thị Role lấy từ Claims nếu cần *@
+                                            <small class="text-muted">User</small>
                                         </div>
                                     </div>
                                 </a>
                             </li>
+                            <li><div class="dropdown-divider"></div></li>
                             <li>
-                                <div class="dropdown-divider"></div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="/profile">
                                     <i class="bx bx-user me-2"></i>
-                                    <span class="align-middle">My Profile</span>
+                                    <span class="align-middle">Hồ sơ của tôi</span>
                                 </a>
                             </li>
+                            @if (context.User.IsInRole("Store"))
+                            {
+                                <li>
+                                    <a class="dropdown-item" href="/store/dashboard">
+                                        <i class="bx bx-store me-2"></i>
+                                        <span class="align-middle">Kênh người bán</span>
+                                    </a>
+                                </li>
+                            }
+                            @if (context.User.IsInRole("Admin"))
+                            {
+                                <li>
+                                    <a class="dropdown-item" href="/admin/dashboard">
+                                        <i class="bx bx-shield me-2"></i>
+                                        <span class="align-middle">Trang quản trị</span>
+                                    </a>
+                                </li>
+                            }
+                            <li><div class="dropdown-divider"></div></li>
                             <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="bx bx-cog me-2"></i>
-                                    <span class="align-middle">Settings</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <span class="d-flex align-items-center align-middle">
-                                        <i class="flex-shrink-0 bx bx-credit-card me-2"></i>
-                                        <span class="flex-grow-1 align-middle">Billing</span>
-                                        <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <div class="dropdown-divider"></div>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" @onclick="HandleLogout">
+                                <a class="dropdown-item" style="cursor: pointer;" @onclick="HandleLogout">
                                     <i class="bx bx-power-off me-2"></i>
-                                    <span class="align-middle">Log Out</span>
+                                    <span class="align-middle">Đăng xuất</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
                 </Authorized>
             </AuthorizeView>
-
-            <!--/ User -->
         </ul>
     </div>
 </nav>
-<!-- / Navbar -->
-
-@code{
+@code {
     private string? userName { get; set; }
-    private string? userRole { get; set; }
+    private List<BrandDto>? brands;
+    private int CartItemCount = 10;
+
+    private string BrandSearchTerm { get; set; } = "";
+
+    private IEnumerable<BrandDto> FilteredBrands
+    {
+        get
+        {
+            if (brands == null) return Enumerable.Empty<BrandDto>();
+
+            // Nếu ô tìm kiếm trống -> Trả về tất cả
+            if (string.IsNullOrWhiteSpace(BrandSearchTerm))
+            {
+                return brands;
+            }
+
+            // Nếu có từ khóa -> Lọc theo Name (không phân biệt hoa thường)
+            return brands.Where(b => b.Name.Contains(BrandSearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Lấy thông tin User
         userName = await LocalStorage.GetItemAsync<string>("userName");
-        userRole = await LocalStorage.GetItemAsync<string>("userRole");
+
+        // 2. Tải danh sách Brand để hiển thị trên Navbar
+        try
+        {
+            brands = await BrandService.GetItemsAsync("/header");
+        }
+        catch (Exception)
+        {
+            // Xử lý lỗi hoặc để trống nếu API lỗi
+        }
     }
 
     private async Task HandleLogout()

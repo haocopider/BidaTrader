@@ -15,6 +15,19 @@ namespace BidaTrader.API.Controllers
 
         public BrandsController(IService<Brand> brandService) => _brandService = brandService;
 
+        [HttpGet("header")]
+        public async Task<ActionResult<List<BrandDto>>> GetBrandHeaders()
+        {
+            var brands = await _brandService.GetItemsAsync();
+            var brandDtos = brands.Select(b => new BrandDto
+            {
+                Id = b.Id,
+                Name = b.Name,
+                Description = b.Description,
+            }).ToList();
+            return Ok(brandDtos);
+        }
+
         [HttpGet]
         public async Task<ActionResult<BrandPerPage>> GetBrands(string? search, int pageIndex = 1, int pageSize = 10)
         {

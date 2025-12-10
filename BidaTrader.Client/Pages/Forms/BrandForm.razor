@@ -1,0 +1,69 @@
+﻿@page "/admin/brand/add"
+@page "/admin/brand/edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="col-xxl">
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">@(Id == 0 ? "Thêm Thương hiệu" : "Sửa Thương hiệu")</h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="brandModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">Tên thương hiệu</label>
+                    <div class="col-sm-10">
+                        <div class="input-group input-group-merge">
+                            <span class="input-group-text"><i class="bx bx-purchase-tag"></i></span>
+                            <InputText class="form-control" @bind-Value="brandModel.Name" />
+                        </div>
+                        <ValidationMessage For="@(() => brandModel.Name)" class="text-danger small" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">Mô tả</label>
+                    <div class="col-sm-10">
+                        <div class="input-group input-group-merge">
+                            <span class="input-group-text"><i class="bx bx-detail"></i></span>
+                            <InputTextArea class="form-control" @bind-Value="brandModel.Description" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row justify-content-end">
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                        <button type="button" class="btn btn-outline-secondary ms-2" @onclick="GoBack">Hủy</button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private BrandDto brandModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            var item = await BrandService.GetItemByIdAsync(Id);
+            if (item != null) brandModel = item;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool result = Id == 0
+            ? await BrandService.CreateItemAsync(brandModel)
+            : await BrandService.UpdateItemAsync(brandModel);
+
+        if (result) Navigation.NavigateTo("/admin/dashboard");
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/admin/dashboard");
+}
