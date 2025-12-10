@@ -1,6 +1,7 @@
 ﻿using BidaTrader.Server.Services;
-using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
+using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

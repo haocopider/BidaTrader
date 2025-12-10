@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="BidaTrader.Client/BidaTrader.Client.csproj" />
   <Project Path="BidaTrader.Server/BidaTrader.Server.csproj" />
-  <Project Path="BidaTraderShared.Data/BidaTraderShared.Data.csproj" />
+  <Project Path="BidaTrader.Shared/BidaTrader.Shared.csproj" Id="97859086-3ba7-4770-a163-ebdb8c8aee6e" />
 </Solution>

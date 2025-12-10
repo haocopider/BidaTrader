@@ -1,8 +1,9 @@
 ﻿using BidaTrader.Client;
 using BidaTrader.Client.Auth;
 using BidaTrader.Client.Services;
-using BidaTraderShared.Data.DTOs;
-using BidaTraderShared.Data.Services;
+using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;

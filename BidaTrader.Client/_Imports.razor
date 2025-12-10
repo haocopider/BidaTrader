@@ -11,7 +11,6 @@
 @using BidaTrader.Client
 @using BidaTrader.Client.Layout
 @using BidaTrader.Client.Pages.Forms
-@using BidaTrader.Client.Pages.CustomerArea
 @using BidaTrader.Client.Pages.AdminArea
 @using BidaTrader.Client.Pages.StoreArea
 
@@ -25,9 +24,9 @@
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
-@using BidaTraderShared.Data.Models
-@using BidaTraderShared.Data.DTOs
-@using BidaTraderShared.Data.Services
+@using BidaTrader.Shared.DTOs;
+@using BidaTrader.Shared.Models;
+@using BidaTrader.Shared.Services;
 @* === CÁC DÒNG MỚI CHO AUTHENTICATION === *@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Blazored.LocalStorage

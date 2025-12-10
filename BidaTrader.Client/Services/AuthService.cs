@@ -1,5 +1,7 @@
 ﻿using BidaTrader.Client.Auth;
-using BidaTraderShared.Data.DTOs;
+using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -12,14 +14,19 @@ namespace BidaTrader.Client.Services
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
         private readonly AuthenticationStateProvider _authStateProvider;
-
-        // DTO để nhận phản hồi từ API
         private class LoginResponse
         {
             [JsonPropertyName("token")]
             public string Token { get; set; }
+
             [JsonPropertyName("userName")]
             public string UserName { get; set; }
+
+            [JsonPropertyName("role")]
+            public string UserRole { get; set; } = string.Empty;
+
+            [JsonPropertyName("tokenExpiryUtc")]
+            public DateTime TokenExpiryUtc { get; set; }
         }
 
         public AuthService(HttpClient httpClient, ILocalStorageService localStorage, AuthenticationStateProvider authStateProvider)
@@ -58,6 +65,8 @@ namespace BidaTrader.Client.Services
             // Lưu token vào Local Storage
             await _localStorage.SetItemAsync("authToken", loginResponse.Token);
             await _localStorage.SetItemAsync("userName", loginResponse.UserName);
+            await _localStorage.SetItemAsync("role", loginResponse.UserRole);
+            await _localStorage.SetItemAsync("tokenExpiryUtc", loginResponse.TokenExpiryUtc);
 
             // Thông báo cho Blazor biết trạng thái xác thực đã thay đổi
             await ((AuthStateProvider)_authStateProvider).NotifyUserAuthentication(loginResponse.Token);
@@ -69,6 +78,8 @@ namespace BidaTrader.Client.Services
         {
             await _localStorage.RemoveItemAsync("authToken");
             await _localStorage.RemoveItemAsync("userName");
+            await _localStorage.RemoveItemAsync("role");
+            await _localStorage.RemoveItemAsync("tokenExpiryUtc");
 
             // Thông báo cho Blazor biết trạng thái đã thay đổi
             await ((AuthStateProvider)_authStateProvider).NotifyUserLogout();

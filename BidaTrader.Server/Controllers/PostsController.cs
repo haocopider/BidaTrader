@@ -1,7 +1,7 @@
 ﻿using BidaTrader.Server.Services;
-using BidaTraderShared.Data.DTOs;
-using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
+using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -75,8 +75,8 @@ namespace BidaTrader.Server.Controllers
                 AccountId = postDto.AccountId,
                 Title = postDto.Title,
                 Content = postDto.Content,
-                IsActive = postDto.IsActive,
-                IsCommentEnabled = postDto.IsCommentEnabled,
+                IsActive = postDto.IsActive ?? true,
+                IsCommentEnabled = postDto.IsCommentEnabled ?? true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -102,8 +102,8 @@ namespace BidaTrader.Server.Controllers
             }
             existingPost.Title = postDto.Title;
             existingPost.Content = postDto.Content;
-            existingPost.IsActive = postDto.IsActive;
-            existingPost.IsCommentEnabled = postDto.IsCommentEnabled;
+            existingPost.IsActive = postDto.IsActive ?? true;
+            existingPost.IsCommentEnabled = postDto.IsCommentEnabled ?? true;
             existingPost.UpdatedAt = DateTime.UtcNow;
             var updated = await _postService.UpdateItemAsync(existingPost);
             if (!updated)

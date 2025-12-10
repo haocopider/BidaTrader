@@ -1,7 +1,7 @@
 ﻿using BidaTrader.Server.Services;
-using BidaTraderShared.Data.DTOs;
-using BidaTraderShared.Data.Models;
-using BidaTraderShared.Data.Services;
+using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

@@ -16,11 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BidaTraderShared.Data\BidaTraderShared.Data.csproj" />
+    <Folder Include="Pages\CustomerArea\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\CustomerArea\" />
+    <ProjectReference Include="..\BidaTrader.Shared\BidaTrader.Shared.csproj" />
   </ItemGroup>
 
 </Project>
