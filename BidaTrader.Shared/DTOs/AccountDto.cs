@@ -5,6 +5,7 @@ namespace BidaTrader.Shared.DTOs
     public class AccountDto
     {
         public int Id { get; set; }
+        public string UID { get; set; }
         [Required(ErrorMessage = "Tên đăng nhập là bắt buộc.")]
         [StringLength(50, ErrorMessage = "Tên đăng nhập không hợp lệ.")]
         public string UserName { get; set; } = string.Empty;
@@ -22,6 +23,20 @@ namespace BidaTrader.Shared.DTOs
 
         [Required(ErrorMessage = "Trạng thái kích hoạt là bắt buộc.")]
         public bool? IsActive { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Phone { get; set; }
+
+        public string? Address { get; set; }
+
+        public string? AvatarUrl { get; set; }
+
+        public DateOnly? DateOfBirth { get; set; }
     }
 
     public class AccountPerPage

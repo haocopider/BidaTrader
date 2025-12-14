@@ -45,7 +45,7 @@ namespace BidaTrader.API.Controllers
 
             var responese = new BrandPerPage
             {
-                Items = itemDtos,
+                Brands = itemDtos,
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 TotalCount = total
@@ -64,6 +64,7 @@ namespace BidaTrader.API.Controllers
                 Name = brand.Name,
                 Description = brand.Description,
                 OwnerStoreId = brand.OwnerStoreId,
+                IsHidden = brand.IsRecycled,
                 CreatedAt = brand.CreatedAt,
                 UpdatedAt = brand.UpdatedAt
             };

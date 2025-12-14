@@ -15,7 +15,7 @@ namespace BidaTrader.Shared.DTOs
 
     public class CategoryPerPage
     {
-        public List<CategoryDto>? Items { get; set; }
+        public List<CategoryDto>? Categories { get; set; }
         public int PageIndex { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public int TotalCount { get; set; }

@@ -77,24 +77,21 @@
         bool success = false;
         try
         {
-            if (Product.Id == 0) // Create (POST)
+            if (Product.Id == 0)
             {
                 success = await ProductService.CreateItemAsync(Product);
             }
-            else // Update (PUT)
+            else
             {
                 success = await ProductService.UpdateItemAsync(Product);
             }
 
             if (success)
             {
-                // Báo cho cha (ProductList) biết là đã lưu thành công
                 await OnSaveSuccess.InvokeAsync();
             }
             else
             {
-                // Thường là lỗi 400 Validation hoặc 401 Auth (nếu không được AuthHeaderHandler xử lý)
-                // Console.WriteLine("Service call failed with non-success status code.");
                 await JSRuntime.InvokeVoidAsync("alert", "Lỗi: Không thể lưu sản phẩm. Vui lòng kiểm tra dữ liệu hoặc trạng thái đăng nhập.");
             }
         }
@@ -106,7 +103,6 @@
     }
     private async Task CloseModalAsync()
     {
-        // Báo cho cha (ProductList) biết là modal cần được đóng
         await OnClose.InvokeAsync();
     }
 }

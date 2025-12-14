@@ -1,0 +1,119 @@
+﻿@attribute [Authorize(Roles = "Admin")]
+
+
+@if(IsVisible)
+{
+    <div class="modal-backdrop fade show"> </div>
+    <div class="modal fade show" tabindex="-1" style="display: block;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="card mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">@(Id == 0 ? "Thêm Thương hiệu" : "Sửa Thương hiệu")</h5>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label">Tên thương hiệu</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-purchase-tag"></i></span>
+                                        <InputText class="form-control" @bind-Value="Model.Name" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.Name)" class="text-danger small" />
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label">Mô tả</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-detail"></i></span>
+                                        <InputTextArea class="form-control" @bind-Value="Model.Description" />
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label">Trạng thái</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group input-group-merge">
+                                        <InputRadioGroup class="form-control" @bind-Value="Model.IsHidden">
+                                            <InputRadio Value="false" /> Hiển thị &nbsp;&nbsp;
+                                            <InputRadio Value="true" /> Ẩn
+                                        </InputRadioGroup>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row justify-content-end">
+                                <div class="col-sm-10">
+                                    <button type="submit" class="btn btn-primary">Lưu</button>
+                                    <button type="button" class="btn btn-outline-secondary ms-2" @onclick="OnClose">Hủy</button>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDataSaved { get; set; }
+    private BrandDto Model { get; set; } = new ();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id == 0) new BrandDto();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && (Id != 0 && Model?.Id != Id))
+        {
+            await LoadBrandData(Id);
+        }
+        else if (IsVisible && Id == 0)
+        {
+            Model = new BrandDto { };
+        }
+    }
+
+    private async Task LoadBrandData(int id)
+    {
+        var result = await BrandService.GetItemByIdAsync(id);
+        if (result != null)
+        {
+            Model = result;
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi khi tải dữ liệu .");
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool result = Id == 0
+            ? await BrandService.CreateItemAsync(Model)
+            : await BrandService.UpdateItemAsync(Model);
+
+        if (result) await OnDataSaved.InvokeAsync();
+    }
+
+    private async Task CLoseModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

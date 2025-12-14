@@ -26,6 +26,7 @@ namespace BidaTrader.Server.Controllers
             var dtos = accounts.Select( p => new AccountDto
             {
                 Id = p.Id,
+                UID = p.Uid,
                 UserName = p.UserName,
                 PasswordHash = p.PasswordHash,
                 Role = p.Role,
@@ -42,8 +43,8 @@ namespace BidaTrader.Server.Controllers
 
             return Ok(response);
         }
-        
-        [HttpGet("{id}")]        
+
+        [HttpGet("{id:int}")]
         public async Task<ActionResult> GetAccountById(int id)
         {
             var account = await _accountService.GetItemByIdAsync(id);
@@ -51,14 +52,48 @@ namespace BidaTrader.Server.Controllers
             {
                 return NotFound();
             }
-
             var dto = new AccountDto
             {
                 Id = account.Id,
+                UID = account.Uid,
                 UserName = account.UserName,
                 PasswordHash = account.PasswordHash,
                 Role = account.Role,
-                IsActive = account.IsActive
+                IsActive = account.IsActive,
+                AvatarUrl = account.AvatarUrl,
+                DateOfBirth = account.DateOfBirth,
+                Address = account.Address,
+                Email = account.Email,
+                FirstName = account.FirstName,
+                LastName = account.LastName,
+                Phone = account.Phone
+            };
+            return Ok(dto);
+        }
+
+        [HttpGet("uid/{uid}")]        
+        public async Task<ActionResult> GetAccountByUID(string uid)
+        {
+            var account = await ((AccountService)_accountService).GetAccountByUIDAsync(uid);
+            if (account == null)
+            {
+                return NotFound();
+            }
+            var dto = new AccountDto
+            {
+                Id = account.Id,
+                UID = account.Uid,
+                UserName = account.UserName,
+                PasswordHash = account.PasswordHash,
+                Role = account.Role,
+                IsActive = account.IsActive,
+                AvatarUrl = account.AvatarUrl,
+                DateOfBirth = account.DateOfBirth,
+                Address = account.Address,
+                Email = account.Email,
+                FirstName = account.FirstName,
+                LastName = account.LastName,
+                Phone = account.Phone
             };
             return Ok(dto);
         }

@@ -1,5 +1,8 @@
 ﻿
 
+using BidaTrader.Shared.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BidaTrader.Shared.DTOs
 {
     public class PostDto
@@ -8,13 +11,15 @@ namespace BidaTrader.Shared.DTOs
 
         public int AccountId { get; set; }
 
+        public string Auther { get; set; } = null!;
+
         public string Title { get; set; } = null!;
 
         public string Content { get; set; } = null!;
 
-        public bool? IsActive { get; set; }
+        public bool IsActive { get; set; }
 
-        public bool? IsCommentEnabled { get; set; }
+        public bool IsCommentEnabled { get; set; }
 
         public DateTime? CreatedAt { get; set; }
 

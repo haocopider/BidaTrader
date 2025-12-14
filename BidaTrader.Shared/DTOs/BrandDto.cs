@@ -12,6 +12,9 @@ namespace BidaTrader.Shared.DTOs
 
         public int? OwnerStoreId { get; set; }
 
+        public string? OwnerStoreName { get; set; }
+        public bool IsHidden { get; set; }
+
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
@@ -19,7 +22,7 @@ namespace BidaTrader.Shared.DTOs
 
     public class BrandPerPage
     {
-        public List<BrandDto>? Items { get; set; }
+        public List<BrandDto>? Brands { get; set; }
         public int PageIndex { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public int TotalCount { get; set; }

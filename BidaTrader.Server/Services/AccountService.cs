@@ -33,5 +33,10 @@ namespace BidaTrader.Server.Services
                 .ToListAsync();
             return (pageItems, totalItems);
         }
+    
+        public async Task<Account> GetAccountByUIDAsync(string uid)
+        {
+            return await _context.Accounts.FirstOrDefaultAsync(a => a.Uid == uid);
+        }
     }
 }
