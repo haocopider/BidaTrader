@@ -1,0 +1,118 @@
+﻿<div class="mb-3">
+    <button @onclick="() => ShowAccountModel(0)" class="btn btn-primary btn-sm"><i class="bx bx-plus"></i> Thêm tài khoản</button>
+</div>
+
+<div class="table-responsive text-nowrap">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>UID</th>
+                <th>Tên tài khoản</th>
+                <th>Trạng thái</th>
+                <th>Quyền hạn</th>
+                <th>Chức năng</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Accounts)
+            {
+                <tr>
+                    <td><strong>@item.UID</strong></td>
+                    <td>@item.UserName</td>
+                    <td>
+                        <span class="badge bg-label-@(item.IsActive == true ? "success" : "danger") me-1">
+                            @(item.IsActive == true ? "Active" : "Locked")
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-label-@(item.Role == "Admin" ? "primary" : (item.Role == "Store" ? "warning" : "info")) me-1">
+                            @item.Role
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-icon item-edit" @onclick="() => ShowAccountModel(item.Id)"><i class="bx bx-edit-alt"></i></button>
+                        <button class="btn btn-sm btn-icon item-trash" @onclick="() => DeleteAccount(item.Id)"><i class="bx bx-trash"></i></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <small class="text-muted">
+        Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount tài khoản.
+    </small>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mb-0">
+            <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                <button class="page-link bi bi-arrow-left" @onclick="() => ChangeAccountPage(Model.PageIndex - 1)"></button>
+            </li>
+            @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++) // Giới hạn 5 nút trang
+            {
+                var pageNumber = i;
+                <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
+                    <button class="page-link" @onclick="() => ChangeAccountPage(pageNumber)">@pageNumber</button>
+                </li>
+            }
+            <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                <button class="page-link bi bi-arrow-right" @onclick="() => ChangeAccountPage(Model.PageIndex + 1)"></button>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<AccountForm @ref="AccountFormComponent"
+             Id="@currentId"
+             IsVisible="@isAccountFormVisible"
+             OnClose="CloseAccountForm"
+             OnDataSaved="RefreshAccountData" />
+
+@code {
+    private AccountForm? AccountFormComponent;
+    private int currentId { get; set; }
+    private bool isAccountFormVisible = false;
+    private bool IsLoadingAccounts = true;
+    private string? ErrorMessage;
+    [Parameter] public AccountPerPage Model { get; set; }
+    private const int PageSize = 7;
+
+
+    private async Task ChangeAccountPage(int newPageIndex)
+    {
+        if (newPageIndex > 0 && newPageIndex <= Model.TotalPages)
+        {
+            var response = await Http.GetAsync($"api/accounts?pageIndex={newPageIndex}&pageSize={PageSize}");
+            if(response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<AccountPerPage>();
+                if (result != null) Model = result;
+            }
+        }
+    }
+
+    private async Task ShowAccountModel(int Id)
+    {
+        currentId = Id;
+        isAccountFormVisible = true;
+    }
+    private void CloseAccountForm()
+    {
+        isAccountFormVisible = false;
+    }
+
+    private async Task RefreshAccountData()
+    {
+        await ChangeAccountPage(Model.PageIndex);
+        CloseAccountForm();
+    }
+
+    private async Task DeleteAccount(int id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Xóa tài khoản này?");
+        if (confirmed)
+        {
+            await AccountService.DeleteItemAsync(id);
+        }
+    }
+
+}

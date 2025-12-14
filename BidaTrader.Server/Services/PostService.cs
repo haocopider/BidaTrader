@@ -13,7 +13,7 @@ namespace BidaTrader.Server.Services
 
         public async Task<(List<Post> Posts, int totalItems)> GetPostWithPagnination(string? title, string? author, bool? isActive = true, int pageIndex = 1, int pageSize = 20)
         {
-            var query = _context.Posts.AsQueryable();
+            var query = _context.Posts.Include(p => p.Account).AsQueryable();
 
             if (!string.IsNullOrEmpty(title))
             {

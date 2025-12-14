@@ -21,5 +21,6 @@ namespace BidaTrader.Server.Services
                 .ToListAsync();
             return (pageItems, totalItems);
         }
+    
     }
 }

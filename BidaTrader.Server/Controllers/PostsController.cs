@@ -32,13 +32,14 @@ namespace BidaTrader.Server.Controllers
                 IsActive = p.IsActive,
                 IsCommentEnabled = p.IsCommentEnabled,
                 CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt
-            });
+                UpdatedAt = p.UpdatedAt,
+                Auther = p.Account.UserName
+            }).ToList();
 
-            var response = new
+            var response = new PostPerPage
             {
-                Data = dtos,
-                TotalItems = totalItems,
+                Posts = dtos,
+                TotalCount = totalItems,
                 PageIndex = pageIndex,
                 PageSize = pageSize
             };
@@ -75,8 +76,8 @@ namespace BidaTrader.Server.Controllers
                 AccountId = postDto.AccountId,
                 Title = postDto.Title,
                 Content = postDto.Content,
-                IsActive = postDto.IsActive ?? true,
-                IsCommentEnabled = postDto.IsCommentEnabled ?? true,
+                IsActive = postDto.IsActive,
+                IsCommentEnabled = postDto.IsCommentEnabled,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -102,8 +103,8 @@ namespace BidaTrader.Server.Controllers
             }
             existingPost.Title = postDto.Title;
             existingPost.Content = postDto.Content;
-            existingPost.IsActive = postDto.IsActive ?? true;
-            existingPost.IsCommentEnabled = postDto.IsCommentEnabled ?? true;
+            existingPost.IsActive = postDto.IsActive;
+            existingPost.IsCommentEnabled = postDto.IsCommentEnabled;
             existingPost.UpdatedAt = DateTime.UtcNow;
             var updated = await _postService.UpdateItemAsync(existingPost);
             if (!updated)

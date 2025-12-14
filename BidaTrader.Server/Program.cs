@@ -21,6 +21,8 @@ builder.Services.AddScoped<IService<Product>, ProductService>();
 builder.Services.AddScoped<IService<Category>, CategoryService>();
 builder.Services.AddScoped<IService<Brand>, BrandService>();
 builder.Services.AddScoped<IService<Account>, AccountService>();
+builder.Services.AddScoped<IService<Post>, PostService>();
+builder.Services.AddScoped<IService<Store>, StoreService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -1,0 +1,228 @@
+﻿@attribute [Authorize(Roles = "Admin")]
+
+@if(IsVisible){
+    <div class="modal-backdrop fade show"> </div>
+    <div class="modal fade show" tabindex="-1" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                    <h4 class="modal-title fw-bold">
+                        <span class="text-muted fw-light">Tài khoản</span>
+                    </h4>
+                    <button type="button" class="btn-close" @onclick="CLoseModal"></button>
+            </div>
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header"><h5 class="mb-0">Tìm kiếm theo UID (Khóa chính)</h5></div>
+                        <div class="card-body">
+                            <div class="input-group input-group-merge">
+                                <input type="text" class="form-control" placeholder="Nhập UID (GUID) để tải dữ liệu..." @bind="SearchUID" />
+                                <button class="btn btn-primary" @onclick="SearchAccountByUID" disabled="@string.IsNullOrWhiteSpace(SearchUID)">
+                                    <i class="bx bx-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(SearchError))
+                            {
+                                <p class="text-danger mt-2 small">@SearchError</p>
+                            }
+                        </div>
+                    </div>
+
+                @if (IsLoading)
+                {
+                    <div class="alert alert-info">Đang tải dữ liệu...</div>
+                }
+                else
+                {
+                    <div class="card mb-4">
+                        <div class="card-header"><h5 class="mb-0">Thông tin Tài khoản</h5></div>
+                        <div class="card-body">
+                            <EditForm Model="Model" OnValidSubmit="HandleSubmit" >
+                                <DataAnnotationsValidator />
+
+                                <div class="row g-3">
+
+                                    @* ẢNH ĐẠI DIỆN *@
+                                    <div class="col-12 text-center mb-4">
+
+                                        @* Ảnh sẽ hiển thị AvatarUrl (từ DB) hoặc ImagePreviewUrl (từ file chọn) *@
+                                        <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl) ?
+                                                                (string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "img/default-avatar.png" : Model.AvatarUrl)
+                                                                : ImagePreviewUrl)"
+                                             alt="Avatar"
+                                             class="rounded-circle shadow-sm border"
+                                             style="width: 150px; height: 150px; object-fit: cover;">
+
+                                        <div class="mt-2">
+                                            <label class="col-form-label small">Chọn ảnh đại diện</label>
+                                            <InputFile OnChange="HandleFileSelection" class="form-control text-center w-50 mx-auto" accept="image/*" />
+                                        </div>
+                                    </div>
+                                    @* USERNAME (Không sửa) *@
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tên đăng nhập</label>
+                                        <div class="input-group input-group-merge">
+                                            <span class="input-group-text"><i class="bx bx-user"></i></span>
+                                            <InputText class="form-control" @bind-Value="Model.UserName" />
+                                        </div>
+                                    </div>
+
+                                    @* ROLE *@
+                                    <div class="col-md-6">
+                                        <label class="form-label">Vai trò</label>
+                                        <div class="input-group input-group-merge">
+                                            <span class="input-group-text"><i class="bx bx-id-card"></i></span>
+                                            <InputSelect class="form-select" @bind-Value="Model.Role">
+                                                <option value="Customer">Customer</option>
+                                                <option value="Store">Store</option>
+                                                <option value="Admin">Admin</option>
+                                            </InputSelect>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Mật khẩu</label>
+                                        <InputText type="password" class="form-control" @bind-Value="@Model.PasswordHash" placeholder="Chỉ nhập khi Tạo mới" />
+                                        <ValidationMessage For="@(() => Model.PasswordHash)" />
+                                    </div>
+
+                                    <div class="col-12 mt-4 text-end">
+                                        <button type="submit" class="btn btn-primary me-2">Lưu</button>
+                                        <button type="button" class="btn btn-outline-secondary" @onclick="() => CLoseModal()">Hủy</button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                }
+        </div>
+    </div>
+</div>
+}
+@code {
+
+    public AccountDto? Model { get; set; } = new ();
+
+    [Parameter] public int Id { get; set; } // ID được truyền từ cha
+    [Parameter] public bool IsVisible { get; set; } // Trạng thái hiển thị
+    [Parameter] public EventCallback OnClose { get; set; } // Callback khi đóng
+    [Parameter] public EventCallback OnDataSaved { get; set; } // Callback khi lưu thành công
+    private bool IsLoading { get; set; } = false;
+    private string SearchUID { get; set; } = string.Empty;
+    private string SearchError { get; set; } = string.Empty;
+
+    private string? ImagePreviewUrl { get; set; }
+    private IBrowserFile? selectedFile;
+    private const int MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    protected override void OnInitialized()
+    {
+        if (Id == 0) Model = new AccountDto();
+    }
+
+    private async Task LoadAccountData(int id)
+    {
+        IsLoading = true;
+        var result = await AccountService.GetItemByIdAsync(id);
+        if(result != null)
+        {
+            Model = result;
+            SearchUID = Model.UID;
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi khi tải dữ liệu tài khoản.");
+            await OnClose.InvokeAsync();
+        }
+        IsLoading = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && (Id != 0 && Model?.Id != Id))
+        {
+            await LoadAccountData(Id);
+        }
+        else if (IsVisible && Id == 0)
+        {
+            Model = new AccountDto { };
+        }
+    }
+
+    private async Task SearchAccountByUID()
+    {
+        if (string.IsNullOrWhiteSpace(SearchUID)) return;
+
+        SearchError = "";
+        IsLoading = true;
+
+        try
+        {
+            var result = await Http.GetFromJsonAsync<AccountDto>($"api/accounts/uid/{SearchUID}");
+
+            if (result != null && result.Id != 0)
+            {
+                Model = result;
+            }
+            else
+            {
+                SearchError = "Không tìm thấy tài khoản nào khớp với UID này.";
+            }
+        }
+        catch (Exception)
+        {
+            SearchError = "Lỗi kết nối API hoặc UID không hợp lệ.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool result = Id == 0
+            ? await AccountService.CreateItemAsync(Model)
+            : await AccountService.UpdateItemAsync(Model);
+
+        if (result) await OnDataSaved.InvokeAsync();
+    }
+
+    private async Task CLoseModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        // 1. Lấy file đầu tiên được chọn
+        selectedFile = e.File;
+
+        if (selectedFile != null)
+        {
+            if (selectedFile.Size > MAX_FILE_SIZE)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Kích thước file quá lớn (tối đa 5MB).");
+                return;
+            }
+
+            // 2. Tạo Data URL để hiển thị ảnh
+            // Blazor cung cấp phương thức RequestImageFileAsync để tối ưu hóa việc tạo thumbnail
+            var imageFile = await selectedFile.RequestImageFileAsync(
+                selectedFile.ContentType,
+                100,
+                100);
+
+            using var fileStream = imageFile.OpenReadStream(MAX_FILE_SIZE);
+
+            using var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+
+            var imageBase64 = Convert.ToBase64String(memoryStream.ToArray());
+
+            ImagePreviewUrl = $"data:{imageFile.ContentType};base64,{imageBase64}";
+
+            // 3. (TÙY CHỌN): Nếu bạn muốn Model.AvatarUrl lưu Data URL (Không nên nếu bạn upload)
+            // Model.AvatarUrl = ImagePreviewUrl;
+        }
+    }
+}

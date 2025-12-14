@@ -1,0 +1,111 @@
+﻿@attribute [Authorize(Roles = "Admin")]
+
+
+@if(IsVisible)
+{
+    <div class="modal-backdrop fade show"> </div>
+    <div class="modal fade show" tabindex="-1" style="display: block;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="card mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">@(Id == 0 ? "Thêm mới Danh mục" : "Chỉnh sửa Danh mục")</h5>
+                        <small class="text-muted float-end">Quản lý danh mục sản phẩm</small>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+
+                            @* Tên Danh mục *@
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label" for="cat-name">Tên danh mục</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-category"></i></span>
+                                        <InputText id="cat-name" class="form-control" @bind-Value="Model.Name" placeholder="Ví dụ: Gậy Bida, Bàn Bida..." />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.Name)" class="text-danger small" />
+                                </div>
+                            </div>
+
+                            @* Mô tả *@
+                            <div class="row mb-3">
+                                <label class="col-sm-2 col-form-label" for="cat-desc">Mô tả</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-comment"></i></span>
+                                        <InputTextArea id="cat-desc" class="form-control" @bind-Value="Model.Description" placeholder="Mô tả ngắn về danh mục này..." />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.Description)" class="text-danger small" />
+                                </div>
+                            </div>
+
+                            @* Nút Submit *@
+                            <div class="row justify-content-end">
+                                <div class="col-sm-10">
+                                    <button type="submit" class="btn btn-primary">@(Id == 0 ? "Thêm mới" : "Cập nhật")</button>
+                                    <button type="button" class="btn btn-outline-secondary ms-2" @onclick="OnClose">Hủy</button>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDataSaved { get; set; }
+    private CategoryDto Model { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(Id == 0)  new CategoryDto();
+    }
+
+    private async Task LoadCategoryData(int id)
+    {
+        var category = await CategoryService.GetItemByIdAsync(id);
+        if (category != null)
+        {
+            Model = category;
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi khi tải dữ liệu .");
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && (Id != 0 && Model?.Id != Id))
+        {
+            await LoadCategoryData(Id);
+        }
+        else if (IsVisible && Id == 0)
+        {
+            Model = new CategoryDto { };
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        bool result = Id == 0
+            ? await CategoryService.CreateItemAsync(Model)
+            : await CategoryService.UpdateItemAsync(Model);
+
+        if (result) await OnDataSaved.InvokeAsync();
+    }
+
+    private async Task CLoseModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

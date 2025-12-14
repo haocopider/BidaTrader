@@ -40,10 +40,11 @@ void AddClientService<T>(string endpoint) where T : class
         new ClientService<T>(sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"), endpoint));
 }
 
-// Category dùng Generic thuần -> Tự động gọi api/categories
 AddClientService<CategoryDto>("categories");
 AddClientService<ProductDto>("products");
 AddClientService<BrandDto>("brands");
 AddClientService<AccountDto>("accounts");
+AddClientService<PostDto>("posts");
+AddClientService<StoreDto>("stores");
 
 await builder.Build().RunAsync();

@@ -29,7 +29,7 @@ namespace BidaTrader.API.Controllers
 
             var response = new CategoryPerPage
             {
-                Items = itemsDto,
+                Categories = itemsDto,
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 TotalCount = total
@@ -69,14 +69,20 @@ namespace BidaTrader.API.Controllers
             return NoContent();
         }
         
-        [HttpPut("{id:int}")]    
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
         {
             if (id != dto.Id) return BadRequest("ID không khớp.");
             var existingCategory = await _categoryService.GetItemByIdAsync(id);
             if (existingCategory == null) return NotFound();
-            existingCategory.Name = dto.Name;
-            existingCategory.Description = dto.Description;
+            if (!string.IsNullOrEmpty(dto.Name))
+            {
+                existingCategory.Name = dto.Name;
+            }
+            if (!string.IsNullOrEmpty(dto.Description))
+            {
+                existingCategory.Description = dto.Description;
+            }
             existingCategory.UpdatedAt = DateTime.UtcNow;
             var updated = await _categoryService.UpdateItemAsync(existingCategory);
             if (!updated) return StatusCode(500, "Cập nhật thất bại.");

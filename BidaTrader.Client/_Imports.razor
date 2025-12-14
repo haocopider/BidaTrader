@@ -10,7 +10,7 @@
 @using Microsoft.JSInterop
 @using BidaTrader.Client
 @using BidaTrader.Client.Layout
-@using BidaTrader.Client.Pages.Forms
+@using BidaTrader.Client.Pages.FormComponents
 @using BidaTrader.Client.Pages.AdminArea
 @using BidaTrader.Client.Pages.StoreArea
 
@@ -20,6 +20,8 @@
 @inject IService<CategoryDto> CategoryService
 @inject IService<AccountDto> AccountService
 @inject IService<BrandDto> BrandService
+@inject IService<StoreDto> StoreService
+@inject IService<PostDto> PostService
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
