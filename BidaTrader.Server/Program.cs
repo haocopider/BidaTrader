@@ -44,9 +44,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
-// === KẾT THÚC CẤU HÌNH JWT ===
-// Cập nhật CORS Policy (sử dụng cấu hình an toàn hơn)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    
+    options.AddPolicy("ActiveStore", policy => 
+        policy.RequireRole("Store").RequireClaim("IsActive", "True"));
+        
+});
+
+// Cập nhật CORS Policy 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient",
@@ -70,9 +77,8 @@ app.UseHttpsRedirection();
 // Thay thế UseCors cũ bằng UseCors mới
 app.UseCors("AllowBlazorClient");
 
-// THÊM 2 DÒNG NÀY (Thứ tự rất quan trọng)
-app.UseAuthentication(); // 1. Xác thực (bạn là ai?)
-app.UseAuthorization(); // 2. Phân quyền (bạn được làm gì?)
+app.UseAuthentication(); // 1. Xác thực
+app.UseAuthorization(); // 2. Phân quyền
 
 app.MapControllers();
 

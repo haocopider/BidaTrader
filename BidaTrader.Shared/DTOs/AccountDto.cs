@@ -39,6 +39,19 @@ namespace BidaTrader.Shared.DTOs
         public DateOnly? DateOfBirth { get; set; }
     }
 
+    public class AuthResponseDto
+    {
+        public bool IsSuccess { get; set; }
+        public string? ErrorMessage { get; set; }
+        public string? Token { get; set; }        // Access Token (Sống ngắn: 15-30p)
+        public string? RefreshToken { get; set; } // Refresh Token (Sống dài: 7-30 ngày)
+    }
+
+    public class RefreshTokenDto
+    {
+        public string Token { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+    }
     public class AccountPerPage
     {
         public List<AccountDto> Accounts { get; set; } = new List<AccountDto>();

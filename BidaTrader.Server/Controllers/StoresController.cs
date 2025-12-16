@@ -32,7 +32,6 @@ namespace BidaTrader.Server.Controllers
                 Description = s.Description,
                 SocialLinks = s.SocialLinks,
                 IsActive = s.IsActive,
-                IsRecycled = s.IsRecycled,
                 CreatedAt = s.CreatedAt,
                 UpdatedAt = s.UpdatedAt
             }).ToList();
@@ -64,7 +63,6 @@ namespace BidaTrader.Server.Controllers
                 store.Description,
                 store.SocialLinks,
                 store.IsActive,
-                store.IsRecycled,
                 store.CreatedAt,
                 store.UpdatedAt
             };
@@ -84,7 +82,6 @@ namespace BidaTrader.Server.Controllers
                 Description = store.Description,
                 SocialLinks = store.SocialLinks,
                 IsActive = store.IsActive,
-                IsRecycled = store.IsRecycled,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -110,7 +107,6 @@ namespace BidaTrader.Server.Controllers
             existingStore.Description = store.Description;
             existingStore.SocialLinks = store.SocialLinks;
             existingStore.IsActive = store.IsActive;
-            existingStore.IsRecycled = store.IsRecycled;
             existingStore.UpdatedAt = DateTime.UtcNow;
             var updated = await _storeService.UpdateItemAsync(existingStore);
             if (!updated)

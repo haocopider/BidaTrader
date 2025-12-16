@@ -6,6 +6,7 @@ namespace BidaTrader.Client.Services
     {
         Task<bool> Login(LoginDto loginModel);
         Task Logout();
+        Task<string?> RefreshToken();
         Task<RegisterDto> Register(RegisterDto registerModel);
     }
 }

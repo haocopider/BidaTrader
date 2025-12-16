@@ -1,7 +1,5 @@
 ﻿using BidaTrader.Client.Auth;
 using BidaTrader.Shared.DTOs;
-using BidaTrader.Shared.Models;
-using BidaTrader.Shared.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Json;
@@ -19,12 +17,6 @@ namespace BidaTrader.Client.Services
             [JsonPropertyName("token")]
             public string Token { get; set; }
 
-            [JsonPropertyName("userName")]
-            public string UserName { get; set; }
-
-            [JsonPropertyName("role")]
-            public string UserRole { get; set; } = string.Empty;
-
             [JsonPropertyName("tokenExpiryUtc")]
             public DateTime TokenExpiryUtc { get; set; }
         }
@@ -40,7 +32,6 @@ namespace BidaTrader.Client.Services
         {
             if (_httpClient.BaseAddress == null)
             {
-                // Fail fast and surface a clearer message for debugging
                 throw new InvalidOperationException("HttpClient.BaseAddress is null. Configure the API base address in Program.cs (ApiBaseUrl) or register a client with a BaseAddress.");
             }
 
@@ -64,8 +55,7 @@ namespace BidaTrader.Client.Services
 
             // Lưu token vào Local Storage
             await _localStorage.SetItemAsync("authToken", loginResponse.Token);
-            await _localStorage.SetItemAsync("userName", loginResponse.UserName);
-            await _localStorage.SetItemAsync("role", loginResponse.UserRole);
+
             await _localStorage.SetItemAsync("tokenExpiryUtc", loginResponse.TokenExpiryUtc);
 
             // Thông báo cho Blazor biết trạng thái xác thực đã thay đổi
@@ -77,12 +67,10 @@ namespace BidaTrader.Client.Services
         public async Task Logout()
         {
             await _localStorage.RemoveItemAsync("authToken");
-            await _localStorage.RemoveItemAsync("userName");
-            await _localStorage.RemoveItemAsync("role");
+            await _localStorage.RemoveItemAsync("refreshToken");
             await _localStorage.RemoveItemAsync("tokenExpiryUtc");
-
-            // Thông báo cho Blazor biết trạng thái đã thay đổi
-            await ((AuthStateProvider)_authStateProvider).NotifyUserLogout();
+            ((AuthStateProvider)_authStateProvider).NotifyUserLogout();
+            _httpClient.DefaultRequestHeaders.Authorization = null;
         }
 
         public async Task<RegisterDto> Register(RegisterDto registerModel)
@@ -99,6 +87,54 @@ namespace BidaTrader.Client.Services
             {
                 return new RegisterDto { IsSuccess = false, ErrorMessage = ex.Message };
             }
+        }
+
+        public async Task<string?> RefreshToken()
+        {
+            try
+            {
+                // 1. Lấy Token cũ từ LocalStorage
+                var token = await _localStorage.GetItemAsync<string>("authToken");
+                var refreshToken = await _localStorage.GetItemAsync<string>("refreshToken");
+
+                // Nếu không có token thì không thể refresh -> Logout
+                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
+                {
+                    await Logout();
+                    return null;
+                }
+
+                // 2. Gửi yêu cầu lên Server
+                var refreshDto = new RefreshTokenDto
+                {
+                    Token = token,
+                    RefreshToken = refreshToken
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("api/auth/refresh-token", refreshDto);
+
+                // 3. Xử lý kết quả
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+                    if (result != null && result.IsSuccess && !string.IsNullOrEmpty(result.Token))
+                    {
+                        // THÀNH CÔNG: Lưu Token mới đè lên cái cũ
+                        await _localStorage.SetItemAsync("authToken", result.Token);
+                        await _localStorage.SetItemAsync("refreshToken", result.RefreshToken);
+
+                        // Trả về token mới để HttpInterceptor sử dụng ngay lập tức
+                        return result.Token;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Gặp lỗi mạng hoặc lỗi server
+            }
+            await Logout();
+            return null;
         }
     }
 }

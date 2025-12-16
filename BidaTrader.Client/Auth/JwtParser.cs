@@ -10,44 +10,43 @@ namespace BidaTrader.Client.Auth
         public static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
-            var payload = jwt.Split('.')[1]; // Lấy phần payload
+            var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
             if (keyValuePairs != null)
             {
-                // Trích xuất các claims mà chúng ta đã định nghĩa ở API
-                if (keyValuePairs.TryGetValue("role", out var roles) || keyValuePairs.TryGetValue(ClaimTypes.Role, out roles))
+                foreach (var kvp in keyValuePairs)
                 {
-                    if (roles is JsonElement rolesElem && rolesElem.ValueKind == JsonValueKind.Array)
+                    // Xử lý riêng cho Role (vì có thể là mảng)
+                    if (kvp.Key == "role" || kvp.Key == ClaimTypes.Role)
                     {
-                        foreach (var role in rolesElem.EnumerateArray())
+                        if (kvp.Value is JsonElement rolesElem && rolesElem.ValueKind == JsonValueKind.Array)
                         {
-                            // QUAN TRỌNG: Khi thêm vào List<Claim>, PHẢI dùng ClaimTypes.Role
-                            claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+                            foreach (var role in rolesElem.EnumerateArray())
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+                            }
+                        }
+                        else
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString()!));
                         }
                     }
+                    // Xử lý các Standard Claims khác (Map sang chuẩn .NET)
+                    else if (kvp.Key == "sub") claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString()!));
+                    else if (kvp.Key == "unique_name") claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString()!));
+                    else if (kvp.Key == "email") claims.Add(new Claim(ClaimTypes.Email, kvp.Value.ToString()!));
+
+                    // QUAN TRỌNG: Lấy tất cả các Claim còn lại (StoreId, UID, IsActive...)
                     else
                     {
-                        // QUAN TRỌNG: Khi thêm vào List<Claim>, PHẢI dùng ClaimTypes.Role
-                        claims.Add(new Claim(ClaimTypes.Role, roles.ToString()));
+                        claims.Add(new Claim(kvp.Key, kvp.Value.ToString()!));
                     }
                 }
-
-                if (keyValuePairs.TryGetValue(ClaimTypes.Email, out var email))
-                {
-                    claims.Add(new Claim(ClaimTypes.Email, email.ToString()));
-                }
-
-                if (keyValuePairs.TryGetValue("sub", out var sub)) // "sub" là ID người dùng
-                {
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, sub.ToString()));
-                }
             }
-
             return claims;
         }
-
         private static byte[] ParseBase64WithoutPadding(string base64)
         {
             switch (base64.Length % 4)

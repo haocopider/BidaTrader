@@ -4,6 +4,7 @@ using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
+using BidaTrader.Server.Helpers;
 
 namespace BidaTrader.Server.Controllers
 {
@@ -112,7 +113,7 @@ namespace BidaTrader.Server.Controllers
             }
 
             account.UserName = accountDto.UserName;
-            account.PasswordHash = accountDto.PasswordHash;
+            account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(accountDto.PasswordHash);
             account.Role = accountDto.Role;
             account.IsActive = accountDto.IsActive ?? account.IsActive;
             var updated =   await _accountService.UpdateItemAsync(account);
