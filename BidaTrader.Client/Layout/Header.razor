@@ -1,4 +1,4 @@
-﻿
+﻿@using System.Security.Claims
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
      id="layout-navbar">
 
@@ -162,6 +162,8 @@
     </div>
 </nav>
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; }
     private string? userName { get; set; }
     private string? role { get; set; }
     private List<BrandDto>? brands;
@@ -188,18 +190,27 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Lấy thông tin User
-        userName = await LocalStorage.GetItemAsync<string>("userName");
-        role = await LocalStorage.GetItemAsync<string>("userRole");
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            var user = authState.User;
 
-        // 2. Tải danh sách Brand để hiển thị trên Navbar
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                userName = user.FindFirst(ClaimTypes.Name)?.Value
+                         ?? user.FindFirst("unique_name")?.Value
+                         ?? "Người dùng";
+
+                role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
+            }
+        } 
         try
         {
             brands = await BrandService.GetItemsAsync("/header");
         }
         catch (Exception)
         {
-            // Xử lý lỗi hoặc để trống nếu API lỗi
+
         }
     }
 

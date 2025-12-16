@@ -23,7 +23,7 @@ namespace BidaTrader.API.Controllers
             {
                 Id = b.Id,
                 Name = b.Name,
-                Description = b.Description,
+                Description = b.ImgUrl,
             }).ToList();
             return Ok(brandDtos);
         }
@@ -37,7 +37,7 @@ namespace BidaTrader.API.Controllers
             {
                 Id = p.Id,
                 Name = p.Name,
-                Description = p.Description,
+                Description = p.ImgUrl,
                 OwnerStoreId = p.OwnerStoreId,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt
@@ -62,9 +62,9 @@ namespace BidaTrader.API.Controllers
             {
                 Id = brand.Id,
                 Name = brand.Name,
-                Description = brand.Description,
+                Description = brand.ImgUrl,
                 OwnerStoreId = brand.OwnerStoreId,
-                IsHidden = brand.IsRecycled,
+                IsHidden = brand.IsActive,
                 CreatedAt = brand.CreatedAt,
                 UpdatedAt = brand.UpdatedAt
             };
@@ -77,7 +77,7 @@ namespace BidaTrader.API.Controllers
             var item = new Brand
             {
                 Name = dto.Name,
-                Description = dto.Description,
+                ImgUrl = dto.Description,
                 OwnerStoreId = dto.OwnerStoreId,
                 CreatedAt = DateTime.UtcNow
             };
@@ -93,7 +93,7 @@ namespace BidaTrader.API.Controllers
             var item = await _brandService.GetItemByIdAsync(id);
             if (item == null) return NotFound("Không tìm thấy thương hiệu.");
             item.Name = dto.Name;
-            item.Description = dto.Description;
+            item.ImgUrl= dto.Description;
             item.OwnerStoreId = dto.OwnerStoreId;
             item.UpdatedAt = DateTime.UtcNow;
             var updated = await _brandService.UpdateItemAsync(item);

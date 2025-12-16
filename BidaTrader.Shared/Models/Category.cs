@@ -13,7 +13,7 @@ public partial class Category
 
     public string? ImageUrl { get; set; }
 
-    public bool IsRecycled { get; set; }
+    public bool IsActive { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

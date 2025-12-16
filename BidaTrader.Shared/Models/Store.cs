@@ -21,8 +21,6 @@ public partial class Store
 
     public bool IsActive { get; set; }
 
-    public bool IsRecycled { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

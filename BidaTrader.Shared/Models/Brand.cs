@@ -9,11 +9,11 @@ public partial class Brand
 
     public string Name { get; set; } = null!;
 
-    public string? Description { get; set; }
+    public string? ImgUrl { get; set; }
 
     public int? OwnerStoreId { get; set; }
 
-    public bool IsRecycled { get; set; }
+    public bool IsActive { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

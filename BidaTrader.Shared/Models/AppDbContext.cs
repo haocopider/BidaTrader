@@ -67,6 +67,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Passcode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+            entity.Property(x => x.RefreshToken)
+                  .HasMaxLength(500);
+            entity.Property(x => x.RefreshTokenExpiryTime)
+                  .HasColumnType("datetime2");
             entity.Property(e => e.PasswordHash).HasMaxLength(500);
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
@@ -91,7 +95,7 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__Brands__3214EC071704F087");
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.ImgUrl).HasMaxLength(500);
             entity.Property(e => e.Name).HasMaxLength(100);
 
             entity.HasOne(d => d.OwnerStore).WithMany(p => p.Brands)
