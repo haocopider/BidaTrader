@@ -16,7 +16,7 @@ namespace BidaTrader.API.Controllers
         public CategoriesController(IService<Category> service) => _categoryService = service;
 
         [HttpGet]
-        public async Task<ActionResult<CategoryPerPage>> GetCategories([FromQuery] string? search, [FromQuery] int pageIndex =1, [FromQuery] int pageSize =10)
+        public async Task<ActionResult<CategoryPerPage>> GetCategoriesWithPagination([FromQuery] string? search, [FromQuery] int pageIndex =1, [FromQuery] int pageSize =10)
         {
             var (items, total) = await ((CategoryService)_categoryService).GetItemsPerPage(search, pageIndex, pageSize);
             
@@ -38,6 +38,18 @@ namespace BidaTrader.API.Controllers
             return Ok(response);
         }
 
+        [HttpGet("all")]
+        public async Task<ActionResult<CategoryDto>> GetCategories()
+        {
+            var categories = await _categoryService.GetItemsAsync();
+            var dtos = categories.Select(d => new CategoryDto
+            {
+                Id = d.Id,
+                Name = d.Name,
+                Description = d.Description,
+            });
+            return Ok(dtos);
+        }
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {

@@ -39,6 +39,29 @@ namespace BidaTrader.Shared.DTOs
         public DateOnly? DateOfBirth { get; set; }
     }
 
+    public class UserDto
+    {
+        public int Id { get; set; }
+        public string UID { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string Role { get; set; } = "Customer";
+        public bool? IsActive { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Phone { get; set; }
+
+        public string? Address { get; set; }
+
+        public string? AvatarUrl { get; set; }
+
+        public DateOnly? DateOfBirth { get; set; }
+    }
+    
     public class AuthResponseDto
     {
         public bool IsSuccess { get; set; }
@@ -52,6 +75,7 @@ namespace BidaTrader.Shared.DTOs
         public string Token { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
     }
+    
     public class AccountPerPage
     {
         public List<AccountDto> Accounts { get; set; } = new List<AccountDto>();
@@ -60,6 +84,7 @@ namespace BidaTrader.Shared.DTOs
         public int TotalCount { get; set; }
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
     }
+    
     public class AccountRoleUpdateDto
     {
         // ID của Account cần cập nhật (thường được truyền qua URL hoặc Body)

@@ -5,7 +5,7 @@
     <div class="nav-align-top mb-4">
         <ul class="nav nav-pills mb-3" role="tablist">
             <li class="nav-item">
-                <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-accounts" aria-controls="navs-accounts" aria-selected="true">
+                <button @onclick="() => LoadAccountData()" type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-accounts" aria-controls="navs-accounts" aria-selected="true">
                     <i class="bx bx-user me-1"></i> Tài khoản
                 </button>
             </li>
@@ -164,6 +164,7 @@
         if (result != null) AccountPerPage = result;
         IsLoadingAccounts = false;
         StateHasChanged();
+        Navigation.NavigateTo("admin/dashboard#accounts");
     }
 
     private async Task LoadCategoryData()
@@ -173,6 +174,7 @@
         if (result != null) CategoryPerPage = result;
         IsLoadingCategories = false;
         StateHasChanged();
+        Navigation.NavigateTo("admin/dashboard#categories");
     }
 
     private async Task LoadBrandData()
@@ -182,6 +184,7 @@
         if (result != null) BrandPerPage = result;
         IsLoadingBrands = false;
         StateHasChanged();
+        Navigation.NavigateTo("admin/dashboard#brands");
     }
 
     private async Task LoadStoreData()
@@ -191,6 +194,7 @@
         if (result != null) StorePerPage = result;
         IsLoadingStores = false;
         StateHasChanged();
+        Navigation.NavigateTo("admin/dashboard#stores");
     }
 
     private async Task LoadPostData()
@@ -200,5 +204,6 @@
         if (result != null) PostPerPage = result;
         IsLoadingPosts = false;
         StateHasChanged();
+        Navigation.NavigateTo("admin/dashboard#posts");
     }
 }

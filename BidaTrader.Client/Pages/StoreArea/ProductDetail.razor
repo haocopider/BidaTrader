@@ -1,98 +1,185 @@
-﻿@page "/products/{Id:int}"
+﻿@page "/product/{Id:int}"
 
-<PageTitle>@product?.Name ?? "Product Detail"</PageTitle>
+<PageTitle>@product.Name - BidaTrader</PageTitle>
 
-@if (isLoading)
-{
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+<div class="container py-4">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="mb-3">
+                        <img src="@selectedImage" class="img-fluid rounded shadow-sm w-100" style="object-fit: cover; max-height: 400px;" alt="@product.Name">
+                    </div>
+                    <div class="d-flex gap-2 overflow-auto">
+                        @foreach (var img in product.Images)
+                        {
+                            <img src="@img" class="rounded border @(selectedImage == img ? "border-primary" : "")"
+                                 style="width: 60px; height: 60px; cursor: pointer; object-fit: cover;"
+                                 @onclick="() => selectedImage = img" />
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <h3 class="fw-bold">@product.Name</h3>
+                    <div class="mb-2">
+                        <span class="text-warning">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="bi @(i <= product.Rating ? "bi-star-fill" : "bi-star")"></i>
+                            }
+                        </span>
+                        <span class="text-muted ms-2">(@product.ReviewCount đánh giá) | Đã bán: @product.Sold</span>
+                    </div>
+
+                    <h2 class="text-danger fw-bold my-3">@product.Price.ToString("N0") ₫</h2>
+
+                    <div class="mb-4">
+                        <p class="text-muted">@product.ShortDescription</p>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-shop text-primary"></i>
+                            <strong>Cung cấp bởi:</strong> <a href="/store/@product.StoreId" class="text-decoration-none">@product.StoreName</a>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="input-group" style="width: 140px;">
+                            <button class="btn btn-outline-secondary" @onclick="() => UpdateQuantity(-1)">-</button>
+                            <input type="text" class="form-control text-center" value="@quantity" readonly />
+                            <button class="btn btn-outline-secondary" @onclick="() => UpdateQuantity(1)">+</button>
+                        </div>
+                        <span class="text-muted">@product.Stock sản phẩm có sẵn</span>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-outline-primary btn-lg flex-grow-1" @onclick="AddToCart">
+                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                        <button class="btn btn-danger btn-lg flex-grow-1">Mua ngay</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p class="ms-2">Loading product details...</p>
     </div>
-}
-else if (product == null)
-{
-    <div class="alert alert-warning">
-        <h4>Product Not Found</h4>
-        <p>The product with ID @Id could not be found or an error occurred while loading.</p>
-        <button class="btn btn-secondary" @onclick="GoBack">Back to Product List</button>
-    </div>
-}
-else
-{
+
     <div class="row">
-        <div class="col-md-6">
-            <img src="https://via.placeholder.com/600"
-                 class="img-fluid rounded" alt="@product.Name" style="max-height: 400px; object-fit: cover;" />
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom-0">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="javascript:void(0)">Mô tả sản phẩm</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-muted" href="javascript:void(0)">Đánh giá (@product.ReviewCount)</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <h5>Chi tiết sản phẩm</h5>
+                    <p>@((MarkupString)product.FullDescription)</p>
+
+                    <hr class="my-4" />
+
+                    <h5>Khách hàng nhận xét</h5>
+                    @foreach (var fb in feedbacks)
+                    {
+                        <div class="d-flex gap-3 mb-3">
+                            <img src="@fb.Avatar" class="rounded-circle" width="40" height="40" alt="User">
+                            <div>
+                                <h6 class="mb-0 fw-bold">@fb.UserName</h6>
+                                <div class="text-warning small mb-1">
+                                    @for (int i = 0; i < fb.Stars; i++)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                </div>
+                                <p class="mb-1 text-muted small">@fb.Date.ToString("dd/MM/yyyy") | Phân loại: Chuẩn</p>
+                                <p class="mb-0">@fb.Comment</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <h1>@product.Name</h1>
-            <p class="text-muted">ID: @product.Id</p>
-
-            <hr />
-
-            <h2 class="text-danger">@product.Price VNĐ</h2>
-
-            <p class="lead mt-3">
-                @product.
-            </p>
-
-            <div class="mt-4">
-                <button class="btn btn-lg btn-success">
-                    <span class="oi oi-cart"></span> Add to Cart
-                </button>
-                <button class="btn btn-lg btn-secondary ms-3" @onclick="GoBack">
-                    Back to List
-                </button>
-            </div>
-
-            <div class="mt-3">
-                <span class="badge bg-info">Rating: @product.Rating / 5.0</span>
-                <span class="badge bg-light text-dark ms-2">Created: @product.CreatedAt?.ToShortDateString()</span>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Sản phẩm tương tự</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-1 g-3">
+                        @foreach (var item in relatedProducts)
+                        {
+                            <div class="col">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <img src="@item.Image" class="rounded border" width="80" height="80" style="object-fit:cover;">
+                                    <div>
+                                        <h6 class="mb-1"><a href="/product/@item.Id" class="text-decoration-none text-dark">@item.Name</a></h6>
+                                        <span class="text-danger fw-bold">@item.Price.ToString("N0") ₫</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-}
+</div>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    private ProductDto? product;
-    private bool isLoading = true;
+    // Mock Data Models (cần thay thế bằng DTO thật)
+    private ProductDisplayDto product = new();
+    private List<string> images = new();
+    private string selectedImage = "";
+    private int quantity = 1;
+    private List<FeedbackDto> feedbacks = new();
+    private List<RelatedProductDto> relatedProducts = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        isLoading = true;
-
-        try
+        // Giả lập dữ liệu
+        product = new ProductDisplayDto
         {
-            // GIẢ ĐỊNH: ProductService (lớp triển khai của IService<Product>)
-            // có phương thức riêng để lấy 1 item theo ID.
-            // Trong thực tế, bạn sẽ cần triển khai phương thức này trong ProductService.
+            Id = Id,
+            Name = "Cơ Bida Carbon Fury Cao Cấp",
+            Price = 5500000,
+            Rating = 4,
+            ReviewCount = 120,
+            Sold = 450,
+            Stock = 20,
+            StoreId = 1,
+            StoreName = "Fury Billiards VN",
+            ShortDescription = "Cơ ngọn carbon, độ bền cao, chống cong vênh.",
+            FullDescription = "Chi tiết về công nghệ carbon, đầu tẩy...",
+            Images = new List<string> { "/assets/img/elements/1.jpg", "/assets/img/elements/2.jpg", "/assets/img/elements/3.jpg" }
+        };
+        selectedImage = product.Images[0];
 
-            // Ép kiểu sang ProductService để dùng phương thức GetByIdAsync (nếu có)
-            // Tuy nhiên, để giữ tính generic, chúng ta dùng HttpClient trực tiếp
-            // hoặc thêm phương thức này vào Interface cụ thể (IProductService).
+        feedbacks.Add(new FeedbackDto { UserName = "NguyenVanA", Avatar = "/assets/img/avatars/1.png", Stars = 5, Comment = "Hàng đẹp, gói kỹ.", Date = DateTime.Now.AddDays(-2) });
+        feedbacks.Add(new FeedbackDto { UserName = "TranThiB", Avatar = "/assets/img/avatars/5.png", Stars = 4, Comment = "Giao hàng hơi chậm nhưng cơ ngon.", Date = DateTime.Now.AddDays(-5) });
 
-            product = await ProductService.GetItemByIdAsync(Id);
-        }
-        catch (Exception ex)
-        {
-            // Xử lý lỗi nếu API không tìm thấy hoặc có vấn đề kết nối
-            Console.WriteLine($"Error loading product: {ex.Message}");
-            product = null;
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        relatedProducts.Add(new RelatedProductDto { Id = 101, Name = "Cơ Mezz", Price = 6000000, Image = "/assets/img/elements/4.jpg" });
+        relatedProducts.Add(new RelatedProductDto { Id = 102, Name = "Cơ Predator", Price = 8500000, Image = "/assets/img/elements/5.jpg" });
     }
 
-    private void GoBack()
+    private void UpdateQuantity(int change)
     {
-        Navigation.NavigateTo("/Products");
+        if (quantity + change >= 1 && quantity + change <= product.Stock) quantity += change;
     }
+
+    private void AddToCart()
+    {
+        // Gọi API AddToCart
+        Navigation.NavigateTo("/cart");
+    }
+
+    // Các class DTO nội bộ để demo giao diện
+    public class ProductDisplayDto { /* ... properties ... */ public List<string> Images { get; set; } public int Rating { get; set; } public int ReviewCount { get; set; } public int Sold { get; set; } public int Stock { get; set; } public int StoreId { get; set; } public string StoreName { get; set; } public string ShortDescription { get; set; } public string FullDescription { get; set; } public double Price { get; set; } public string Name { get; set; } public int Id { get; set; } }
+    public class FeedbackDto { public string UserName { get; set; } public string Avatar { get; set; } public int Stars { get; set; } public string Comment { get; set; } public DateTime Date { get; set; } }
+    public class RelatedProductDto { public int Id { get; set; } public string Name { get; set; } public double Price { get; set; } public string Image { get; set; } }
 }

@@ -1,0 +1,185 @@
+﻿@page "/cart"
+
+<PageTitle>Giỏ hàng</PageTitle>
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            @foreach (var storeGroup in cartStoreGroups)
+            {
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-white d-flex align-items-center">
+                        <input type="checkbox" class="form-check-input me-2" checked="@storeGroup.IsSelected" @onchange="(e) => ToggleStore(storeGroup, e.Value)" />
+                        <i class="bi bi-shop me-2"></i>
+                        <span class="fw-bold">@storeGroup.StoreName</span>
+                        <span class="badge bg-label-primary ms-2"><i class="bi bi-chat-dots"></i> Chat</span>
+                    </div>
+
+                    <div class="card-body p-0">
+                        @foreach (var item in storeGroup.Items)
+                        {
+                            <div class="p-3 border-bottom d-flex align-items-center">
+                                <input type="checkbox" class="form-check-input me-3" checked="@item.IsSelected" @onchange="CalculateTotal" />
+                                <img src="@item.Image" class="rounded border" style="width: 80px; height: 80px; object-fit: cover;" />
+
+                                <div class="ms-3 flex-grow-1">
+                                    <h6 class="mb-1 text-truncate" style="max-width: 300px;">@item.ProductName</h6>
+                                    <div class="text-muted small mb-1">Phân loại: @item.Variant</div>
+                                    <div class="text-danger fw-bold">@item.Price.ToString("N0") ₫</div>
+                                </div>
+
+                                <div class="input-group input-group-sm" style="width: 100px;">
+                                    <button class="btn btn-outline-secondary">-</button>
+                                    <input type="text" class="form-control text-center" value="@item.Quantity" readonly />
+                                    <button class="btn btn-outline-secondary">+</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card-footer bg-light">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="small fw-bold">Voucher Shop:</label>
+                                <select class="form-select form-select-sm">
+                                    <option>Chọn mã giảm giá...</option>
+                                    <option>GIAM10K - Giảm 10k</option>
+                                    <option>FREESHIP - Miễn phí vận chuyển</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold">Đơn vị vận chuyển:</label>
+                                <select class="form-select form-select-sm" @bind="storeGroup.ShippingMethod">
+                                    <option value="Standard">Nhanh (30.000đ)</option>
+                                    <option value="Express">Hỏa tốc (50.000đ)</option>
+                                    <option value="Economy">Tiết kiệm (15.000đ)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 position-fixed">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Thanh toán</h5>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <span>@subTotal.ToString("N0") ₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Phí vận chuyển:</span>
+                        <span>@shippingTotal.ToString("N0") ₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Giảm giá:</span>
+                        <span class="text-success">- @discountTotal.ToString("N0") ₫</span>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold fs-5">Tổng cộng:</span>
+                        <span class="fw-bold fs-5 text-danger">@((subTotal + shippingTotal - discountTotal).ToString("N0")) ₫</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phương thức thanh toán</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="cod" checked>
+                            <label class="form-check-label" for="cod"><i class="bi bi-cash"></i> Thanh toán khi nhận hàng (COD)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="bank">
+                            <label class="form-check-label" for="bank"><i class="bi bi-bank"></i> Chuyển khoản ngân hàng</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment" id="momo">
+                            <label class="form-check-label text-pink" for="momo"><i class="bi bi-wallet2"></i> Ví MoMo</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-2">Mua Hàng (@selectedCount)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Mock Data
+    List<CartStoreGroup> cartStoreGroups = new();
+    double subTotal = 0;
+    double shippingTotal = 0;
+    double discountTotal = 0;
+    int selectedCount = 0;
+
+    protected override void OnInitialized()
+    {
+        // Fake data initialization
+        cartStoreGroups.Add(new CartStoreGroup
+        {
+            StoreName = "Bida Shop A",
+            Items = new List<CartItem> {
+                new CartItem { ProductName = "Găng tay Bida", Price = 150000, Quantity = 2, Image="/assets/img/elements/1.jpg" },
+                new CartItem { ProductName = "Lơ Bida Master", Price = 50000, Quantity = 5, Image="/assets/img/elements/2.jpg" }
+            }
+        });
+
+        cartStoreGroups.Add(new CartStoreGroup
+        {
+            StoreName = "Cơ Bida Pro",
+            Items = new List<CartItem> {
+                new CartItem { ProductName = "Cơ Carbon Lite", Price = 2500000, Quantity = 1, Image="/assets/img/elements/3.jpg" }
+            }
+        });
+        CalculateTotal();
+    }
+
+    void ToggleStore(CartStoreGroup group, object checkedValue)
+    {
+        bool isChecked = (bool)checkedValue;
+        group.IsSelected = isChecked;
+        foreach (var item in group.Items) item.IsSelected = isChecked;
+        CalculateTotal();
+    }
+
+    void CalculateTotal()
+    {
+        subTotal = 0;
+        selectedCount = 0;
+        shippingTotal = 0; // Logic tính ship thực tế phức tạp hơn
+        foreach (var group in cartStoreGroups)
+        {
+            bool hasSelectedItem = false;
+            foreach (var item in group.Items)
+            {
+                if (item.IsSelected)
+                {
+                    subTotal += item.Price * item.Quantity;
+                    selectedCount++;
+                    hasSelectedItem = true;
+                }
+            }
+            if (hasSelectedItem) shippingTotal += 30000; // Mock ship
+        }
+    }
+
+    class CartStoreGroup
+    {
+        public string StoreName { get; set; }
+        public bool IsSelected { get; set; }
+        public string ShippingMethod { get; set; } = "Standard";
+        public List<CartItem> Items { get; set; }
+    }
+    class CartItem
+    {
+        public string ProductName { get; set; }
+        public string Variant { get; set; } = "Mặc định";
+        public double Price { get; set; }
+        public int Quantity { get; set; }
+        public string Image { get; set; }
+        public bool IsSelected { get; set; }
+    }
+}

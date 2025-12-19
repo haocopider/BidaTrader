@@ -58,6 +58,7 @@
                 if (result != null) Model = result;
             }
         }
+        Navigation.NavigateWithFragmentQuery($"/p{newPageIndex}");
     }
 
     private void ShowBrandModel(int id)
@@ -76,4 +77,5 @@
         await CloseModel();
         await ChangeBrandPage(Model.PageIndex);
     }
+
 }

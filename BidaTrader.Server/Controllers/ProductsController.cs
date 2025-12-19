@@ -16,21 +16,79 @@ public class ProductsController : ControllerBase
     }
 
 
-    [HttpGet("all")]
-    public async Task<ActionResult> GetAllProduct()
+    [HttpGet("home")]
+    public async Task<ActionResult> HomePage([FromQuery] int? categoryId, [FromQuery] string? pname, [FromQuery] bool? lastest, [FromQuery] bool? highest, [FromQuery] float? rating , [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
     {
-        var products = await _productService.GetItemsAsync();
-        var reponse = products.Select(p => new ProductDto
+        var (products, totalCount) = await ((ProductService)_productService).GetProductsForHomePageAsync(
+            categoryId, pname, lastest, highest, rating , pageIndex, pageSize);
+
+        if (products == null)
+        {
+            return Ok(new ProductPerPage());
+        }
+
+        var dtos = products.Select(p => new ProductDto
         {
             Id = p.Id,
-            Name = p.Name,
-            Price = p.Price,
             CategoryId = p.CategoryId,
-            // Đã được Include từ Service
-            CategoryName = p.Category?.Name ?? "N/A",
-            ImageUrl = p.ProductImages.FirstOrDefault()?.ImageUrl ?? "img/default.png"
+            CategoryName = p.Category.Name,
+            Name = p.Name,
+            ImageUrl = p.ProductImages
+            .Where(pi => pi.IsMain)
+            .Select(pi => pi.ImageUrl)
+            .FirstOrDefault(),
+            Price = p.Price,
+            Quantity = p.Quantity,
+            Rating = p.Rating,
+            CreatedAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt,
+            StoreLogo =p.Store.LogoUrl,
+            StoreName =p.Store.StoreName
         }).ToList();
-        return Ok(reponse);
+
+        // 3. Đóng gói vào PagedResponseDto
+        var pagedResponse = new ProductPerPage
+        {
+            Items = dtos,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        };
+
+        return Ok(pagedResponse); // ⬅️ TRẢ VỀ DTO PHÂN TRANG
+    }
+
+    [HttpGet("store/{storeId}")]
+    public async Task<ActionResult> StorePage(int storeId,[FromQuery] int? categoryId, [FromQuery] string? pname, [FromQuery] bool? lastest, [FromQuery] bool? cheapest, [FromQuery] float? rating, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 25)
+    {
+        var (products, total) = await ((ProductService)_productService).GetProductsForStorePageAsync(storeId, categoryId, pname, lastest, cheapest, rating, pageIndex, pageSize);
+
+        if (products == null) return Ok(new ProductPerPage());
+
+        var dtos = products.Select(p => new ProductDto
+        {
+            Id = p.Id,
+            CategoryId = p.CategoryId,
+            CategoryName = p.Category.Name,
+            Name = p.Name,
+            ImageUrl = p.ProductImages
+            .Where(pi => pi.IsMain)
+            .Select(pi => pi.ImageUrl)
+            .FirstOrDefault(),
+            Price = p.Price,
+            Quantity = p.Quantity,
+            Rating = p.Rating,
+        }).ToList();
+
+        var response = new ProductPerPage
+        {
+            Items = dtos,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalCount = total
+        };
+
+        return Ok(response);
     }
 
     [HttpGet]

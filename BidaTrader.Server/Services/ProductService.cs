@@ -113,5 +113,92 @@ namespace BidaTrader.Server.Services
 
             return (pagedProducts, totalCount);
         }
+
+        public async Task<(List<Product> Products, int TotalCount)>GetProductsForHomePageAsync(int? categoryId, string? pname, bool? lastest, bool? hightest, float? rating , int pageIndex, int pageSize)
+        {
+            var query = _context.Products
+                .Include(c => c.Category)
+                .Include(pi => pi.ProductImages)
+                .Include(s => s.Store)
+                .AsQueryable();
+
+            // Lọc theo Category
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            // Lọc theo tên sản phẩm
+            if (!string.IsNullOrWhiteSpace(pname))
+            {
+                string searchLower = pname!.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(searchLower));
+            }
+
+            if (lastest.HasValue && lastest.Value)
+            {
+                query = query.OrderByDescending(p => p.CreatedAt);
+            }
+
+            if (hightest.HasValue && hightest.Value)
+            {
+                query = query.OrderByDescending(p => p.Price);
+            }
+
+            if (rating.HasValue && rating.Value > 0)
+            {
+                query = query.Where(p => p.Rating >= rating.Value);
+            }
+
+            // 1. Lấy tổng số lượng (trước khi phân trang)
+            int totalCount = await query.CountAsync();
+
+            // 2. Phân trang (Skip/Take)
+            var pagedProducts = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (pagedProducts, totalCount);
+        }
+
+        public async Task<(List<Product> Products, int TotalCount)> GetProductsForStorePageAsync(int storeId, int? categoryId, string? pname, bool? lastest, bool? cheapest, float? rating ,int pageIndex =1, int pageSize=25)
+        {
+            var query = _context.Products.Include(c => c.Store).Include(c => c.Category).Include(pi => pi.ProductImages).Where(s => s.StoreId == storeId).AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0) query = query.Where(c => c.CategoryId == categoryId.Value);
+            // Lọc theo tên sản phẩm
+            if (!string.IsNullOrWhiteSpace(pname))
+            {
+                string searchLower = pname!.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(searchLower));
+            }
+
+            if (lastest.HasValue && lastest.Value)
+            {
+                query = query.OrderByDescending(p => p.CreatedAt);
+            }
+
+            if (cheapest.HasValue && cheapest.Value)
+            {
+                query = query.OrderBy(p => p.Price);
+            }
+
+            if (rating.HasValue && rating.Value > 0)
+            {
+                query = query.Where(p => p.Rating >= rating.Value);
+            }
+
+            // 1. Lấy tổng số lượng (trước khi phân trang)
+            int totalCount = await query.CountAsync();
+
+            // 2. Phân trang (Skip/Take)
+            var pagedProducts = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (pagedProducts, totalCount);
+        }
     }
 }
