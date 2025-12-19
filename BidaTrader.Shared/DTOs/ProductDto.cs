@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BidaTrader.Shared.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace BidaTrader.Shared.DTOs
 {
@@ -18,7 +19,6 @@ namespace BidaTrader.Shared.DTOs
 
         [Required]
         public int StoreId { get; set; }
-
         public int? Quantity { get; set; }
 
         public double? Rating { get; set; }
@@ -30,6 +30,8 @@ namespace BidaTrader.Shared.DTOs
         public DateTime? UpdatedAt { get; set; }
         public string? ImageUrl { get; set; }
         public string CategoryName { get; set; } = "N/A";
+        public string StoreName { get; set; } = "N/A";
+        public string? StoreLogo { get; set; }
     }
 
     public class ProductPerPage

@@ -1,662 +1,397 @@
 ﻿@page "/"
 
-<!-- Content -->
+<style>
+    /* Container pagination */
+    .pagination-fixed {
+        position: fixed;
+        top: 50%;
+        right: 18px;
+        transform: translateY(-50%);
+        z-index: 1050;
+    }
 
+    /* Pagination dọc */
+    .pagination-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-    <div class="row">
-        <div class="col-lg-8 mb-4 order-0">
-            <div class="card">
-                <div class="d-flex align-items-end row">
-                    <div class="col-sm-7">
-                        <div class="card-body">
-                            <h5 class="card-title text-primary">Congratulations John! 🎉</h5>
-                            <p class="mb-4">
-                                You have done <span class="fw-bold">72%</span> more sales today. Check your new badge in
-                                your profile.
-                            </p>
+        /* Button mặc định */
+        .pagination-vertical .page-link {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            padding: 0;
+            text-align: center;
+            line-height: 44px;
+            font-weight: 600;
+            background: linear-gradient(145deg, #f8f9ff, #e9ecff);
+            color: #3b5bff;
+            border: 1px solid #d6ddff;
+            box-shadow: 0 4px 10px rgba(59, 91, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.25s ease;
+        }
 
-                            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Badges</a>
-                        </div>
-                    </div>
-                    <div class="col-sm-5 text-center text-sm-left">
-                        <div class="card-body pb-0 px-0 px-md-4">
-                            <img src="../assets/img/illustrations/man-with-laptop-light.png"
-                                 height="140"
-                                 alt="View Badge User"
-                                 data-app-dark-img="illustrations/man-with-laptop-dark.png"
-                                 data-app-light-img="illustrations/man-with-laptop-light.png" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 col-md-4 order-1">
-            <div class="row">
-                <div class="col-lg-6 col-md-12 col-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/chart-success.png"
-                                         alt="chart success"
-                                         class="rounded" />
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn p-0"
-                                            type="button"
-                                            id="cardOpt3"
-                                            data-bs-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="false">
-                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                                        <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="fw-semibold d-block mb-1">Profit</span>
-                            <h3 class="card-title mb-2">$12,628</h3>
-                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +72.80%</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-12 col-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/wallet-info.png"
-                                         alt="Credit Card"
-                                         class="rounded" />
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn p-0"
-                                            type="button"
-                                            id="cardOpt6"
-                                            data-bs-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="false">
-                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt6">
-                                        <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <span>Sales</span>
-                            <h3 class="card-title text-nowrap mb-1">$4,679</h3>
-                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +28.42%</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Total Revenue -->
-        <div class="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
-            <div class="card">
-                <div class="row row-bordered g-0">
-                    <div class="col-md-8">
-                        <h5 class="card-header m-0 me-2 pb-3">Total Revenue</h5>
-                        <div id="totalRevenueChart" class="px-2"></div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card-body">
-                            <div class="text-center">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle"
-                                            type="button"
-                                            id="growthReportId"
-                                            data-bs-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="false">
-                                        2022
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
-                                        <a class="dropdown-item" href="javascript:void(0);">2021</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">2020</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">2019</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="growthChart"></div>
-                        <div class="text-center fw-semibold pt-3 mb-2">62% Company Growth</div>
-
-                        <div class="d-flex px-xxl-4 px-lg-2 p-4 gap-xxl-3 gap-lg-1 gap-3 justify-content-between">
-                            <div class="d-flex">
-                                <div class="me-2">
-                                    <span class="badge bg-label-primary p-2"><i class="bx bx-dollar text-primary"></i></span>
-                                </div>
-                                <div class="d-flex flex-column">
-                                    <small>2022</small>
-                                    <h6 class="mb-0">$32.5k</h6>
-                                </div>
-                            </div>
-                            <div class="d-flex">
-                                <div class="me-2">
-                                    <span class="badge bg-label-info p-2"><i class="bx bx-wallet text-info"></i></span>
-                                </div>
-                                <div class="d-flex flex-column">
-                                    <small>2021</small>
-                                    <h6 class="mb-0">$41.2k</h6>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--/ Total Revenue -->
-        <div class="col-12 col-md-8 col-lg-4 order-3 order-md-2">
-            <div class="row">
-                <div class="col-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/paypal.png" alt="Credit Card" class="rounded" />
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn p-0"
-                                            type="button"
-                                            id="cardOpt4"
-                                            data-bs-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="false">
-                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt4">
-                                        <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="d-block mb-1">Payments</span>
-                            <h3 class="card-title text-nowrap mb-2">$2,456</h3>
-                            <small class="text-danger fw-semibold"><i class="bx bx-down-arrow-alt"></i> -14.82%</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/cc-primary.png" alt="Credit Card" class="rounded" />
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn p-0"
-                                            type="button"
-                                            id="cardOpt1"
-                                            data-bs-toggle="dropdown"
-                                            aria-haspopup="true"
-                                            aria-expanded="false">
-                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                    </button>
-                                    <div class="dropdown-menu" aria-labelledby="cardOpt1">
-                                        <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                                        <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="fw-semibold d-block mb-1">Transactions</span>
-                            <h3 class="card-title mb-2">$14,857</h3>
-                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> +28.14%</small>
-                        </div>
-                    </div>
-                </div>
-                <!-- </div>
-                <div class="row"> -->
-                <div class="col-12 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between flex-sm-row flex-column gap-3">
-                                <div class="d-flex flex-sm-column flex-row align-items-start justify-content-between">
-                                    <div class="card-title">
-                                        <h5 class="text-nowrap mb-2">Profile Report</h5>
-                                        <span class="badge bg-label-warning rounded-pill">Year 2021</span>
-                                    </div>
-                                    <div class="mt-sm-auto">
-                                        <small class="text-success text-nowrap fw-semibold"><i class="bx bx-chevron-up"></i> 68.2%</small>
-                                        <h3 class="mb-0">$84,686k</h3>
-                                    </div>
-                                </div>
-                                <div id="profileReportChart"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <!-- Order Statistics -->
-        <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between pb-0">
-                    <div class="card-title mb-0">
-                        <h5 class="m-0 me-2">Order Statistics</h5>
-                        <small class="text-muted">42.82k Total Sales</small>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn p-0"
-                                type="button"
-                                id="orederStatistics"
-                                data-bs-toggle="dropdown"
-                                aria-haspopup="true"
-                                aria-expanded="false">
-                            <i class="bx bx-dots-vertical-rounded"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="orederStatistics">
-                            <a class="dropdown-item" href="javascript:void(0);">Select All</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Share</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="d-flex flex-column align-items-center gap-1">
-                            <h2 class="mb-2">8,258</h2>
-                            <span>Total Orders</span>
-                        </div>
-                        <div id="orderStatisticsChart"></div>
-                    </div>
-                    <ul class="p-0 m-0">
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <span class="avatar-initial rounded bg-label-primary">
-                                    <i class="bx bx-mobile-alt"></i>
-                                </span>
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <h6 class="mb-0">Electronic</h6>
-                                    <small class="text-muted">Mobile, Earbuds, TV</small>
-                                </div>
-                                <div class="user-progress">
-                                    <small class="fw-semibold">82.5k</small>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <span class="avatar-initial rounded bg-label-success"><i class="bx bx-closet"></i></span>
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <h6 class="mb-0">Fashion</h6>
-                                    <small class="text-muted">T-shirt, Jeans, Shoes</small>
-                                </div>
-                                <div class="user-progress">
-                                    <small class="fw-semibold">23.8k</small>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <span class="avatar-initial rounded bg-label-info"><i class="bx bx-home-alt"></i></span>
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <h6 class="mb-0">Decor</h6>
-                                    <small class="text-muted">Fine Art, Dining</small>
-                                </div>
-                                <div class="user-progress">
-                                    <small class="fw-semibold">849k</small>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <span class="avatar-initial rounded bg-label-secondary">
-                                    <i class="bx bx-football"></i>
-                                </span>
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <h6 class="mb-0">Sports</h6>
-                                    <small class="text-muted">Football, Cricket Kit</small>
-                                </div>
-                                <div class="user-progress">
-                                    <small class="fw-semibold">99</small>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <!--/ Order Statistics -->
-        <!-- Expense Overview -->
-        <div class="col-md-6 col-lg-4 order-1 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <ul class="nav nav-pills" role="tablist">
-                        <li class="nav-item">
-                            <button type="button"
-                                    class="nav-link active"
-                                    role="tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#navs-tabs-line-card-income"
-                                    aria-controls="navs-tabs-line-card-income"
-                                    aria-selected="true">
-                                Income
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab">Expenses</button>
-                        </li>
-                        <li class="nav-item">
-                            <button type="button" class="nav-link" role="tab">Profit</button>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body px-0">
-                    <div class="tab-content p-0">
-                        <div class="tab-pane fade show active" id="navs-tabs-line-card-income" role="tabpanel">
-                            <div class="d-flex p-4 pt-3">
-                                <div class="avatar flex-shrink-0 me-3">
-                                    <img src="../assets/img/icons/unicons/wallet.png" alt="User" />
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block">Total Balance</small>
-                                    <div class="d-flex align-items-center">
-                                        <h6 class="mb-0 me-1">$459.10</h6>
-                                        <small class="text-success fw-semibold">
-                                            <i class="bx bx-chevron-up"></i>
-                                            42.9%
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="incomeChart"></div>
-                            <div class="d-flex justify-content-center pt-4 gap-2">
-                                <div class="flex-shrink-0">
-                                    <div id="expensesOfWeek"></div>
-                                </div>
-                                <div>
-                                    <p class="mb-n1 mt-1">Expenses This Week</p>
-                                    <small class="text-muted">$39 less than last week</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--/ Expense Overview -->
-        <!-- Transactions -->
-        <div class="col-md-6 col-lg-4 order-2 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="card-title m-0 me-2">Transactions</h5>
-                    <div class="dropdown">
-                        <button class="btn p-0"
-                                type="button"
-                                id="transactionID"
-                                data-bs-toggle="dropdown"
-                                aria-haspopup="true"
-                                aria-expanded="false">
-                            <i class="bx bx-dots-vertical-rounded"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
-                            <a class="dropdown-item" href="javascript:void(0);">Last 28 Days</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-                            <a class="dropdown-item" href="javascript:void(0);">Last Year</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <ul class="p-0 m-0">
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/paypal.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Paypal</small>
-                                    <h6 class="mb-0">Send money</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">+82.6</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/wallet.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Wallet</small>
-                                    <h6 class="mb-0">Mac'D</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">+270.69</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/chart.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Transfer</small>
-                                    <h6 class="mb-0">Refund</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">+637.91</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/cc-success.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Credit Card</small>
-                                    <h6 class="mb-0">Ordered Food</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">-838.71</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex mb-4 pb-1">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/wallet.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Wallet</small>
-                                    <h6 class="mb-0">Starbucks</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">+203.33</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="d-flex">
-                            <div class="avatar flex-shrink-0 me-3">
-                                <img src="../assets/img/icons/unicons/cc-warning.png" alt="User" class="rounded" />
-                            </div>
-                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="me-2">
-                                    <small class="text-muted d-block mb-1">Mastercard</small>
-                                    <h6 class="mb-0">Ordered Food</h6>
-                                </div>
-                                <div class="user-progress d-flex align-items-center gap-1">
-                                    <h6 class="mb-0">-92.45</h6>
-                                    <span class="text-muted">USD</span>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <!--/ Transactions -->
-    </div>
-<!-- / Content -->
-@* <div class="row">
-    <div class="col-12 mb-4">
-        <div class="input-group">
-            <input type="text"
-                   class="form-control"
-                   placeholder="Nhập tên sản phẩm để tìm kiếm..."
-                   @bind-value="SearchTerm"
-                   @onkeyup="HandleSearchKeyup" />
-            <button class="btn btn-primary" @onclick="SearchProducts">Tìm Kiếm</button>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <h4>Danh mục</h4>
-        <ul class="list-group">
-            <li class="list-group-item @(selectedCatId == null ? "active" : "")"
-                style="cursor:pointer"
-                @onclick="() => FilterByCat(null)">Tất cả</li>
-
-            @if (categories != null)
-            {
-                foreach (var cat in categories)
-                {
-                    <li class="list-group-item @(selectedCatId == cat.Id ? "active" : "")"
-                        style="cursor:pointer"
-                        @onclick="() => FilterByCat(cat.Id)">
-                        @cat.Name
-                    </li>
-                }
+            /* Hover */
+            .pagination-vertical .page-link:hover {
+                background: linear-gradient(145deg, #3b5bff, #5c7cff);
+                color: #fff;
+                transform: translateY(-2px) scale(1.05);
+                box-shadow: 0 8px 18px rgba(59, 91, 255, 0.35);
             }
+
+        /* Trang đang active */
+        .pagination-vertical .page-item.active .page-link {
+            background: linear-gradient(145deg, #20c997, #38d9a9);
+            border-color: #20c997;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(32, 201, 151, 0.45);
+        }
+
+        /* Disabled */
+        .pagination-vertical .page-item.disabled .page-link {
+            background: #f1f3f5;
+            color: #adb5bd;
+            border-color: #dee2e6;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+    /* CSS bổ sung để hiệu ứng mượt mà hơn */
+    .transition-hover {
+        transition: all 0.3s ease;
+    }
+
+        .transition-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12) !important;
+        }
+
+    .zoom-effect {
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .zoom-effect {
+        transform: scale(1.1);
+    }
+
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .border-radius-top {
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+    }
+</style>
+
+<PageTitle>Trang chủ - BidaTrader</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body border-top border-4 border-primary rounded-top">
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-primary text-white border-primary">
+                            <i class="bi bi-grid-fill"></i>
+                        </span>
+                        <select class="form-select border-primary text-primary fw-bold"
+                                style="--bs-bg-opacity: .1; background-color: rgba(var(--bs-primary-rgb), .1);"
+                                @onchange="OnCategoryChanged">
+                            <option value="0" class="text-dark">📂 Danh mục sản phẩm</option>
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat.Id" class="text-dark">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-success text-white border-success">
+                            <i class="bi bi-cash-coin"></i>
+                        </span>
+                        <select class="form-select border-success text-success fw-bold"
+                                style="background-color: rgba(var(--bs-success-rgb), .1);"
+                                @bind="filter.SortPrice">
+                            <option value="none" class="text-dark">💰 Giá bán</option>
+                            <option value="asc" class="text-dark">📈 Thấp đến Cao</option>
+                            <option value="desc" class="text-dark">📉 Cao đến Thấp</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-info text-white border-info">
+                            <i class="bi bi-clock-history"></i>
+                        </span>
+                        <select class="form-select border-info text-info fw-bold"
+                                style="background-color: rgba(var(--bs-info-rgb), .1);"
+                                @bind="filter.SortDate">
+                            <option value="none" class="text-dark">📅 Thời gian</option>
+                            <option value="newest" class="text-dark">✨ Mới nhất</option>
+                            <option value="oldest" class="text-dark">🕰️ Cũ nhất</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-warning text-white border-warning">
+                            <i class="bi bi-star-fill"></i>
+                        </span>
+                        <select class="form-select border-warning text-warning fw-bold"
+                                style="background-color: rgba(var(--bs-warning-rgb), .1);"
+                                @bind="filter.MinRating">
+                            <option value="0" class="text-dark">⭐ Đánh giá</option>
+                            <option value="5" class="text-dark">⭐⭐⭐⭐⭐ (5 Sao)</option>
+                            <option value="4" class="text-dark">⭐⭐⭐⭐ (4+ Sao)</option>
+                            <option value="3" class="text-dark">⭐⭐⭐ (3+ Sao)</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Đang tải sản phẩm...</p>
+        </div>
+    }
+    else if (Products.Items == null || Products.Items.Count == 0)
+    {
+        <div class="alert alert-warning text-center" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> Không tìm thấy sản phẩm nào phù hợp với tiêu chí lọc.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var product in Products.Items)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm product-card border-0 transition-hover">
+                        <div class="position-relative overflow-hidden border-radius-top">
+                            <img src="@product.ImageUrl"
+                                 class="card-img-top zoom-effect"
+                                 alt="@product.Name"
+                                 style="height: 220px; object-fit: cover;">
+
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <span class="badge bg-danger shadow-sm">Yêu thích</span>
+                            </div>
+
+                            <div class="position-absolute bottom-0 start-0 m-2 d-flex align-items-center bg-white bg-opacity-75 rounded-pill pe-2 shadow-sm border border-white"
+                                 style="backdrop-filter: blur(4px); cursor: pointer;"
+                                 @onclick='() => Navigation.NavigateTo($"/store/{product.StoreId}")'>
+                                <img src="@product.StoreLogo"
+                                     class="rounded-circle border border-2 border-white"
+                                     style="width: 32px; height: 32px; object-fit: cover;"
+                                     alt="Store Avatar">
+                                <small class="ms-1 fw-bold text-dark text-truncate" style="max-width: 80px;">@product.StoreName</small>
+                            </div>
+                        </div>
+
+                        <div class="card-body d-flex flex-column p-3">
+                            <h6 class="card-title text-dark fw-bold mb-1 text-truncate-2"
+                                style="height: 2.4rem; line-height: 1.2rem;" title="@product.Name">
+                                @product.Name
+                            </h6>
+
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="text-warning small me-2">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= (product.Rating)) // Giả sử dùng biến Rating thật
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+                                </div>
+                                <small class="text-muted border-start ps-2">Kho: @product.Quantity</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="text-primary fw-bolder fs-5">@product.Price.ToString("N0")</span>
+                                <span class="text-primary small fw-bold"> VNĐ</span>
+                            </div>
+
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="/product/@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                                <button class="btn btn-primary btn-sm flex-grow-1 rounded-pill shadow-sm">
+                                    <i class="bi bi-cart-plus"></i> Thêm
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 text-end">
+                            <small class="text-muted" style="font-size: 0.7rem;">
+                                <i class="bi bi-clock"></i>
+                                @(product.UpdatedAt.HasValue? product.UpdatedAt.Value.ToString("dd/MM/yyyy") : product.CreatedAt.Value.ToString("dd/MM/yyyy"))
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+<div class="pagination-fixed">
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-vertical">
+            <li class="page-item @(Products.PageIndex == 1 ? "disabled" : "")">
+                <button class="page-link"
+                        @onclick="() => ChangePage(Products.PageIndex - 1)">
+                    ‹
+                </button>
+            </li>
+
+            @for (int i = 1; i <= Products.TotalPages; i++)
+            {
+                var pageNumber = i;
+                <li class="page-item @(Products.PageIndex == pageNumber ? "active" : "")">
+                    <button class="page-link"
+                            @onclick="() => ChangePage(pageNumber)">
+                        @pageNumber
+                    </button>
+                </li>
+            }
+
+            <li class="page-item @(Products.PageIndex == Products.TotalPages ? "disabled" : "")">
+                <button class="page-link"
+                        @onclick="() => ChangePage(Products.PageIndex + 1)">
+                    ›
+                </button>
+            </li>
         </ul>
-    </div>
+    </nav>
+</div>
 
-    <div class="col-md-9">
-        <div class="row">
-            @if (products == null)
-            {
-                <p>Đang tải...</p>
-            }
-            else if (products.Count == 0)
-            {
-                <p>Không có sản phẩm nào.</p>
-            }
-            else
-            {
-                foreach (var p in products)
-                {
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100">
-                            <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name">
-                            <div class="card-body">
-                                <h5 class="card-title">@p.Name</h5>
-                                <p class="card-text text-danger fw-bold">@p.Price.ToString("N0") đ</p>
-                                <small class="text-muted">@p.CategoryName</small>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-</div> *@
+@code {
+    // --- KHAI BÁO BIẾN ---
+    private ProductPerPage Products { get; set; } = new();
+    private List<CategoryDto> categories = new List<CategoryDto>();
+    private List<BrandDto> brands = new List<BrandDto>();
+    private bool isLoading = true;
 
-@* @code {
-    List<CategoryDto>? categories;
-    List<ProductDto>? products;
-    int? selectedCatId;
-    private string SearchTerm = string.Empty;
+    private const int PageSize = 20;
+    // Biến cho bộ lọc
+    private FilterModel filter = new FilterModel();
 
+    // --- CLASS FILTER MODEL (Chứa dữ liệu lọc) ---
+    public class FilterModel
+    {
+        public string SearchTerm { get; set; } = "";
+        public int CategoryId { get; set; } = 0;
+        public int BrandId { get; set; } = 0;
+        public string SortPrice { get; set; } = "none"; // none, asc, desc
+        public string SortDate { get; set; } = "newest"; // newest, oldest
+        public int MinRating { get; set; } = 0;
+    }
+
+    // --- LIFECYCLE ---
     protected override async Task OnInitializedAsync()
     {
-        categories = await CategoryService.GetItemsAsync("/all");
-        LoadStateFromUrl();
+        // 1. Tải danh mục và thương hiệu (Mock data hoặc gọi API thật)
+        await LoadMetaData();
+
+        // 2. Tải sản phẩm lần đầu
         await LoadProducts();
     }
 
-    // Hàm gọi API lấy sản phẩm
-    async Task LoadProducts()
+    private async Task ChangePage(int newPageIndex)
     {
-        // Tạo chuỗi Query String chung
-        var queryParts = new List<string>();
-        if (selectedCatId.HasValue) queryParts.Add($"categoryId={selectedCatId.Value}");
-        if (!string.IsNullOrWhiteSpace(SearchTerm)) queryParts.Add($"search={SearchTerm}");
-
-        string queryString = queryParts.Any() ? $"?{string.Join("&", queryParts)}" : "";
-
-        products = await ProductService.GetItemsAsync("/all" + queryString);
-    }
-    // Xử lý khi bấm vào danh mục
-    void FilterByCat(int? id)
-    {
-        selectedCatId = id;
-        // Cập nhật URL (Query String) để người dùng có thể copy link
-        string url = id == null ? "/products" : $"/products?categoryId={id}";
-        Navigation.NavigateTo(url);
-        // Sau đó tải lại dữ liệu
-        _ = LoadProducts();
+        if (newPageIndex > 0 && newPageIndex <= Products.TotalPages)
+        {
+            var queryString = $"api/products/home?pageIndex={newPageIndex}&pageSize={PageSize}";
+            var response = await Http.GetAsync(queryString);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ProductPerPage>();
+                if (result != null) Products = result;
+            }
+        }
     }
 
-    private void SearchProducts()
+    private async Task LoadMetaData()
     {
-        var uriBuilder = new System.Text.StringBuilder("/products");
-        var queryParts = new List<string>();
-
-        // 1. Thêm Category ID (Nếu có)
-        if (selectedCatId.HasValue)
+        // TODO: Thay thế bằng call API thực tế: await ClientService.GetCategories();
+        // Giả lập dữ liệu
+        categories = new List<CategoryDto>
         {
-            queryParts.Add($"categoryId={selectedCatId.Value}");
-        }
+            new CategoryDto { Id = 1, Name = "Cơ Bida (Cues)" },
+            new CategoryDto { Id = 2, Name = "Bàn Bida (Tables)" },
+            new CategoryDto { Id = 3, Name = "Phụ kiện (Accessories)" }
+        };
 
-        // 2. Thêm Search Term (Nếu có)
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        brands = new List<BrandDto>
         {
-            // Mã hóa URL cho từ khóa tìm kiếm
-            queryParts.Add($"search={Uri.EscapeDataString(SearchTerm)}");
-        }
-
-        if (queryParts.Any())
-        {
-            uriBuilder.Append("?").Append(string.Join("&", queryParts));
-        }
-
-        Navigation.NavigateTo(uriBuilder.ToString());
+            new BrandDto { Id = 1, Name = "Predator" },
+            new BrandDto { Id = 2, Name = "Mezz" },
+            new BrandDto { Id = 3, Name = "Mit" }
+        };
     }
-    private void HandleSearchKeyup(KeyboardEventArgs e)
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        // Giả lập delay mạng
+        await Task.Delay(500);
+
+        var response = await Http.GetAsync("/api/products/home?pageIndex=1&pageSize=24");
+        if(response.IsSuccessStatusCode)
+        {
+            var data = await response.Content.ReadFromJsonAsync<ProductPerPage>();
+            Products = data;
+        }
+
+        isLoading = false;
+    }
+
+    // Các hàm event change
+    private void OnCategoryChanged(ChangeEventArgs e)
+    {
+        filter.CategoryId = int.Parse(e.Value.ToString());
+    }
+
+    private void OnBrandChanged(ChangeEventArgs e)
+    {
+        filter.BrandId = int.Parse(e.Value.ToString());
+    }
+
+    private void HandleSearch(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            SearchProducts();
+            LoadProducts();
         }
     }
 
-    void LoadStateFromUrl()
+
+    private async Task ResetFilter()
     {
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-
-        // Đọc CategoryId
-        if (int.TryParse(query["categoryId"], out int catId))
-        {
-            selectedCatId = catId;
-        }
-        else
-        {
-            selectedCatId = null;
-        }
-
-        // ĐỌC SearchTerm (MỚI)
-        SearchTerm = query["search"] ?? string.Empty;
+        filter = new FilterModel();
+        await LoadProducts();
     }
-} *@
 
+}

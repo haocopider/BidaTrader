@@ -11,6 +11,7 @@ public partial class Store
 
     public string StoreName { get; set; } = null!;
 
+    public string LogoUrl { get; set; } = null!;
     public string? Phone { get; set; }
 
     public string? Address { get; set; }

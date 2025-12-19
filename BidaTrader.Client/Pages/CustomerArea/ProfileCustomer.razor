@@ -1,0 +1,206 @@
+﻿@page "/profile"
+@attribute [Authorize]
+
+
+<PageTitle>Hồ sơ cá nhân</PageTitle>
+
+@if(isLoading)
+{
+    <p>Đang tải dữ liệu</p>
+}
+else 
+{
+    @if(Model == null)
+    {
+        <p>Không có dữ liệu</p>
+    }
+    else
+    {
+        <div class="flex-grow-1 container-p-y">
+            <div class="row">
+                <div class="col-md-12">
+                    <ul class="nav nav-pills flex-column flex-md-row mb-3">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="javascript:void(0);"><i class="bx bx-user me-1"></i> Tài khoản</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages-account-settings-notifications.html"><i class="bx bx-bell me-1"></i> Thông báo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="pages-account-settings-connections.html"><i class="bx bx-link-alt me-1"></i> Liên kết </a>
+                        </li>
+                    </ul>
+                    <div class="card mb-4">
+                        <h5 class="card-header">Thông tin cá nhân</h5>
+                        <!-- Account -->
+                        <div class="card-body">
+                            <div class="d-flex align-items-start align-items-sm-center gap-4">
+                                <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl) ? (string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "./assets/img/avatars/1.png" : Model.AvatarUrl) : ImagePreviewUrl)"
+                                     alt="user-avatar"
+                                     class="d-block rounded"
+                                     height="100"
+                                     width="100"
+                                     id="uploadedAvatar" />
+                                <div class="button-wrapper">
+                                    <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
+                                        <span class="d-none d-sm-block">Chọn ảnh mới</span>
+                                        <i class="bx bx-upload d-block d-sm-none"></i>
+                                        <InputFile OnChange="HandleFileSelection"
+                                                   id="upload"
+                                                   class="account-file-input"
+                                                   hidden
+                                                   accept="image/png, image/jpeg" />
+
+                                    </label>
+                                    <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
+                                        <i class="bx bx-reset d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block">Hủy bỏ</span>
+                                    </button>
+
+                                    <p class="text-muted mb-0">Cho phép các định dạng JPG, GIF hoặc PNG. Kích thước tối đa 800KB</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-0" />
+                        <div class="card-body">
+                            <EditForm Model="@Model" OnValidSubmit="HandleUpdateProfile">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <div class="row">
+                                    <div class="mb-3 col-md-6">
+                                        <label for="firstName" class="form-label">Họ</label>
+                                        <InputText @bind-Value="@Model.FirstName" class="form-control" autofocus />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="lastName" class="form-label">Tên</label>
+                                        <InputText @bind-Value="@Model.LastName" class="form-control" autofocus />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="email" class="form-label">E-mail</label>
+                                        <InputText class="form-control"
+                                                   @bind-Value="@Model.Email"
+                                                   placeholder="Vui lòng nhập Email..." />
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label" for="phoneNumber">Số điện thoại</label>
+                                        <div class="input-group input-group-merge">
+                                            <span class="input-group-text">VN (+84)</span>
+                                            <InputText type="text"
+                                                       @bind-Value="@Model.Phone"
+                                                       class="form-control"
+                                                       placeholder="Nhập số điện thoại" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label for="address" class="form-label">Địa chỉ</label>
+                                        <InputText class="form-control" @bind-Value="@Model.Address" />
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <button type="submit" class="btn btn-primary me-2">Lưu thay đổi</button>
+                                    <button type="reset" class="btn btn-outline-secondary">Hủy</button>
+                                </div>
+                            </EditForm>
+                        </div>
+                        <!-- /Account -->
+                    </div>
+                    <div class="card">
+                        <h5 class="card-header">Xóa tài khoản</h5>
+                        <div class="card-body">
+                            <div class="mb-3 col-12 mb-0">
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading fw-bold mb-1">Bạn có chắc chắn xóa tài khoản</h6>
+                                    <p class="mb-0">Khi đã nhấn xóa tài khoản bạn không thể hoàn tác!</p>
+                                </div>
+                            </div>
+                            <form id="formAccountDeactivation" onsubmit="return false">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="accountActivation"
+                                           id="accountActivation" />
+                                </div>
+                                <button type="submit" class="btn btn-danger deactivate-account">Xóa tài khoản</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+}
+
+
+
+@code {
+    public UserDto? Model { get; set; }
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model = await Http.GetFromJsonAsync<UserDto>($"api/accounts/profile");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdateProfile()
+    {
+        var response = await Http.PutAsJsonAsync("api/accounts/profile", Model);
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Cập nhật thông tin thành công!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Cập nhật thất bại.");
+        }
+    }
+
+    private string? ImagePreviewUrl { get; set; }
+    private IBrowserFile? selectedFile;
+    private const int MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        // 1. Lấy file đầu tiên được chọn
+        selectedFile = e.File;
+
+        if (selectedFile != null)
+        {
+            if (selectedFile.Size > MAX_FILE_SIZE)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Kích thước file quá lớn (tối đa 5MB).");
+                return;
+            }
+
+            // 2. Tạo Data URL để hiển thị ảnh
+            // Blazor cung cấp phương thức RequestImageFileAsync để tối ưu hóa việc tạo thumbnail
+            var imageFile = await selectedFile.RequestImageFileAsync(
+                selectedFile.ContentType,
+                100,
+                100);
+
+            using var fileStream = imageFile.OpenReadStream(MAX_FILE_SIZE);
+
+            using var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+
+            var imageBase64 = Convert.ToBase64String(memoryStream.ToArray());
+
+            ImagePreviewUrl = $"data:{imageFile.ContentType};base64,{imageBase64}";
+
+            // 3. (TÙY CHỌN): Nếu bạn muốn Model.AvatarUrl lưu Data URL (Không nên nếu bạn upload)
+            // Model.AvatarUrl = ImagePreviewUrl;
+        }
+    }
+
+}

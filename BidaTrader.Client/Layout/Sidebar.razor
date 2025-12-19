@@ -1,14 +1,11 @@
 ﻿
-@inject NavigationManager Navigation
 @code {
     // --- KHAI BÁO BIẾN DỮ LIỆU ---
     private List<CategoryDto>? categories;
-
-    // --- BIẾN TRẠNG THÁI LỌC ---
     private string SearchTerm { get; set; } = "";
     private int? SelectedCategoryId { get; set; }
-    private int SelectedPriceRange { get; set; } = 0; // 0: All, 1: <1M, 2: 1-5M, ...
-    private decimal MaxPriceSlider { get; set; } = 20000000; // Giá trị mặc định slider
+    private int SelectedPriceRange { get; set; } = 0;
+    private decimal MaxPriceSlider { get; set; } = 20000000; 
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,11 +63,12 @@
         var queryString = queryParts.Any() ? "?" + string.Join("&", queryParts) : "";
 
         // Điều hướng sang trang danh sách sản phẩm với bộ lọc
-        Navigation.NavigateTo($"/products{queryString}");
+        Navigation.NavigateWithFragmentQuery("", queryString);
     }
 }
 
-<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme"
+       style="height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column;">
     <div class="app-brand demo">
         <a href="" class="app-brand-link">
             <img src="../assets/img/logo.png" alt="Logo" width="50" class="app-brand-logo demo" />
@@ -160,26 +158,6 @@
             </Authorized>
         </AuthorizeView>
         
-        <AuthorizeView>
-            <Authorized>
-                <li class="menu-header small text-uppercase"><span class="menu-header-text text-danger">Tài khoản</span></li>
-                <!-- Cards -->
-                <li class="menu-item">
-                    <a href="cards-basic.html" class="menu-link">
-                        <i class="menu-icon tf-icons bx bx-user"></i>
-                        <div data-i18n="Basic">Trang cá nhân</div>
-                    </a>
-                </li>
-                <!-- User interface -->
-                <li class="menu-item">
-                    <a href="javascript:void(0)" class="menu-link">
-                        <i class="menu-icon tf-icons bx bx-key"></i>
-                        <div data-i18n="User interface">Đổi mật khẩu</div>
-                    </a>
-                </li>
-            </Authorized>
-        </AuthorizeView>
-
         <AuthorizeView Roles="Customer">
             <!-- Extended components -->
             <li class="menu-item">

@@ -33,6 +33,7 @@
                             <InputCheckbox @bind-Value="item.IsActive"
                                            @oninput="() => ToggleStoreActiveStatus(item)"
                                            class="form-check-input" />
+                            <a style="cursor: pointer;" @onclick="() => GoToStore(item.Id)"><i class="bi bi-arrow-bar-right"></i></a>
                         </div>
                     </td>
                 </tr>
@@ -98,5 +99,10 @@
             store.IsActive = !newStatus;
             await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: Cập nhật trạng thái cửa hàng thất bại. Đã khôi phục trạng thái cũ.");
         }
+    }
+
+    private void GoToStore(int storeId)
+    {
+        Navigation.NavigateTo($"store/{storeId}");
     }
 }

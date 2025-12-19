@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using BidaTrader.Shared.Models;
-using BidaTrader.Shared.Services;
+﻿using BidaTrader.Server.Helpers;
 using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
-using BidaTrader.Server.Helpers;
+using BidaTrader.Shared.Models;
+using BidaTrader.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BidaTrader.Server.Controllers
 {
@@ -19,6 +20,63 @@ namespace BidaTrader.Server.Controllers
             _accountService = service;
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> GetMyProfile()
+        {
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                return Unauthorized();
+
+            var account = await _accountService.GetItemByIdAsync(userId);
+            if (account == null) return NotFound("Không tìm thấy tài khoản.");
+
+            return Ok(new UserDto
+            {
+                Id = account.Id,
+                UID = account.Uid,
+                UserName = account.UserName,
+                Email = account.Email,
+                FirstName = account.FirstName,
+                LastName = account.LastName,
+                Phone = account.Phone,
+                Address = account.Address,
+                AvatarUrl = account.AvatarUrl,
+                IsActive = account.IsActive,
+                DateOfBirth = account.DateOfBirth,
+            });
+        }
+
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMyProfile([FromBody] UserDto dto)
+        {
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+                return Unauthorized();
+
+            var account = await _accountService.GetItemByIdAsync(userId);
+            if (account == null) return NotFound();
+            account.LastName = dto.LastName;
+            account.FirstName = dto.FirstName;
+            account.Email = dto.Email;
+            account.Phone = dto.Phone;
+            account.Address = dto.Address;
+
+            if (!string.IsNullOrEmpty(dto.AvatarUrl) && dto.AvatarUrl.StartsWith("data:image"))
+            {
+                // Logic lưu file ảnh (Giả sử bạn có hàm helper lưu file)
+                // account.AvatarUrl = await _fileService.SaveBase64Image(dto.AvatarUrl);
+
+                // Tạm thời nếu chưa có logic lưu file, cẩn thận kẻo lỗi DB vì chuỗi quá dài
+                // account.AvatarUrl = dto.AvatarUrl; 
+            }
+
+            var updated = await _accountService.UpdateItemAsync(account);
+            if (!updated) return StatusCode(500, "Cập nhật thông tin thất bại.");
+
+            return Ok(new { message = "Cập nhật thành công" });
+        }
         [HttpGet]
         public async Task<ActionResult> GetAccounts([FromQuery] string? username, [FromQuery] string? role , [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
         {

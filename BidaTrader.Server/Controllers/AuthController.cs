@@ -35,13 +35,10 @@ namespace BidaTrader.API.Controllers
             if (await _context.Accounts.AnyAsync(u => u.UserName == request.UserName))
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Tên đăng nhập đã tồn tại." });
 
-            // --- SINH UID THÔNG MINH ---
-            // (Như logic tăng dần AA0001 -> AA0002)
             var lastAccount = await _context.Accounts.OrderByDescending(a => a.Id).FirstOrDefaultAsync();
             string newUid;
             try
             {
-                // Giả định bạn có Helper class SequentialUidHelper (xem lại bài trước)
                 newUid = SequentialUidHelper.GenerateNextUid(lastAccount?.Uid);
             }
             catch (Exception ex)
@@ -49,8 +46,7 @@ namespace BidaTrader.API.Controllers
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = ex.Message });
             }
 
-            // --- HASH PASSWORD (BCRYPT) ---
-            // Sử dụng Helper hoặc BCrypt trực tiếp
+
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             // --- TẠO ACCOUNT ---
@@ -60,12 +56,16 @@ namespace BidaTrader.API.Controllers
                 UserName = request.UserName,
                 Email = request.Email ?? $"{request.UserName}@bidatrader.com",
                 PasswordHash = passwordHash,
-                Passcode = "",
                 Role = "Customer",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                FirstName = request.UserName,
-                LastName = ""
+                FirstName = request.UserName, // Lấy tạm username làm tên
+
+                // --- BỔ SUNG CÁC TRƯỜNG BẮT BUỘC ĐỂ TRÁNH LỖI NOT NULL ---
+                LastName = "",   // Không được để null
+                Phone = "",      // Không được để null
+                Address = "",    // Không được để null
+                AvatarUrl = ""   // Không được để null
             };
 
             try
@@ -89,9 +89,23 @@ namespace BidaTrader.API.Controllers
                     RefreshToken = refreshToken
                 });
             }
+            catch (DbUpdateException dbEx)
+            {
+                // Lấy chi tiết lỗi từ InnerException để biết chính xác cột nào gây lỗi
+                var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
+                return StatusCode(500, new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Lỗi Database: " + errorMsg
+                });
+            }
             catch (Exception ex)
             {
-                return StatusCode(500, new AuthResponseDto { IsSuccess = false, ErrorMessage = ex.Message });
+                return StatusCode(500, new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Lỗi hệ thống: " + ex.Message
+                });
             }
         }
 
