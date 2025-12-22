@@ -49,7 +49,48 @@ namespace BidaTrader.Server.Services
             // Xử lý lọc đơn giản nếu cần thiết tại Service
             return await products.ToListAsync();
         }
-    
+
+        public async Task<List<ProductDto>> GetProductMyStore(int accountId, string? pnam)
+        {
+            var store = await _context.Stores
+                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+
+            if (store == null)
+                throw new Exception("Store không tồn tại");
+
+            var query = _context.Products
+                .Include(p => p.ProductImages)
+                .Include(p => p.Category)
+                .Include(p => p.Store)
+                .Where(p => p.StoreId == store.Id)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(pnam))
+            {
+                query = query.Where(p =>
+                    EF.Functions.Like(p.Name, $"%{pnam}%"));
+            }
+
+            var data = await query.ToListAsync();
+
+            return data.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                Name = p.Name,
+                ImageUrl = p.ProductImages
+                    .FirstOrDefault(pi => pi.IsMain)?.ImageUrl,
+                Price = p.Price,
+                Quantity = p.Quantity,
+                Rating = p.Rating,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                StoreLogo = p.Store.LogoUrl,
+                StoreName = p.Store.StoreName
+            }).ToList();
+        }
+
         public async Task ToBin(List<Product> products)
         {
             foreach (var product in products)

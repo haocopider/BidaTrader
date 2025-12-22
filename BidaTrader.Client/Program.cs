@@ -45,5 +45,6 @@ AddClientService<BrandDto>("brands");
 AddClientService<AccountDto>("accounts");
 AddClientService<PostDto>("posts");
 AddClientService<StoreDto>("stores");
+AddClientService<AddToCartDto>("cart");
 
 await builder.Build().RunAsync();
