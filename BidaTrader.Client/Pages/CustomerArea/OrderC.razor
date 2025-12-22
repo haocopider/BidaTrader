@@ -1,0 +1,177 @@
+﻿@page "/my-orders"
+@attribute [Authorize]
+
+<PageTitle>Đơn hàng của tôi</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-2">
+            <ul class="nav nav-pills nav-fill">
+                @foreach (var status in new[] { "All", "Pending", "Processing", "Shipping", "Completed", "Cancelled" })
+                {
+                    <li class="nav-item">
+                        <button class="nav-link @(currentStatus == status ? "active" : "")"
+                                @onclick="() => FilterStatus(status)">
+                            @GetStatusLabel(status)
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+    }
+    else if (orders == null || !orders.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p>Chưa có đơn hàng nào.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var order in orders)
+            {
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold"><i class="bi bi-shop"></i> @order.StoreName</span>
+                                <span class="text-muted small ms-2">| @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <span class="badge @GetStatusColor(order.Status)">@GetStatusLabel(order.Status)</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <img src="@order.FirstImage" class="rounded border me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">@order.ProductNamesSummary</h6>
+                                    <p class="mb-0 text-muted small">Mã đơn: #@order.Id</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-muted small">Tổng tiền</div>
+                                    <div class="text-danger fw-bold fs-5">@order.TotalAmount.ToString("N0") ₫</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge @GetStatusColor(order.Status)">
+                                    @GetStatusLabel(order.Status)
+                                </span>
+                            </div>
+
+                            <div>
+                                @if (order.Status == "Shipping")
+                                {
+                                    <button class="btn btn-success btn-sm me-2"
+                                            @onclick="() => ConfirmReceived(order.Id)">
+                                        <i class="bi bi-check-circle"></i> Đã nhận hàng
+                                    </button>
+                                }
+
+                                @if (order.Status == "Completed")
+                                {
+                                    <button class="btn btn-warning btn-sm me-2">
+                                        <i class="bi bi-star"></i> Đánh giá
+                                    </button>
+                                }
+
+                                <button class="btn btn-outline-primary btn-sm"
+                                        @onclick="() => GoToOrderDetail(order.Id)">
+                                    Xem chi tiết
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<OrderDto> orders = new();
+    private bool isLoading = true;
+    private string currentStatus = "All";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        isLoading = true;
+        try
+        {
+            orders = await Http.GetFromJsonAsync<List<OrderDto>>($"api/orders/my-orders?status={currentStatus}");
+        }
+        catch (Exception ex) { Console.WriteLine(ex); }
+        finally { isLoading = false; }
+    }
+
+    private async Task FilterStatus(string status)
+    {
+        currentStatus = status;
+        await LoadOrders();
+    }
+
+    // Helper hiển thị tên tiếng Việt
+    private string GetStatusLabel(string status) => status switch
+    {
+        "All" => "Tất cả",
+        "Pending" => "Chờ xác nhận",
+        "Processing" => "Đang xử lý",
+        "Shipping" => "Đang giao",
+        "Completed" => "Hoàn thành",
+        "Cancelled" => "Đã hủy",
+        _ => status
+    };
+
+    // Helper màu sắc badge
+    private string GetStatusColor(string status) => status switch
+    {
+        "Pending" => "bg-warning",
+        "Processing" => "bg-info",
+        "Shipping" => "bg-primary",
+        "Completed" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private void GoToOrderDetail(int orderId)
+    {
+        Navigation.NavigateTo($"/my-orders/{orderId}");
+    }
+
+    private async Task ConfirmReceived(int orderId)
+    {
+        var ok = await JSRuntime.InvokeAsync<bool>(
+            "confirm",
+            "Bạn xác nhận đã nhận được hàng?"
+        );
+
+        if (!ok) return;
+
+        var response = await Http.PutAsJsonAsync(
+            $"api/orders/{orderId}/status",
+            "Completed"
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadOrders();
+            await JSRuntime.InvokeVoidAsync("alert", "Cảm ơn bạn đã xác nhận!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Có lỗi xảy ra.");
+        }
+    }
+
+}

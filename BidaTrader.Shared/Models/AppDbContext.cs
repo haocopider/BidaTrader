@@ -159,7 +159,7 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.OrderDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
-            entity.Property(e => e.PaymentStatus).HasDefaultValue(false);
+            entity.Property(e => e.IsPaid).HasDefaultValue(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);

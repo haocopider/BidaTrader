@@ -1,0 +1,199 @@
+﻿@page "/store/products"
+
+<PageTitle>Quản lý sản phẩm - BidaTrader</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2"></i> Kho hàng của tôi</h4>
+        <button class="btn btn-primary shadow-sm" @onclick="AddNewProduct">
+            <i class="bi bi-plus-lg me-1"></i> Thêm sản phẩm mới
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Tìm tên sản phẩm..."
+                               @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearch" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" @onchange="OnCategoryFilterChanged">
+                        <option value="0">Tất cả danh mục</option>
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" @bind="statusFilter">
+                        <option value="all">Trạng thái: Tất cả</option>
+                        <option value="instock">Còn hàng</option>
+                        <option value="outofstock">Hết hàng</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-uppercase small fw-bold">
+                    <tr>
+                        <th class="ps-4">Sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá bán</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (isLoading)
+                    {
+                        <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>
+                    }
+                    else if (!filteredProducts.Any())
+                    {
+                        <tr><td colspan="6" class="text-center py-5 text-muted">Không tìm thấy sản phẩm nào.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var p in filteredProducts)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "/assets/img/elements/1.jpg" : p.ImageUrl)"
+                                             class="rounded border me-3" style="width: 50px; height: 50px; object-fit: cover;" />
+                                        <div>
+                                            <div class="fw-bold text-dark">@p.Name</div>
+                                            <small class="text-muted">ID: #@p.Id</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-label-secondary">@p.CategoryName</span></td>
+                                <td class="fw-bold text-primary">@p.Price.ToString("N0") ₫</td>
+                                <td>
+                                    @if (p.Quantity <= 5)
+                                    {
+                                        <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> @p.Quantity</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@p.Quantity</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (p.Quantity > 0)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 rounded-pill">Đang bán</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 rounded-pill">Hết hàng</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group shadow-sm border rounded">
+                                        <button class="btn btn-white btn-sm px-3" title="Chỉnh sửa" @onclick="() => EditProduct(p.Id)">
+                                            <i class="bi bi-pencil-square text-primary"></i>
+                                        </button>
+                                        <button class="btn btn-white btn-sm px-3" title="Xóa" @onclick="() => ConfirmDelete(p)">
+                                            <i class="bi bi-trash3 text-danger"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductDto> allProducts = new();
+    private List<ProductDto> filteredProducts = new();
+    private List<CategoryDto> categories = new();
+    private bool isLoading = true;
+
+    // Filters
+    private string searchTerm = "";
+    private int categoryFilter = 0;
+    private string statusFilter = "all";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMetaData();
+        await LoadProducts();
+    }
+
+    private async Task LoadMetaData()
+    {
+        try { categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/categories/all"); }
+        catch { }
+    }
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        try
+        {
+            // Gọi API dành riêng cho chủ cửa hàng
+            allProducts = await Http.GetFromJsonAsync<List<ProductDto>>("api/products/my-store-products");
+            ApplyFilters();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isLoading = false; }
+    }
+
+    private void ApplyFilters()
+    {
+        var query = allProducts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+            query = query.Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+        if (categoryFilter > 0)
+            query = query.Where(p => p.CategoryId == categoryFilter);
+
+        if (statusFilter == "instock") query = query.Where(p => p.Quantity > 0);
+        else if (statusFilter == "outofstock") query = query.Where(p => p.Quantity <= 0);
+
+        filteredProducts = query.ToList();
+    }
+
+    private void HandleSearch() => ApplyFilters();
+
+    private void OnCategoryFilterChanged(ChangeEventArgs e)
+    {
+        categoryFilter = int.Parse(e.Value.ToString());
+        ApplyFilters();
+    }
+
+    private void AddNewProduct() => Navigation.NavigateTo("/store/products/add");
+
+    private void EditProduct(int id) => Navigation.NavigateTo($"/store/products/edit/{id}");
+
+    private async Task ConfirmDelete(ProductDto product)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Bạn có chắc chắn muốn xóa sản phẩm '{product.Name}'? Thao tác này không thể hoàn tác.");
+        if (confirmed)
+        {
+            var response = await Http.DeleteAsync($"api/products/{product.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                allProducts.Remove(product);
+                ApplyFilters();
+                await JSRuntime.InvokeVoidAsync("alert", "Đã xóa sản phẩm thành công.");
+            }
+        }
+    }
+}

@@ -238,7 +238,7 @@
                                 <a href="/product/@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill">
                                     <i class="bi bi-eye"></i> Xem
                                 </a>
-                                <button class="btn btn-primary btn-sm flex-grow-1 rounded-pill shadow-sm">
+                                <button @onclick="() => AddToCart(product.Id)" class="btn btn-primary btn-sm flex-grow-1 rounded-pill shadow-sm">
                                     <i class="bi bi-cart-plus"></i> Thêm
                                 </button>
                             </div>
@@ -288,7 +288,6 @@
 </div>
 
 @code {
-    // --- KHAI BÁO BIẾN ---
     private ProductPerPage Products { get; set; } = new();
     private List<CategoryDto> categories = new List<CategoryDto>();
     private List<BrandDto> brands = new List<BrandDto>();
@@ -298,7 +297,6 @@
     // Biến cho bộ lọc
     private FilterModel filter = new FilterModel();
 
-    // --- CLASS FILTER MODEL (Chứa dữ liệu lọc) ---
     public class FilterModel
     {
         public string SearchTerm { get; set; } = "";
@@ -309,7 +307,6 @@
         public int MinRating { get; set; } = 0;
     }
 
-    // --- LIFECYCLE ---
     protected override async Task OnInitializedAsync()
     {
         // 1. Tải danh mục và thương hiệu (Mock data hoặc gọi API thật)
@@ -368,7 +365,6 @@
         isLoading = false;
     }
 
-    // Các hàm event change
     private void OnCategoryChanged(ChangeEventArgs e)
     {
         filter.CategoryId = int.Parse(e.Value.ToString());
@@ -387,11 +383,31 @@
         }
     }
 
-
     private async Task ResetFilter()
     {
         filter = new FilterModel();
         await LoadProducts();
+    }
+
+    private async Task AddToCart(int productId)
+    {
+        var request = new AddToCartDto
+        {
+            ProductId = productId,
+            Quantity = 1
+        };
+
+        var response = await Http.PostAsJsonAsync("api/cart/add", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+
+        }
+        else
+        {
+            // Thất bại
+            var error = await response.Content.ReadAsStringAsync();
+        }
     }
 
 }

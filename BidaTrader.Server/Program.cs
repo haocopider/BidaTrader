@@ -23,6 +23,9 @@ builder.Services.AddScoped<IService<Brand>, BrandService>();
 builder.Services.AddScoped<IService<Account>, AccountService>();
 builder.Services.AddScoped<IService<Post>, PostService>();
 builder.Services.AddScoped<IService<Store>, StoreService>();
+builder.Services.AddScoped<CartService, CartService>();
+builder.Services.AddScoped<OrderService, OrderService>();
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -44,23 +47,64 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Cập nhật CORS Policy 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    
-    options.AddPolicy("ActiveStore", policy => 
-        policy.RequireRole("Store").RequireClaim("IsActive", "True"));
-        
+    // ================= ADMIN =================
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin")
+    );
+
+    // ================= STORE =================
+    options.AddPolicy("StoreOnly", policy =>
+        policy.RequireRole("Store")
+    );
+
+    options.AddPolicy("ActiveStore", policy =>
+        policy.RequireRole("Store")
+              .RequireClaim("IsActive", "True")
+    );
+
+    // ================= CUSTOMER =================
+    options.AddPolicy("CustomerOnly", policy =>
+        policy.RequireRole("Customer")
+    );
+
+    // ================= COMBINED =================
+    options.AddPolicy("AdminOrStore", policy =>
+        policy.RequireRole("Admin", "Store")
+    );
+
+    options.AddPolicy("AdminOrCustomer", policy =>
+        policy.RequireRole("Admin", "Customer")
+    );
+
+    options.AddPolicy("StoreOrCustomer", policy =>
+        policy.RequireRole("Store", "Customer")
+    );
+
+    // ================= AUTHENTICATED =================
+    options.AddPolicy("Authenticated", policy =>
+        policy.RequireAuthenticatedUser()
+    );
 });
 
-// Cập nhật CORS Policy 
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowBlazorClient",
-        b => b.WithOrigins(builder.Configuration["Jwt:Audience"]) // Chỉ cho phép Client
-               .AllowAnyMethod()
-               .AllowAnyHeader());
+    options.AddPolicy("AllowBlazorClient", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://localhost:7103", // Blazor WASM (https)
+                "http://localhost:5009"   // Blazor WASM (http)
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
+
 
 
 var app = builder.Build();

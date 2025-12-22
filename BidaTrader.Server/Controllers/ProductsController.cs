@@ -2,7 +2,10 @@
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -58,6 +61,14 @@ public class ProductsController : ControllerBase
         return Ok(pagedResponse); // ⬅️ TRẢ VỀ DTO PHÂN TRANG
     }
 
+    [HttpGet("my-store-products")]
+    public async Task<ActionResult<List<ProductDto>>> GetMyStoreProducts(string? pnam)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+        var dtos = await ((ProductService)_productService).GetProductMyStore(userId, pnam);
+        return Ok(dtos);
+    }
     [HttpGet("store/{storeId}")]
     public async Task<ActionResult> StorePage(int storeId,[FromQuery] int? categoryId, [FromQuery] string? pname, [FromQuery] bool? lastest, [FromQuery] bool? cheapest, [FromQuery] float? rating, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 25)
     {

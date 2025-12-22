@@ -59,13 +59,11 @@ namespace BidaTrader.API.Controllers
                 Role = "Customer",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                FirstName = request.UserName, // Lấy tạm username làm tên
-
-                // --- BỔ SUNG CÁC TRƯỜNG BẮT BUỘC ĐỂ TRÁNH LỖI NOT NULL ---
-                LastName = "",   // Không được để null
-                Phone = "",      // Không được để null
-                Address = "",    // Không được để null
-                AvatarUrl = ""   // Không được để null
+                FirstName = request.UserName,
+                LastName = "",
+                Phone = "",
+                Address = "",
+                AvatarUrl = ""
             };
 
             try
@@ -186,28 +184,42 @@ namespace BidaTrader.API.Controllers
 
         private string GenerateJwtToken(Account account)
         {
-            // 1. Tạo Claims (Dữ liệu quan trọng để phân quyền)
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()), // ID
-                new Claim(ClaimTypes.Name, account.UserName),               // UserName
-                new Claim("UID", account.Uid),                              // UID tùy chỉnh (AA0001)
-                new Claim(ClaimTypes.Role, account.Role),                   // Role (Admin/Store/Customer)
-                new Claim("IsActive", account.IsActive.ToString())          // Trạng thái hoạt động
-            };
+    {
+        // ===== Standard claims =====
+        new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 
-            if (account.StoreId.HasValue)
+        // ===== Identity =====
+        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+        new Claim(ClaimTypes.Name, account.UserName),
+        new Claim("UID", account.Uid),
+
+        // ===== Role =====
+        new Claim(ClaimTypes.Role, account.Role.Trim())
+    };
+
+            // ===== Store-specific claims =====
+            if (account.Role == "Store")
             {
-                claims.Add(new Claim("StoreId", account.StoreId.Value.ToString()));
+                claims.Add(new Claim("IsActive", account.IsActive ? "True" : "False"));
+
+                if (account.StoreId.HasValue)
+                {
+                    claims.Add(new Claim("StoreId", account.StoreId.Value.ToString()));
+                }
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
+            );
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(30),
+                Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = creds,
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"]

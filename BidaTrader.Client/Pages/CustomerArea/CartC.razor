@@ -1,0 +1,282 @@
+﻿@page "/cart"
+@attribute [Authorize]
+
+<PageTitle>Giỏ hàng</PageTitle>
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            @if (isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p>Đang tải giỏ hàng...</p>
+                </div>
+            }
+            else if (CartGroup.Count == 0)
+            {
+                <div class="alert alert-info text-center">
+                    Giỏ hàng của bạn đang trống.
+                    <a href="/">Tiếp tục mua sắm</a>
+                </div>
+            }
+else
+{
+        @foreach (var storeGroup in CartGroup)
+        {
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white d-flex align-items-center">
+                    <input type="checkbox" class="form-check-input me-2" checked="@storeGroup.IsSelected" @onchange="(e) => ToggleStore(storeGroup, e.Value)" />
+                    <i class="bi bi-shop me-2"></i>
+                    <span class="fw-bold">@storeGroup.StoreName</span>
+                    <span class="badge bg-label-primary ms-2"><i class="bi bi-chat-dots"></i> Chat</span>
+                </div>
+
+                <div class="card-body p-0">
+                    @foreach (var item in storeGroup.Items)
+                    {
+                        <div class="p-3 border-bottom d-flex align-items-center">
+                            <input type="checkbox" class="form-check-input me-3" checked="@item.IsSelected" @onchange="CalculateTotal" />
+                            <img src="@item.ProductImage" class="rounded border" style="width: 80px; height: 80px; object-fit: cover;" />
+
+                            <div class="ms-3 flex-grow-1">
+                                <h6 class="mb-1 text-truncate" style="max-width: 300px;">@item.ProductName</h6>
+                                @* <div class="text-muted small mb-1">Phân loại: @item.Variant</div> *@
+                                <div class="text-danger fw-bold">@item.Price.ToString("N0") ₫</div>
+                            </div>
+
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                        <button class="btn btn-outline-secondary"
+                                                @onclick="() => UpdateQuantity(item.ProductId, item.Quantity - 1)"
+                                                disabled="@(item.Quantity <= 1)">
+                                            -
+                                        </button>
+
+                                        <input type="text" class="form-control text-center"
+                                               value="@item.Quantity" readonly />
+
+                                        <button class="btn btn-outline-secondary"
+                                                @onclick="() => UpdateQuantity(item.ProductId, item.Quantity + 1)">
+                                            +
+                                        </button>
+                                    </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="card-footer bg-light">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="small fw-bold">Voucher Shop:</label>
+                            <select class="form-select form-select-sm">
+                                <option>Chọn mã giảm giá...</option>
+                                <option>GIAM10K - Giảm 10k</option>
+                                <option>FREESHIP - Miễn phí vận chuyển</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold">Đơn vị vận chuyển:</label>
+                            <select class="form-select form-select-sm" @bind="shippingMethod">
+                                <option value="Standard">Nhanh (30.000đ)</option>
+                                <option value="Express">Hỏa tốc (50.000đ)</option>
+                                <option value="Economy">Tiết kiệm (15.000đ)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+}
+        </div>
+                    <div class="col-lg-4">
+                <div class="card shadow-sm border-0 position-fixed">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">Thanh toán</h5>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <span>@subTotal.ToString("N0") ₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Phí vận chuyển:</span>
+                            <span>@shippingTotal.ToString("N0") ₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Giảm giá:</span>
+                            <span class="text-success">- @discountTotal.ToString("N0") ₫</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fw-bold fs-5">Tổng cộng:</span>
+                            <span class="fw-bold fs-5 text-danger">@((subTotal + shippingTotal - discountTotal).ToString("N0")) ₫</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Phương thức thanh toán</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="cod" checked>
+                                <label class="form-check-label" for="cod"><i class="bi bi-cash"></i> Thanh toán khi nhận hàng (COD)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="bank">
+                                <label class="form-check-label" for="bank"><i class="bi bi-bank"></i> Chuyển khoản ngân hàng</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="momo">
+                                <label class="form-check-label text-pink" for="momo"><i class="bi bi-wallet2"></i> Ví MoMo</label>
+                            </div>
+                        </div>
+
+                    <button class="btn btn-primary w-100 py-2"
+                            disabled="@isCheckingOut"
+                            @onclick="Checkout">
+                        @if (isCheckingOut)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2">Đang xử lý...</span>
+                        }
+                        else
+                        {
+                            <span>Mua Hàng (@selectedCount)</span>
+                        }
+                    </button>
+                </div>
+                </div>
+            </div>
+
+    </div>
+</div>
+
+@code {
+
+    // Sửa dòng này
+    private List<CartGroupDto> CartGroup { get; set; } = new List<CartGroupDto>();
+    bool isLoading = true;
+
+    private enum ShippingMethod { Standard, Express, Economy }
+
+    private ShippingMethod shippingMethod { get; set; }
+
+    double subTotal = 0;
+    double shippingTotal = 0;
+    double discountTotal = 0;
+    int selectedCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCart();
+    }
+
+    private async Task LoadCart()
+    {
+        isLoading = true;
+
+        var response = await Http.GetAsync("/api/cart");
+        if (response.IsSuccessStatusCode)
+        {
+            CartGroup = await response.Content.ReadFromJsonAsync<List<CartGroupDto>>() ?? new();
+        }
+
+        isLoading = false;
+    }
+
+    private void ToggleStore(CartGroupDto group, object checkedValue)
+    {
+        bool isChecked = (bool)checkedValue;
+        group.IsSelected = isChecked;
+        foreach (var item in group.Items) item.IsSelected = isChecked;
+        CalculateTotal();
+    }
+
+    private void CalculateTotal()
+    {
+        subTotal = 0;
+        selectedCount = 0;
+        shippingTotal = 0;
+        foreach (var group in CartGroup)
+        {
+            bool hasSelectedItem = false;
+            foreach (var item in group.Items)
+            {
+                if (item.IsSelected)
+                {
+                    subTotal += (Double)(item.Price * item.Quantity);
+                    selectedCount++;
+                    hasSelectedItem = true;
+                }
+            }
+            if (hasSelectedItem) shippingTotal += 30000;
+        }
+    }
+
+    private async Task UpdateQuantity(int productId, int quantity)
+    {
+        var updated = new AddToCartDto
+        {
+            ProductId = productId,
+            Quantity = quantity
+        };
+
+        var response = await Http.PutAsJsonAsync("api/cart/update", updated);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadCart();
+            CalculateTotal();
+        }
+    }
+
+    bool isCheckingOut = false;
+    string? checkoutError;
+
+    private async Task Checkout()
+    {
+        checkoutError = null;
+
+        var selectedItems = CartGroup
+            .SelectMany(g => g.Items)
+            .Where(i => i.IsSelected)
+            .Select(i => new CheckoutItemDto
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity
+            })
+            .ToList();
+
+        if (!selectedItems.Any())
+        {
+            checkoutError = "Bạn chưa chọn sản phẩm nào để mua.";
+            return;
+        }
+
+        var request = new CheckoutRequestDto
+        {
+            SelectedItems = selectedItems,
+            PaymentMethod = "COD", // hoặc bind từ UI
+            ShippingAddress = "123 Nguyễn Văn A, Q1, TP.HCM", // sau bind input
+            PhoneNumber = "0909000000"
+        };
+
+        isCheckingOut = true;
+
+        var response = await Http.PostAsJsonAsync("/api/cart/checkout", request);
+
+        isCheckingOut = false;
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadCart();
+            CalculateTotal();
+
+            // Option 1: chuyển trang
+            Navigation.NavigateTo("/orders");
+
+            // Option 2: toast / alert
+            // toastService.Success("Đặt hàng thành công!");
+        }
+        else
+        {
+            checkoutError = await response.Content.ReadAsStringAsync();
+        }
+    }
+
+}
