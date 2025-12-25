@@ -25,4 +25,8 @@
     <ProjectReference Include="..\BidaTrader.Shared\BidaTrader.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\avatars\" />
+  </ItemGroup>
+
 </Project>
