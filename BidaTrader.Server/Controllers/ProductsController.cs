@@ -1,8 +1,5 @@
 ﻿using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
-using BidaTrader.Shared.Models;
-using BidaTrader.Shared.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -11,188 +8,140 @@ using System.Security.Claims;
 [ApiController]
 public class ProductsController : ControllerBase
 {
-    private readonly IService<Product> _productService;
+    private readonly ProductService _productService;
 
-    public ProductsController(IService<Product> productService)
+    public ProductsController(ProductService productService)
     {
         _productService = productService;
     }
 
 
+    //Trang chủ
     [HttpGet("home")]
-    public async Task<ActionResult> HomePage([FromQuery] int? categoryId, [FromQuery] string? pname, [FromQuery] bool? lastest, [FromQuery] bool? highest, [FromQuery] float? rating , [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
+    public async Task<ActionResult<ProductPerPage>> HomePage(
+        [FromQuery] int? categoryId,
+        [FromQuery] int? brandId,
+        [FromQuery] string? pname,
+        [FromQuery] string? sname,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] bool? latest,
+        [FromQuery] bool? highest,
+        [FromQuery] float? rating,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 21)
     {
-        var (products, totalCount) = await ((ProductService)_productService).GetProductsForHomePageAsync(
-            categoryId, pname, lastest, highest, rating , pageIndex, pageSize);
+        var response = await ((ProductService)_productService).GetProductsForHomePageAsync(
+            categoryId,
+            brandId,
+            pname,
+            sname,
+            minPrice,
+            maxPrice,
+            latest,
+            highest,
+            rating,
+            pageIndex,
+            pageSize
+        );
 
-        if (products == null)
-        {
-            return Ok(new ProductPerPage());
-        }
-
-        var dtos = products.Select(p => new ProductDto
-        {
-            Id = p.Id,
-            CategoryId = p.CategoryId,
-            CategoryName = p.Category.Name,
-            Name = p.Name,
-            ImageUrl = p.ProductImages
-            .Where(pi => pi.IsMain)
-            .Select(pi => pi.ImageUrl)
-            .FirstOrDefault(),
-            Price = p.Price,
-            Quantity = p.Quantity,
-            Rating = p.Rating,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt,
-            StoreLogo =p.Store.LogoUrl,
-            StoreName =p.Store.StoreName
-        }).ToList();
-
-        // 3. Đóng gói vào PagedResponseDto
-        var pagedResponse = new ProductPerPage
-        {
-            Items = dtos,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
-
-        return Ok(pagedResponse); // ⬅️ TRẢ VỀ DTO PHÂN TRANG
+        return Ok(response);
     }
-
-    [HttpGet("my-store-products")]
-    public async Task<ActionResult<List<ProductDto>>> GetMyStoreProducts(string? pnam)
+    
+    
+    //Cửa hàng
+    [HttpGet("mystore")]
+    public async Task<ActionResult<ProductPerPage>> GetMyStore(
+        [FromQuery] int pageIndex=1,
+        [FromQuery] int pageSize=10)
     {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-
-        var dtos = await ((ProductService)_productService).GetProductMyStore(userId, pnam);
+        var userId = GetCurrentUserId();
+        var dtos = await _productService.GetMyStore(userId, pageIndex, pageSize);
         return Ok(dtos);
     }
+
+
     [HttpGet("store/{storeId}")]
-    public async Task<ActionResult> StorePage(int storeId,[FromQuery] int? categoryId, [FromQuery] string? pname, [FromQuery] bool? lastest, [FromQuery] bool? cheapest, [FromQuery] float? rating, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 25)
+    public async Task<ActionResult> StorePage(int storeId,
+        [FromQuery] int? categoryId,
+        [FromQuery] int? brandId,
+        [FromQuery] string? pname,
+        [FromQuery] string? sname,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] bool? latest,
+        [FromQuery] bool? highest,
+        [FromQuery] float? rating,
+        [FromQuery] int pageIndex,
+        [FromQuery] int pageSize)
     {
-        var (products, total) = await ((ProductService)_productService).GetProductsForStorePageAsync(storeId, categoryId, pname, lastest, cheapest, rating, pageIndex, pageSize);
-
-        if (products == null) return Ok(new ProductPerPage());
-
-        var dtos = products.Select(p => new ProductDto
-        {
-            Id = p.Id,
-            CategoryId = p.CategoryId,
-            CategoryName = p.Category.Name,
-            Name = p.Name,
-            ImageUrl = p.ProductImages
-            .Where(pi => pi.IsMain)
-            .Select(pi => pi.ImageUrl)
-            .FirstOrDefault(),
-            Price = p.Price,
-            Quantity = p.Quantity,
-            Rating = p.Rating,
-        }).ToList();
-
-        var response = new ProductPerPage
-        {
-            Items = dtos,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalCount = total
-        };
+        var response = await ((ProductService)_productService).GetProductsForStorePageAsync(
+            storeId,
+            categoryId,
+            brandId,
+            pname,
+            sname,
+            minPrice,
+            maxPrice,
+            latest,
+            highest,
+            rating,
+            pageIndex=1,
+            pageSize=10
+        );
 
         return Ok(response);
     }
 
-    [HttpGet]
-    public async Task<ActionResult<ProductPerPage>> GetProducts([FromQuery] int? categoryId, [FromQuery] string? searchKey, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
-    {
-
-        var (products, totalCount) = await ((ProductService)_productService).GetProductsForPaginationAsync(
-            categoryId, searchKey, pageIndex, pageSize);
-
-        if (products == null)
-        {
-            return Ok(new ProductPerPage());
-        }
-
-        var dtos = products.Select(p => new ProductDto
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Price = p.Price,
-            CategoryId = p.CategoryId,
-            // Đã được Include từ Service
-            CategoryName = p.Category?.Name ?? "N/A",
-            ImageUrl = p.ProductImages.FirstOrDefault()?.ImageUrl ?? "img/default.png"
-        }).ToList();
-
-        // 3. Đóng gói vào PagedResponseDto
-        var pagedResponse = new ProductPerPage
-        {
-            Items = dtos,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
-
-        return Ok(pagedResponse); // ⬅️ TRẢ VỀ DTO PHÂN TRANG
-    }
-
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+    public async Task<ActionResult<ProductDto>> GetProductById(int id)
     {
         var product = await _productService.GetItemByIdAsync(id);
-
-        // 1. Sửa Status Code: 404 Not Found là chuẩn cho tài nguyên không tồn tại
-        if (product == null) return NotFound("Không tìm thấy sản phẩm.");
-
-        // 2. Mapping Entity -> DTO (Output)
-        var dto = new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price,
-            CategoryId = product.CategoryId,
-            CategoryName = product.Category?.Name ?? "N/A",
-            ImageUrl = product.ProductImages.FirstOrDefault()?.ImageUrl ?? "img/default.png"
-        };
-
-        // 3. Trả về DTO
-        return Ok(dto);
+        return Ok(product);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePrduct([FromBody] ProductDto dto)
+    public async Task<IActionResult> CreatePrduct([FromBody] ProductCreateUpdateDto dto)
     {
-        var item = new Product
+        // Kiểm tra tính hợp lệ của Model (DataAnnotations trong DTO)
+        if (!ModelState.IsValid)
         {
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            CategoryId = dto.CategoryId,
-            StoreId = dto.StoreId
-        };
-        var created = await _productService.CreateItemAsync(item);
-        if (!created) return BadRequest("Tạo mới sản phẩm thất bại.");
-        return NoContent();
-    }
+            return BadRequest(ModelState);
+        }
 
+        try
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId <= 0)
+            {
+                return Unauthorized("Không tìm thấy thông tin người dùng.");
+            }
+
+            var created = await _productService.CreateProductAsync(dto, userId);
+
+            if (!created)
+            {
+                return BadRequest("Tạo mới sản phẩm thất bại. Vui lòng kiểm tra lại thông tin cửa hàng hoặc dữ liệu nhập.");
+            }
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Lỗi Server: " + ex.Message);
+        }
+    }
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto dto)
     {
         if (id != dto.Id) return BadRequest("ID không khớp.");
         var existingProduct = await _productService.GetItemByIdAsync(id);
         if (existingProduct == null) return NotFound("Không tìm thấy sản phẩm để cập nhật.");
-        existingProduct.Name = dto.Name;
-        existingProduct.Description = dto.Description;
-        existingProduct.Price = dto.Price;
-        existingProduct.CategoryId = dto.CategoryId;
-        existingProduct.StoreId = dto.StoreId;
-        existingProduct.UpdatedAt = DateTime.UtcNow;
-        var updated = await _productService.UpdateItemAsync(existingProduct);
+        var updated = await _productService.UpdateItemAsync(dto);
         if (!updated) return BadRequest("Cập nhật sản phẩm thất bại");
         return NoContent();
     }
-
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProduct(int id)
@@ -203,4 +152,15 @@ public class ProductsController : ControllerBase
         if (!deleted) return BadRequest("Xóa sản phẩm thất bại");
         return NoContent();
     }
+
+    private int GetCurrentUserId()
+    {
+        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (idClaim != null && int.TryParse(idClaim.Value, out int userId))
+        {
+            return userId;
+        }
+        throw new Exception("User not found in token");
+    }
+
 }

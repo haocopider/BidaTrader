@@ -17,7 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IService<>), typeof(ServerService<>));
-builder.Services.AddScoped<IService<Product>, ProductService>();
+builder.Services.AddScoped<ProductService, ProductService>();
 builder.Services.AddScoped<IService<Category>, CategoryService>();
 builder.Services.AddScoped<IService<Brand>, BrandService>();
 builder.Services.AddScoped<IService<Account>, AccountService>();
@@ -117,7 +117,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseFileServer();
+app.UseStaticFiles();
 // Thay thế UseCors cũ bằng UseCors mới
 app.UseCors("AllowBlazorClient");
 

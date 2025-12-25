@@ -9,6 +9,7 @@ namespace BidaTrader.Shared.DTOs
     {
         public int Id { get; set; }
         public int AccountId { get; set; }
+        public string? OwnerId { get; set; }
         public string StoreName { get; set; } = null!;
         public string? LogoUrl { get; set; }
         public string? Phone { get; set; }

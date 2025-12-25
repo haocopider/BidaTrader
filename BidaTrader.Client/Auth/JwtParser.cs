@@ -18,7 +18,6 @@ namespace BidaTrader.Client.Auth
             {
                 foreach (var kvp in keyValuePairs)
                 {
-                    // Xử lý riêng cho Role (vì có thể là mảng)
                     if (kvp.Key == "role" || kvp.Key == ClaimTypes.Role)
                     {
                         if (kvp.Value is JsonElement rolesElem && rolesElem.ValueKind == JsonValueKind.Array)
@@ -33,12 +32,10 @@ namespace BidaTrader.Client.Auth
                             claims.Add(new Claim(ClaimTypes.Role, kvp.Value.ToString()!));
                         }
                     }
-                    // Xử lý các Standard Claims khác (Map sang chuẩn .NET)
                     else if (kvp.Key == "sub") claims.Add(new Claim(ClaimTypes.NameIdentifier, kvp.Value.ToString()!));
                     else if (kvp.Key == "unique_name") claims.Add(new Claim(ClaimTypes.Name, kvp.Value.ToString()!));
                     else if (kvp.Key == "email") claims.Add(new Claim(ClaimTypes.Email, kvp.Value.ToString()!));
 
-                    // QUAN TRỌNG: Lấy tất cả các Claim còn lại (StoreId, UID, IsActive...)
                     else
                     {
                         claims.Add(new Claim(kvp.Key, kvp.Value.ToString()!));

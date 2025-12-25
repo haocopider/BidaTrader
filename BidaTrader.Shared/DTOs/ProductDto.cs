@@ -16,9 +16,8 @@ namespace BidaTrader.Shared.DTOs
 
         [Required]
         public int CategoryId { get; set; }
-
-        [Required]
         public int StoreId { get; set; }
+        public int? BrandId { get; set; }
         public int? Quantity { get; set; }
 
         public double? Rating { get; set; }
@@ -29,9 +28,28 @@ namespace BidaTrader.Shared.DTOs
 
         public DateTime? UpdatedAt { get; set; }
         public string? ImageUrl { get; set; }
+        public List<string> Images { get; set; }
         public string CategoryName { get; set; } = "N/A";
         public string StoreName { get; set; } = "N/A";
+        public string? BrandName { get; set; }
         public string? StoreLogo { get; set; }
+    }
+
+    public class ProductCreateUpdateDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;
+
+        public string? Description { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Giá phải lớn hơn 0")]
+        public decimal Price { get; set; }
+        [Required]
+        public int CategoryId { get; set; }
+        public int? BrandId { get; set; }
+        public int? Quantity { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public List<string> Images { get; set; }
     }
 
     public class ProductPerPage
@@ -40,9 +58,7 @@ namespace BidaTrader.Shared.DTOs
 
         public int PageIndex { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public int TotalCount { get; set; } // Tổng số lượng sản phẩm TRONG DB (QUAN TRỌNG)
-
-        // Thuận tiện cho UI tính toán tổng số trang
+        public int TotalCount { get; set; }
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
     }
 

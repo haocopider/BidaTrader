@@ -1,56 +1,170 @@
-﻿using BidaTrader.Shared.DTOs;
+﻿using BidaTrader.Server.Helpers;
+using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace BidaTrader.Server.Services
 {
-    public class ProductService : ServerService<Product>
+    public class ProductService : ServerService<ProductDto>
     {
-        public ProductService(AppDbContext context) : base(context) { }
-
-        // GHI ĐÈ (OVERRIDE) hàm Create để thêm thời gian tạo
-        public override async Task<bool> CreateItemAsync(Product product)
-        {
-            product.CreatedAt = DateTime.Now;
-            product.IsActive = true;
-            return await base.CreateItemAsync(product);
+        private readonly IWebHostEnvironment _env;
+        public ProductService(AppDbContext context, IWebHostEnvironment env) : base(context) { 
+            _env = env;
         }
 
-        // GHI ĐÈ (OVERRIDE) hàm Update để xử lý Business Logic & Audit
-        public override async Task<bool> UpdateItemAsync(Product productInput)
+        public override async Task<ProductDto?> GetItemByIdAsync(int id)
         {
-            // 1. Lấy dữ liệu cũ từ DB
-            var existingProduct = await _dbSet.FindAsync(productInput.Id);
-            if (existingProduct == null) return false;
-
-            // 2. Chỉ cập nhật các trường cho phép (Mapping an toàn)
-            existingProduct.Name = productInput.Name;
-            existingProduct.Description = productInput.Description;
-            existingProduct.Price = productInput.Price;
-            existingProduct.CategoryId = productInput.CategoryId;
-
-            // 3. Logic Audit: Cập nhật thời gian sửa
-            existingProduct.UpdatedAt = DateTime.Now;
-
-            // 4. Lưu (EF Core tự nhận biết thay đổi)
-            return await _context.SaveChangesAsync() > 0;
-        }
-
-        // GHI ĐÈ hàm GetItems để Include Category (Eager Loading)
-        public override async Task<List<Product>?> GetItemsAsync(string? queryString = null)
-        {
-            // Query cơ bản có Include Category
-            var products = _dbSet.Include(p => p.Category)
-                .Include(p => p.Brand)
+            var p = await _context.Products
+                .Include(p => p.Category)
                 .Include(p => p.Store)
-                .AsQueryable();
+                .Include(p => p.Brand)
+                .Include(p => p.ProductImages)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-            // Xử lý lọc đơn giản nếu cần thiết tại Service
-            return await products.ToListAsync();
+            if (p == null) return null;
+
+            return new ProductDto
+            {
+                Id = p.Id,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.Name,
+                Name = p.Name,
+                Description = p.Description,
+                ImageUrl = p.ProductImages?.FirstOrDefault(i => i.IsMain)?.ImageUrl
+                           ?? p.ProductImages?.FirstOrDefault()?.ImageUrl,
+
+                Images = p.ProductImages?.Select(i => i.ImageUrl).ToList() ?? new List<string>(),
+                Price = p.Price,
+                Quantity = p.Quantity,
+                Rating = p.Rating,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                StoreId = p.StoreId,
+                BrandId = p.BrandId,
+                StoreLogo = p.Store?.LogoUrl,
+                StoreName = p.Store?.StoreName,
+                BrandName = p.Brand?.Name ?? "Không có thương hiệu"
+            };
         }
 
-        public async Task<List<ProductDto>> GetProductMyStore(int accountId, string? pnam)
+        public async Task<bool> CreateProductAsync(ProductCreateUpdateDto dto, int accountId)
+        {
+            try
+            {
+                var store = await _context.Stores.FirstOrDefaultAsync(s => s.AccountId == accountId);
+                if (store == null)
+                {
+                    Console.WriteLine($"Không tìm thấy cửa hàng cho AccountId: {accountId}");
+                    return false;
+                }
+
+                var product = new Product
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    Price = dto.Price,
+                    Quantity = dto.Quantity ?? 1,
+                    CategoryId = dto.CategoryId,
+                    BrandId = dto.BrandId,
+                    StoreId = store.Id,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    IsActive = true,
+                    Rating = 5,
+                };
+
+                if (dto.Images != null && dto.Images.Any())
+                {
+                    for (int i = 0; i < dto.Images.Count; i++)
+                    {
+                        string imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
+
+                        if (!string.IsNullOrEmpty(imageUrl))
+                        {
+                            product.ProductImages.Add(new ProductImage
+                            {
+                                ImageUrl = imageUrl,
+                                IsMain = (i == 0)
+                            });
+                        }
+                    }
+                }
+
+                await _context.Products.AddAsync(product);
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tạo sản phẩm: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Chi tiết lỗi: {ex.InnerException.Message}");
+                }
+                return false;
+            }
+        }
+        public override async Task<bool> UpdateItemAsync( ProductDto dto)
+        {
+            try
+            {
+                var product = await _context.Products
+                    .Include(p => p.ProductImages)
+                    .FirstOrDefaultAsync(p => p.Id == dto.Id);
+
+                if (product == null) return false;
+
+                // Cập nhật thông tin cơ bản
+                product.Name = dto.Name;
+                product.Description = dto.Description;
+                product.Price = dto.Price;
+                product.Quantity = dto.Quantity ?? 1;
+                product.CategoryId = dto.CategoryId;
+                product.BrandId = dto.BrandId;
+                product.UpdatedAt = DateTime.Now;
+
+                if (dto.Images != null && dto.Images.Any())
+                {
+                    for (int i = 0; i < dto.Images.Count; i++)
+                    {
+                        // Gọi hàm lưu ảnh ra folder
+                        string imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
+
+                        product.ProductImages.Add(new ProductImage
+                        {
+                            ImageUrl = imageUrl,
+                            IsMain = (i == 0)
+                        });
+                    }
+                }
+
+                _context.Products.Update(product);
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public override async Task<bool> DeleteItemAsync(int id)
+        {
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null) return false;
+
+                _context.Products.Remove(product);
+                // Do có quan hệ Cascade Delete nên ProductImages sẽ tự động bị xóa theo
+                return await _context.SaveChangesAsync() > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<ProductPerPage> GetMyStore(int accountId,int pageIndex, int pageSize)
         {
             var store = await _context.Stores
                 .FirstOrDefaultAsync(s => s.AccountId == accountId);
@@ -65,171 +179,168 @@ namespace BidaTrader.Server.Services
                 .Where(p => p.StoreId == store.Id)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(pnam))
-            {
-                query = query.Where(p =>
-                    EF.Functions.Like(p.Name, $"%{pnam}%"));
-            }
+            int totalCount = await query.CountAsync();
+            var products = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            var data = await query.ToListAsync();
-
-            return data.Select(p => new ProductDto
+            var dtos = products.Select(p => new ProductDto
             {
                 Id = p.Id,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 Name = p.Name,
-                ImageUrl = p.ProductImages
-                    .FirstOrDefault(pi => pi.IsMain)?.ImageUrl,
+                ImageUrl = p.ProductImages?
+                            .Where(i => i.IsMain)
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault(),
                 Price = p.Price,
                 Quantity = p.Quantity,
                 Rating = p.Rating,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
+                StoreId = p.StoreId,
+                BrandId = p.BrandId ?? null,
                 StoreLogo = p.Store.LogoUrl,
                 StoreName = p.Store.StoreName
             }).ToList();
-        }
 
-        public async Task ToBin(List<Product> products)
-        {
-            foreach (var product in products)
+            return new ProductPerPage
             {
-                var existingProduct = await _dbSet.FindAsync(product.Id);
-                if (existingProduct != null)
-                {
-                    existingProduct.IsActive = false;
-                    existingProduct.UpdatedAt = DateTime.Now;
-                } 
-            }
+                Items = dtos,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
-        public async Task<List<Product>?> GetFilteredProductsAsync(int? categoryId, string? searchKey)
+        public async Task<ProductPerPage> GetProductsForHomePageAsync(
+            int? categoryId,
+            int? brandId,
+            string? pname,
+            string? sname,
+            decimal? minPrice,
+            decimal? maxPrice,
+            bool? latest,
+            bool? highest,
+            float? rating,
+            int pageIndex,
+            int pageSize)
         {
+
             var query = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.ProductImages)
+                .Include(p => p.Store)
                 .AsQueryable();
 
-            if (categoryId.HasValue)
-            {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
+            if (categoryId > 0)
+                query = query.Where(p => p.CategoryId == categoryId);
 
-            if (!string.IsNullOrEmpty(searchKey))
-            {
-                query = query.Where(p => p.Name.ToLower().Contains(searchKey));
-            }
+            if (brandId > 0)
+                query = query.Where(p => p.BrandId == brandId);
 
-            return await query.ToListAsync();
-        }
-
-        public async Task<(List<Product> Products, int TotalCount)> 
-            GetProductsForPaginationAsync(int? categoryId, string? searchKey, int pageIndex,int pageSize)
-        {
-            var query = _context.Products
-                .Include(p => p.Category)
-                .AsQueryable();
-
-            // Lọc theo Category
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
-
-            // Lọc theo Search Key
-            if (!string.IsNullOrWhiteSpace(searchKey))
-            {
-                string searchLower = searchKey!.ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(searchLower));
-            }
-
-            // 1. Lấy tổng số lượng (trước khi phân trang)
-            int totalCount = await query.CountAsync();
-
-            // 2. Phân trang (Skip/Take)
-            var pagedProducts = await query
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return (pagedProducts, totalCount);
-        }
-
-        public async Task<(List<Product> Products, int TotalCount)>GetProductsForHomePageAsync(int? categoryId, string? pname, bool? lastest, bool? hightest, float? rating , int pageIndex, int pageSize)
-        {
-            var query = _context.Products
-                .Include(c => c.Category)
-                .Include(pi => pi.ProductImages)
-                .Include(s => s.Store)
-                .AsQueryable();
-
-            // Lọc theo Category
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
-
-            // Lọc theo tên sản phẩm
             if (!string.IsNullOrWhiteSpace(pname))
-            {
-                string searchLower = pname!.ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(searchLower));
-            }
+                query = query.Where(p => p.Name.Contains(pname));
 
-            if (lastest.HasValue && lastest.Value)
-            {
-                query = query.OrderByDescending(p => p.CreatedAt);
-            }
+            if (!string.IsNullOrWhiteSpace(sname))
+                query = query.Where(p => p.Store.StoreName.Contains(sname));
 
-            if (hightest.HasValue && hightest.Value)
-            {
+            if (rating > 0)
+                query = query.Where(p => p.Rating >= rating);
+
+            if (minPrice.HasValue)
+                query = query.Where(p => p.Price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.Price <= maxPrice.Value);
+
+            if (highest == true)
                 query = query.OrderByDescending(p => p.Price);
-            }
+            else if (latest == true)
+                query = query.OrderByDescending(p => p.CreatedAt);
+            else
+                query = query.OrderByDescending(p => p.Id);
 
-            if (rating.HasValue && rating.Value > 0)
-            {
-                query = query.Where(p => p.Rating >= rating.Value);
-            }
-
-            // 1. Lấy tổng số lượng (trước khi phân trang)
             int totalCount = await query.CountAsync();
-
-            // 2. Phân trang (Skip/Take)
-            var pagedProducts = await query
+            var products = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return (pagedProducts, totalCount);
-        }
+            var dtos = products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                Name = p.Name,
+                ImageUrl = p.ProductImages?
+                            .Where(i => i.IsMain)
+                            .Select(i => i.ImageUrl)
+                            .FirstOrDefault(),
+                Price = p.Price,
+                Quantity = p.Quantity,
+                Rating = p.Rating,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                StoreId = p.StoreId,
+                StoreLogo = p.Store.LogoUrl,
+                StoreName = p.Store.StoreName
+            }).ToList();
 
-        public async Task<(List<Product> Products, int TotalCount)> GetProductsForStorePageAsync(int storeId, int? categoryId, string? pname, bool? lastest, bool? cheapest, float? rating ,int pageIndex =1, int pageSize=25)
+            return new ProductPerPage
+            {
+                Items = dtos,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
+        
+        public async Task<ProductPerPage> GetProductsForStorePageAsync(
+            int storeId,
+            int? categoryId,
+            int? brandId,
+            string? pname,
+            string? sname,
+            decimal? minPrice,
+            decimal? maxPrice,
+            bool? latest,
+            bool? highest,
+            float? rating,
+            int pageIndex,
+            int pageSize)
         {
             var query = _context.Products.Include(c => c.Store).Include(c => c.Category).Include(pi => pi.ProductImages).Where(s => s.StoreId == storeId).AsQueryable();
 
-            if (categoryId.HasValue && categoryId.Value > 0) query = query.Where(c => c.CategoryId == categoryId.Value);
-            // Lọc theo tên sản phẩm
+            if (categoryId > 0)
+                query = query.Where(p => p.CategoryId == categoryId);
+
+            if (brandId > 0)
+                query = query.Where(p => p.BrandId == brandId);
+
             if (!string.IsNullOrWhiteSpace(pname))
-            {
-                string searchLower = pname!.ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(searchLower));
-            }
+                query = query.Where(p => p.Name.Contains(pname));
 
-            if (lastest.HasValue && lastest.Value)
-            {
+            if (!string.IsNullOrWhiteSpace(sname))
+                query = query.Where(p => p.Store.StoreName.Contains(sname));
+
+            if (rating > 0)
+                query = query.Where(p => p.Rating >= rating);
+
+            if (minPrice.HasValue)
+                query = query.Where(p => p.Price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.Price <= maxPrice.Value);
+
+            if (highest == true)
+                query = query.OrderByDescending(p => p.Price);
+            else if (latest == true)
                 query = query.OrderByDescending(p => p.CreatedAt);
-            }
-
-            if (cheapest.HasValue && cheapest.Value)
-            {
-                query = query.OrderBy(p => p.Price);
-            }
-
-            if (rating.HasValue && rating.Value > 0)
-            {
-                query = query.Where(p => p.Rating >= rating.Value);
-            }
-
+            
             // 1. Lấy tổng số lượng (trước khi phân trang)
             int totalCount = await query.CountAsync();
 
@@ -239,7 +350,67 @@ namespace BidaTrader.Server.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            return (pagedProducts, totalCount);
+            var dtos = pagedProducts.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                Name = p.Name,
+                ImageUrl = p.ProductImages?
+                .Where(i => i.IsMain)
+                .Select(i => i.ImageUrl)
+                .FirstOrDefault(),
+                Price = p.Price,
+                Quantity = p.Quantity,
+                Rating = p.Rating,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                StoreId = p.StoreId,
+                StoreLogo = p.Store.LogoUrl,
+                StoreName = p.Store.StoreName
+            }).ToList();
+
+            return new ProductPerPage
+            {
+                Items = dtos,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
+
+        private async Task<string> SaveImageToFolder(string base64String, string productName)
+        {
+            if (string.IsNullOrEmpty(base64String) || !base64String.Contains("base64,"))
+                return base64String;
+
+            try
+            {
+                // 1. Xử lý đường dẫn an toàn
+                string webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+                var uploadsFolder = Path.Combine(webRootPath, "uploads", "products");
+
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                // 2. Decode Base64
+                var dataIndex = base64String.IndexOf("base64,") + 7;
+                var cleanBase64 = base64String.Substring(dataIndex);
+                var buffer = Convert.FromBase64String(cleanBase64);
+
+                // 3. Tạo file name duy nhất
+                var fileName = $"{Guid.NewGuid()}.jpg";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // 4. Ghi file
+                await File.WriteAllBytesAsync(filePath, buffer);
+
+                return $"/uploads/products/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi SaveImage: {ex.Message}");
+                return string.Empty;
+            }
         }
     }
 }
