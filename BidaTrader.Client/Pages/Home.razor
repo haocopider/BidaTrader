@@ -92,301 +92,396 @@
 <PageTitle>Trang chủ - BidaTrader</PageTitle>
 
 <div class="container-fluid py-4">
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body border-top border-4 border-primary rounded-top">
-            <div class="row g-3">
-
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-primary text-white border-primary">
-                            <i class="bi bi-grid-fill"></i>
-                        </span>
-                        <select class="form-select border-primary text-primary fw-bold"
-                                style="--bs-bg-opacity: .1; background-color: rgba(var(--bs-primary-rgb), .1);"
-                                @onchange="OnCategoryChanged">
-                            <option value="0" class="text-dark">📂 Danh mục sản phẩm</option>
-                            @foreach (var cat in categories)
-                            {
-                                <option value="@cat.Id" class="text-dark">@cat.Name</option>
-                            }
-                        </select>
+    <div class="row g-4">
+        <aside class="col-lg-3">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 85px; border-radius: 12px;">
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 text-uppercase small text-muted"><i class="bx bx-package me-2"></i>Sản phẩm</h6>
+                        <div class="input-group input-group-merge border rounded-pill overflow-hidden">
+                            <span class="input-group-text border-0 bg-white"><i class="bx bx-search"></i></span>
+                            <input type="text" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Tên sản phẩm..."
+                                   @bind="SearchTerm"
+                                   @bind:event="oninput"
+                                   @onkeyup="HandleSearchEnter" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(SearchTerm))
+                        {
+                            <div class="form-text text-primary small ms-2 animate__animated animate__fadeIn">
+                                Đang lọc theo sản phẩm...
+                            </div>
+                        }
                     </div>
-                </div>
 
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-success text-white border-success">
-                            <i class="bi bi-cash-coin"></i>
-                        </span>
-                        <select class="form-select border-success text-success fw-bold"
-                                style="background-color: rgba(var(--bs-success-rgb), .1);"
-                                @bind="filter.SortPrice">
-                            <option value="none" class="text-dark">💰 Giá bán</option>
-                            <option value="asc" class="text-dark">📈 Thấp đến Cao</option>
-                            <option value="desc" class="text-dark">📉 Cao đến Thấp</option>
-                        </select>
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 text-uppercase small text-muted"><i class="bx bx-store me-2"></i>Cửa hàng</h6>
+                        <div class="input-group input-group-merge border rounded-pill overflow-hidden">
+                            <span class="input-group-text border-0 bg-white"><i class="bx bx-buildings"></i></span>
+                            <input type="text" class="form-control border-0 shadow-none ps-0"
+                                   placeholder="Tên cửa hàng..."
+                                   @bind="StoreSearchTerm"
+                                   @bind:event="oninput"
+                                   @onkeyup="HandleSearchEnter" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(StoreSearchTerm))
+                        {
+                            <div class="form-text text-primary small ms-2 animate__animated animate__fadeIn">
+                                Đang lọc theo cửa hàng...
+                            </div>
+                        }
                     </div>
-                </div>
 
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-info text-white border-info">
-                            <i class="bi bi-clock-history"></i>
-                        </span>
-                        <select class="form-select border-info text-info fw-bold"
-                                style="background-color: rgba(var(--bs-info-rgb), .1);"
-                                @bind="filter.SortDate">
-                            <option value="none" class="text-dark">📅 Thời gian</option>
-                            <option value="newest" class="text-dark">✨ Mới nhất</option>
-                            <option value="oldest" class="text-dark">🕰️ Cũ nhất</option>
-                        </select>
+                    <hr class="text-muted opacity-25" />
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3 text-uppercase small text-muted"><i class="bx bx-wallet me-2"></i>Giá (VNĐ)</h6>
+                        <div class="d-flex flex-column gap-2 ms-1">
+                            <label class="form-check-label custom-option custom-option-basic rounded">
+                                <input class="form-check-input me-2" type="radio" name="priceRange"
+                                       checked="@(SelectedPriceRange == PriceRange.None)" @onclick="() => SelectPrice(PriceRange.None)">
+                                <span>Tất cả giá</span>
+                            </label>
+                            <label class="form-check-label custom-option custom-option-basic">
+                                <input class="form-check-input me-2" type="radio" name="priceRange"
+                                       checked="@(SelectedPriceRange == PriceRange.OneToThree)" @onclick="() => SelectPrice(PriceRange.OneToThree)">
+                                <span>1tr - 3tr</span>
+                            </label>
+                            <label class="form-check-label custom-option custom-option-basic">
+                                <input class="form-check-input me-2" type="radio" name="priceRange"
+                                       checked="@(SelectedPriceRange == PriceRange.ThreeToFive)" @onclick="() => SelectPrice(PriceRange.ThreeToFive)">
+                                <span>3tr - 5tr</span>
+                            </label>
+                            <label class="form-check-label custom-option custom-option-basic">
+                                <input class="form-check-input me-2" type="radio" name="priceRange"
+                                       checked="@(SelectedPriceRange == PriceRange.OverTen)" @onclick="() => SelectPrice(PriceRange.OverTen)">
+                                <span>Trên 10tr</span>
+                            </label>
+                        </div>
+
+                        <div class="mt-4 px-1">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small text-muted">Dưới:</span>
+                                <span class="fw-bold text-primary">@MaxPriceSlider.ToString("N0")</span>
+                            </div>
+                            <input type="range" class="form-range" min="0" max="50000000" step="500000"
+                                   @bind="MaxPriceSlider" @bind:event="oninput" @onchange="OnSliderChanged">
+                        </div>
                     </div>
-                </div>
 
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-warning text-white border-warning">
-                            <i class="bi bi-star-fill"></i>
-                        </span>
-                        <select class="form-select border-warning text-warning fw-bold"
-                                style="background-color: rgba(var(--bs-warning-rgb), .1);"
-                                @bind="filter.MinRating">
-                            <option value="0" class="text-dark">⭐ Đánh giá</option>
-                            <option value="5" class="text-dark">⭐⭐⭐⭐⭐ (5 Sao)</option>
-                            <option value="4" class="text-dark">⭐⭐⭐⭐ (4+ Sao)</option>
-                            <option value="3" class="text-dark">⭐⭐⭐ (3+ Sao)</option>
-                        </select>
-                    </div>
+                    <button class="btn btn-primary w-100 mb-2 shadow-sm rounded-pill" @onclick="ApplyFilters">
+                        <i class="bx bx-filter-alt me-1"></i> Áp dụng
+                    </button>
+                    <button class="btn btn-outline-label-secondary w-100 rounded-pill" @onclick="ResetFilters">
+                        <i class="bx bx-reset me-1"></i> Reset
+                    </button>
                 </div>
-
             </div>
-        </div>
-    </div>
-    @if (isLoading)
-    {
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Đang tải sản phẩm...</p>
-        </div>
-    }
-    else if (Products.Items == null || Products.Items.Count == 0)
-    {
-        <div class="alert alert-warning text-center" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> Không tìm thấy sản phẩm nào phù hợp với tiêu chí lọc.
-        </div>
-    }
-    else
-    {
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var product in Products.Items)
+        </aside>
+        <main class="col-lg-9">
+            @if (isLoading) { /* Spinner... */ }
+            else if (Products.Items.Count == 0)
             {
-                <div class="col">
-                    <div class="card h-100 shadow-sm product-card border-0 transition-hover">
-                        <div class="position-relative overflow-hidden border-radius-top">
-                            <img src="@product.ImageUrl"
-                                 class="card-img-top zoom-effect"
-                                 alt="@product.Name"
-                                 style="height: 220px; object-fit: cover;">
-
-                            <div class="position-absolute top-0 start-0 m-2">
-                                <span class="badge bg-danger shadow-sm">Yêu thích</span>
-                            </div>
-
-                            <div class="position-absolute bottom-0 start-0 m-2 d-flex align-items-center bg-white bg-opacity-75 rounded-pill pe-2 shadow-sm border border-white"
-                                 style="backdrop-filter: blur(4px); cursor: pointer;"
-                                 @onclick='() => Navigation.NavigateTo($"/store/{product.StoreId}")'>
-                                <img src="@product.StoreLogo"
-                                     class="rounded-circle border border-2 border-white"
-                                     style="width: 32px; height: 32px; object-fit: cover;"
-                                     alt="Store Avatar">
-                                <small class="ms-1 fw-bold text-dark text-truncate" style="max-width: 80px;">@product.StoreName</small>
-                            </div>
-                        </div>
-
-                        <div class="card-body d-flex flex-column p-3">
-                            <h6 class="card-title text-dark fw-bold mb-1 text-truncate-2"
-                                style="height: 2.4rem; line-height: 1.2rem;" title="@product.Name">
-                                @product.Name
-                            </h6>
-
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="text-warning small me-2">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {
-                                        if (i <= (product.Rating)) // Giả sử dùng biến Rating thật
-                                        {
-                                            <i class="bi bi-star-fill"></i>
-                                        }
-                                        else
-                                        {
-
-                                            <i class="bi bi-star"></i>
-                                        }
-                                    }
-                                </div>
-                                <small class="text-muted border-start ps-2">Kho: @product.Quantity</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <span class="text-primary fw-bolder fs-5">@product.Price.ToString("N0")</span>
-                                <span class="text-primary small fw-bold"> VNĐ</span>
-                            </div>
-
-                            <div class="mt-auto d-flex gap-2">
-                                <a href="/product/@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill">
-                                    <i class="bi bi-eye"></i> Xem
-                                </a>
-                                <button @onclick="() => AddToCart(product.Id)" class="btn btn-primary btn-sm flex-grow-1 rounded-pill shadow-sm">
-                                    <i class="bi bi-cart-plus"></i> Thêm
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 text-end">
-                            <small class="text-muted" style="font-size: 0.7rem;">
-                                <i class="bi bi-clock"></i>
-                                @(product.UpdatedAt.HasValue? product.UpdatedAt.Value.ToString("dd/MM/yyyy") : product.CreatedAt.Value.ToString("dd/MM/yyyy"))
-                            </small>
-                        </div>
-                    </div>
+                <div class="text-center py-5 card modern-card shadow-sm">
+                    <i class="bi bi-search-heart fs-1 text-muted"></i>
+                    <h5 class="mt-3 fw-bold">Rất tiếc, không tìm thấy sản phẩm!</h5>
+                    <p class="text-muted px-4">Hãy thử thay đổi từ khóa tìm kiếm hoặc khoảng giá của bạn.</p>
                 </div>
             }
-        </div>
-    }
+            else
+            {
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                    @foreach (var product in Products.Items)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm product-card border-0 transition-hover">
+                                <div class="position-relative overflow-hidden border-radius-top">
+                                    <img src="@product.ImageUrl"
+                                         class="card-img-top zoom-effect"
+                                         alt="@product.Name"
+                                         style="height: 220px; object-fit: cover;">
+
+                                    <div class="position-absolute top-0 start-0 m-2">
+                                        <span class="badge bg-danger shadow-sm">Yêu thích</span>
+                                    </div>
+
+                                    <div class="position-absolute bottom-0 start-0 m-2 d-flex align-items-center bg-white bg-opacity-75 rounded-pill pe-2 shadow-sm border border-white"
+                                         style="backdrop-filter: blur(4px); cursor: pointer;"
+                                         @onclick='() => Navigation.NavigateTo($"/store/{product.StoreId}")'>
+                                        <img src="@product.StoreLogo"
+                                             class="rounded-circle border border-2 border-white"
+                                             style="width: 32px; height: 32px; object-fit: cover;"
+                                             alt="Store Avatar">
+                                        <small class="ms-1 fw-bold text-dark text-truncate" style="max-width: 80px;">@product.StoreName</small>
+                                    </div>
+                                </div>
+
+                                <div class="card-body d-flex flex-column p-3">
+                                    <h6 class="card-title text-dark fw-bold mb-1 text-truncate-2"
+                                        style="height: 2.4rem; line-height: 1.2rem;" title="@product.Name">
+                                        @product.Name
+                                    </h6>
+
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="text-warning small me-2">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= (product.Rating)) // Giả sử dùng biến Rating thật
+                                                {
+                                                    <i class="bi bi-star-fill"></i>
+                                                }
+                                                else
+                                                {
+
+                                                    <i class="bi bi-star"></i>
+                                                }
+                                            }
+                                        </div>
+                                        <small class="text-muted border-start ps-2">Kho: @product.Quantity</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <span class="text-primary fw-bolder fs-5">@product.Price.ToString("N0")</span>
+                                        <span class="text-primary small fw-bold"> VNĐ</span>
+                                    </div>
+
+                                    <div class="mt-auto d-flex gap-2">
+                                        <a href="/product/@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill">
+                                            <i class="bi bi-eye"></i> Xem
+                                        </a>
+                                        <button @onclick="() => AddToCart(product.Id)" class="btn btn-primary btn-sm flex-grow-1 rounded-pill shadow-sm">
+                                            <i class="bi bi-cart-plus"></i> Thêm
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 text-end">
+                                    <small class="text-muted" style="font-size: 0.7rem;">
+                                        <i class="bi bi-clock"></i>
+                                        @(product.UpdatedAt.HasValue? product.UpdatedAt.Value.ToString("dd/MM/yyyy") : product.CreatedAt.Value.ToString("dd/MM/yyyy"))
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            }
+        </main>
+    </div>
 </div>
 <div class="pagination-fixed">
     <nav aria-label="Page navigation">
-        <ul class="pagination pagination-vertical">
-            <li class="page-item @(Products.PageIndex == 1 ? "disabled" : "")">
-                <button class="page-link"
-                        @onclick="() => ChangePage(Products.PageIndex - 1)">
-                    ‹
+<ul class="pagination pagination-vertical">
+    <li class="page-item @(Products.PageIndex == 1 ? "disabled" : "")">
+        <button class="page-link" @onclick="() => ChangePage(Products.PageIndex - 1)">‹</button>
+    </li>
+
+    @{
+        int currentPage = Products.PageIndex;
+        int totalPages = Products.TotalPages;
+        int delta = 2;
+    }
+
+    @for (int i = 1; i <= totalPages; i++)
+    {
+        var pageNumber = i;
+
+        if (i == 1 ||
+        (i >= currentPage && i <= currentPage + delta) ||
+        i > totalPages - 3)
+        {
+            <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                <button class="page-link" @onclick="() => ChangePage(pageNumber)">
+                    @pageNumber
                 </button>
             </li>
+        }
+        else if (i == currentPage + delta + 1 && i < totalPages - 2)
+        {
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        }
+        else if (i == 2 && currentPage > 2)
+        {
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        }
+    }
 
-            @for (int i = 1; i <= Products.TotalPages; i++)
-            {
-                var pageNumber = i;
-                <li class="page-item @(Products.PageIndex == pageNumber ? "active" : "")">
-                    <button class="page-link"
-                            @onclick="() => ChangePage(pageNumber)">
-                        @pageNumber
-                    </button>
-                </li>
-            }
-
-            <li class="page-item @(Products.PageIndex == Products.TotalPages ? "disabled" : "")">
-                <button class="page-link"
-                        @onclick="() => ChangePage(Products.PageIndex + 1)">
-                    ›
-                </button>
-            </li>
-        </ul>
-    </nav>
+    <li class="page-item @(Products.PageIndex == totalPages ? "disabled" : "")">
+        <button class="page-link" @onclick="() => ChangePage(Products.PageIndex + 1)">›</button>
+    </li>
+</ul>
+</nav>
 </div>
 
 @code {
-    private ProductPerPage Products { get; set; } = new();
-    private List<CategoryDto> categories = new List<CategoryDto>();
-    private List<BrandDto> brands = new List<BrandDto>();
+    public ProductPerPage Products { get; set; } = new();
+    private List<CategoryDto>? categories = new();
     private bool isLoading = true;
 
-    private const int PageSize = 20;
-    // Biến cho bộ lọc
-    private FilterModel filter = new FilterModel();
+    private string SearchTerm { get; set; } = "";
+    private string StoreSearchTerm { get; set; } = "";
 
-    public class FilterModel
+    private int? SelectedCategoryId { get; set; }
+    private PriceRange SelectedPriceRange { get; set; } = PriceRange.None;
+    private decimal MaxPriceSlider { get; set; } = 50000000; // Mặc định 50tr
+    private const int PageSize = 21;
+
+    private enum PriceRange
     {
-        public string SearchTerm { get; set; } = "";
-        public int CategoryId { get; set; } = 0;
-        public int BrandId { get; set; } = 0;
-        public string SortPrice { get; set; } = "none"; // none, asc, desc
-        public string SortDate { get; set; } = "newest"; // newest, oldest
-        public int MinRating { get; set; } = 0;
+        None = 0,
+        OneToThree = 1,
+        ThreeToFive = 2,
+        FiveToTen = 3,
+        OverTen = 4 
     }
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Tải danh mục và thương hiệu (Mock data hoặc gọi API thật)
         await LoadMetaData();
-
-        // 2. Tải sản phẩm lần đầu
+        ParseUrlParameters();
         await LoadProducts();
     }
 
-    private async Task ChangePage(int newPageIndex)
+    private void ParseUrlParameters()
     {
-        if (newPageIndex > 0 && newPageIndex <= Products.TotalPages)
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("pname", out var search)) SearchTerm = search!;
+        if (query.TryGetValue("sname", out var store)) StoreSearchTerm = store!; 
+        if (query.TryGetValue("categoryId", out var cid)) SelectedCategoryId = int.Parse(cid!);
+
+        if (query.TryGetValue("minPrice", out var min) && query.TryGetValue("maxPrice", out var max))
         {
-            var queryString = $"api/products/home?pageIndex={newPageIndex}&pageSize={PageSize}";
-            var response = await Http.GetAsync(queryString);
+            var minVal = decimal.Parse(min!);
+            SelectedPriceRange = minVal switch
+            {
+                1000000 => PriceRange.OneToThree,
+                3000000 => PriceRange.ThreeToFive,
+                5000000 => PriceRange.FiveToTen,
+                _ => PriceRange.None
+            };
+        }
+        else if (query.TryGetValue("maxPrice", out var maxOnly))
+        {
+            MaxPriceSlider = decimal.Parse(maxOnly!);
+            SelectedPriceRange = PriceRange.None;
+        }
+    }
+
+    private async Task  HandleSearchEnter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Task.Yield();
+            await ApplyFilters();
+        }
+        
+    }
+
+    private async Task SelectCategory(int? id)
+    {
+        SelectedCategoryId = id;
+        await Task.Yield();
+        await ApplyFilters();
+    }
+
+    private async Task SelectPrice(PriceRange range)
+    {
+        SelectedPriceRange = range;
+        MaxPriceSlider = 50000000;
+        await Task.Yield();
+        await ApplyFilters();
+    }
+
+    private async Task OnSliderChanged()
+    {
+        SelectedPriceRange = PriceRange.None;
+        await Task.Yield();
+        await ApplyFilters();
+    }
+
+    private async Task ApplyFilters()
+    {
+        var query = new Dictionary<string, string>();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm)) query["pname"] = SearchTerm;
+        if (!string.IsNullOrWhiteSpace(StoreSearchTerm)) query["sname"] = StoreSearchTerm;
+        if (SelectedCategoryId.HasValue) query["categoryId"] = SelectedCategoryId.Value.ToString();
+
+        switch (SelectedPriceRange)
+        {
+            case PriceRange.OneToThree: query["minPrice"] = "1000000"; query["maxPrice"] = "3000000"; break;
+            case PriceRange.ThreeToFive: query["minPrice"] = "3000000"; query["maxPrice"] = "5000000"; break;
+            case PriceRange.FiveToTen: query["minPrice"] = "5000000"; query["maxPrice"] = "10000000"; break;
+            case PriceRange.OverTen: query["minPrice"] = "10000000"; break;
+            case PriceRange.None:
+                if (MaxPriceSlider < 50000000) query["maxPrice"] = MaxPriceSlider.ToString();
+                break;
+        }
+
+        var queryString = string.Join("&", query.Select(q => $"{q.Key}={Uri.EscapeDataString(q.Value)}"));
+
+        Navigation.NavigateTo($"/?{queryString}", forceLoad: false);
+
+        await LoadProducts(1);
+    }
+    
+    private async Task LoadProducts(int pageIndex = 1)
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+        var finalQuery = queryParams.ToDictionary(x => x.Key, x => x.Value.ToString());
+
+        finalQuery["pageIndex"] = pageIndex.ToString();
+        finalQuery["pageSize"] = PageSize.ToString();
+
+        var apiQuery = string.Join("&", finalQuery.Select(q => $"{q.Key}={Uri.EscapeDataString(q.Value)}"));
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/products/home?{apiQuery}");
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ProductPerPage>();
-                if (result != null) Products = result;
+                Products = await response.Content.ReadFromJsonAsync<ProductPerPage>() ?? new();
             }
         }
+        catch (Exception)
+        {
+            Products = new();
+        }
+
+        isLoading = false;
+        StateHasChanged();
     }
 
     private async Task LoadMetaData()
     {
-        // TODO: Thay thế bằng call API thực tế: await ClientService.GetCategories();
-        // Giả lập dữ liệu
-        categories = new List<CategoryDto>
-        {
-            new CategoryDto { Id = 1, Name = "Cơ Bida (Cues)" },
-            new CategoryDto { Id = 2, Name = "Bàn Bida (Tables)" },
-            new CategoryDto { Id = 3, Name = "Phụ kiện (Accessories)" }
-        };
-
-        brands = new List<BrandDto>
-        {
-            new BrandDto { Id = 1, Name = "Predator" },
-            new BrandDto { Id = 2, Name = "Mezz" },
-            new BrandDto { Id = 3, Name = "Mit" }
-        };
+        categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/categories/all");
     }
 
-    private async Task LoadProducts()
+    private async Task ChangePage(int newPageIndex)
     {
-        isLoading = true;
-        // Giả lập delay mạng
-        await Task.Delay(500);
+        if (newPageIndex < 1 || newPageIndex > Products.TotalPages) return;
 
-        var response = await Http.GetAsync("/api/products/home?pageIndex=1&pageSize=24");
-        if(response.IsSuccessStatusCode)
-        {
-            var data = await response.Content.ReadFromJsonAsync<ProductPerPage>();
-            Products = data;
-        }
+        await LoadProducts(newPageIndex);
 
-        isLoading = false;
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
     }
 
-    private void OnCategoryChanged(ChangeEventArgs e)
+    private async Task ResetFilters()
     {
-        filter.CategoryId = int.Parse(e.Value.ToString());
-    }
-
-    private void OnBrandChanged(ChangeEventArgs e)
-    {
-        filter.BrandId = int.Parse(e.Value.ToString());
-    }
-
-    private void HandleSearch(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            LoadProducts();
-        }
-    }
-
-    private async Task ResetFilter()
-    {
-        filter = new FilterModel();
-        await LoadProducts();
+        SearchTerm = "";
+        StoreSearchTerm = "";
+        SelectedCategoryId = null;
+        SelectedPriceRange = PriceRange.None;
+        MaxPriceSlider = 50000000;
+        await ApplyFilters();
     }
 
     private async Task AddToCart(int productId)
@@ -405,7 +500,6 @@
         }
         else
         {
-            // Thất bại
             var error = await response.Content.ReadAsStringAsync();
         }
     }

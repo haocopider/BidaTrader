@@ -1,42 +1,183 @@
-﻿<EditForm Model="Product" OnValidSubmit="OnValidSubmit">
+﻿<EditForm Model="Product" OnValidSubmit="HandleSubmit">
     <DataAnnotationsValidator />
 
-    <div class="mb-3">
-        <label for="title" class="form-label">Tên sản phẩm</label>
-        <InputText id="title" @bind-Value="Product.Name" class="form-control" />
-        <ValidationMessage For="@(() => Product.Name)" />
+    <div class="row g-4">
+
+        <!-- LEFT: PRODUCT INFO -->
+        <div class="col-lg-8">
+
+            <div class="mb-4">
+                <label class="form-label small text-muted">Tên sản phẩm</label>
+                <InputText @bind-Value="Product.Name"
+                           class="form-control form-control-lg"
+                           placeholder="Ví dụ: Gậy bida Adam AX-1" />
+                <ValidationMessage For="@(() => Product.Name)" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small text-muted">Mô tả</label>
+                <InputTextArea @bind-Value="Product.Description"
+                               class="form-control"
+                               rows="4"
+                               placeholder="Mô tả ngắn gọn về sản phẩm..." />
+                <ValidationMessage For="@(() => Product.Description)" />
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Giá bán (VNĐ)</label>
+                    <InputNumber @bind-Value="Product.Price"
+                                 class="form-control"
+                                 placeholder="0" />
+                    <ValidationMessage For="@(() => Product.Price)" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Danh mục</label>
+                    <InputSelect @bind-Value="Product.CategoryId"
+                                 class="form-select">
+                        @foreach (var cat in Categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Product.CategoryId)" />
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Số lượng tồn kho</label>
+                    <InputNumber @bind-Value="Product.Quantity"
+                                 class="form-control"
+                                 placeholder="0" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Thương hiệu</label>
+                    <InputSelect @bind-Value="Product.BrandId"
+                    class="form-select">
+                        @foreach(var bra in Brands)
+                        {
+                            <option value="@bra.Id">@bra.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Product.BrandId)" />
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: IMAGE UPLOAD -->
+        <div class="col-lg-4">
+
+            <div class="border rounded p-3 bg-light h-100">
+                <label class="form-label small text-muted mb-2">Hình ảnh sản phẩm</label>
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    @foreach (var img in NewImages)
+                    {
+                        <div class="position-relative border rounded overflow-hidden"
+                             style="width: 96px; height: 96px;">
+                            <img src="@img.Base64Data"
+                                 class="w-100 h-100 object-fit-cover" />
+                            <button type="button"
+                                    class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+                                    @onclick="() => RemoveNewImage(img)">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    }
+
+                    <label class="d-flex align-items-center justify-content-center border border-dashed rounded bg-white text-primary shadow-sm"
+                           style="width: 96px; height: 96px; cursor: pointer;">
+                        <InputFile OnChange="OnInputFileChange"
+                                   multiple hidden
+                                   accept=".jpg,.png,.jpeg,.webp" />
+                        <i class="bi bi-plus-lg fs-4"></i>
+                    </label>
+
+                </div>
+
+                @if (!string.IsNullOrEmpty(UploadError))
+                {
+                    <div class="text-danger small mt-2">@UploadError</div>
+                }
+            </div>
+
+        </div>
     </div>
 
-    <div class="mb-3">
-        <label for="content" class="form-label">Mô tả</label>
-        <InputTextArea id="content" @bind-Value="Product.Description" class="form-control" />
-        <ValidationMessage For="@(() => Product.Description)" />
+    <!-- ACTION BUTTONS -->
+    <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                @onclick="OnClose">
+            Huỷ
+        </button>
+        <button type="submit"
+                class="btn btn-primary px-4">
+            Lưu sản phẩm
+        </button>
     </div>
-
-    <div class="mb-3">
-        <label for="price" class="form-label">Giá</label>
-        <InputNumber id="price" @bind-Value="Product.Price" class="form-control" />
-        <ValidationMessage For="@(() => Product.Price)" />
-    </div>
-
-
-    <div class="mb-3">
-        <label for="brandId" class="form-label">Thương hiệu</label>
-        <InputNumber type="number" id="brandId" @bind-Value="Product.BrandId" class="form-control" />
-        <ValidationMessage For="@(() => Product.BrandId)" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">@ButtonText</button>
-    <a href="/Products" class="btn btn-link">Huỷ</a>
 </EditForm>
 
 @code {
-    [Parameter]
-    public Product Product { get; set; } = new();
+    [Parameter] public ProductCreateUpdateDto Product { get; set; } = new();
+    [Parameter] public List<CategoryDto> Categories { get; set; } = new();
+    [Parameter] public List<BrandDto> Brands { get; set; } = new();
+    [Parameter] public EventCallback<ProductCreateUpdateDto> OnValidSubmit { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
 
-    [Parameter]
-    public string ButtonText { get; set; } = "Lưu";
+    private List<ImagePreviewDto> NewImages = new();
+    private string UploadError = "";
+    private const long MaxFileSize = 1024 * 1024 * 5; // 5MB
 
-    [Parameter]
-    public EventCallback OnValidSubmit { get; set; }
+    protected override void OnParametersSet()
+    {
+        NewImages.Clear();
+        UploadError = "";
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        UploadError = "";
+        try
+        {
+            var files = e.GetMultipleFiles(5);
+            foreach (var file in files)
+            {
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(MaxFileSize).ReadAsync(buffer);
+                var base64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+                NewImages.Add(new ImagePreviewDto { Base64Data = base64 });
+            }
+        }
+        catch (Exception ex) { UploadError = ex.Message; }
+    }
+
+    private void RemoveOldImage(string url)
+    {
+        // Xóa khỏi danh sách URL hiện tại của Product
+        Product.Images?.Remove(url);
+    }
+
+    private void RemoveNewImage(ImagePreviewDto img) => NewImages.Remove(img);
+
+    private async Task HandleSubmit()
+    {
+        if (Product.CategoryId == 0)
+        {
+            UploadError = "Vui lòng chọn danh mục!";
+            return;
+        }
+
+        // Gán ảnh
+        Product.Images = NewImages.Select(x => x.Base64Data).ToList();
+
+        await OnValidSubmit.InvokeAsync(Product);
+    }
+
+    public class ImagePreviewDto { public string Base64Data { get; set; } }
 }

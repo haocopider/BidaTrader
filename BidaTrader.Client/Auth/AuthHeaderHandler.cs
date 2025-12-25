@@ -9,7 +9,7 @@ namespace BidaTrader.Client.Auth // Hoặc namespace đúng của bạn
     public class AuthHeaderHandler : DelegatingHandler
     {
         private readonly ILocalStorageService _localStorage;
-        private readonly IServiceProvider _serviceProvider; // 1. Thay IAuthService bằng IServiceProvider
+        private readonly IServiceProvider _serviceProvider;
 
         public AuthHeaderHandler(ILocalStorageService localStorage, IServiceProvider serviceProvider)
         {
@@ -28,10 +28,8 @@ namespace BidaTrader.Client.Auth // Hoặc namespace đúng của bạn
             // Gửi request
             var response = await base.SendAsync(request, cancellationToken);
 
-            // --- Phần 2: Xử lý 401 Unauthorized (Sửa đổi) ---
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                // Tránh vòng lặp vô tận nếu chính API Refresh Token bị lỗi
                 if (request.RequestUri!.AbsolutePath.Contains("refresh-token") ||
                     request.RequestUri!.AbsolutePath.Contains("login"))
                 {
@@ -40,12 +38,10 @@ namespace BidaTrader.Client.Auth // Hoặc namespace đúng của bạn
 
                 var authService = _serviceProvider.GetRequiredService<IAuthService>();
 
-                // Gọi Refresh Token
                 var newToken = await authService.RefreshToken();
 
                 if (!string.IsNullOrEmpty(newToken))
                 {
-                    // Gán token mới và thử lại request cũ
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", newToken);
                     return await base.SendAsync(request, cancellationToken);
                 }

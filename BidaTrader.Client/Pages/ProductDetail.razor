@@ -1,0 +1,323 @@
+﻿@page "/product/{Id:int}"
+
+<PageTitle>@(product?.Name ?? "Chi tiết sản phẩm") - BidaTrader</PageTitle>
+
+
+<style>
+    .thumb-item {
+        display: inline-block;
+        width: 70px;
+        min-width: 70px;
+    }
+
+        .thumb-item img {
+            transition: transform .18s ease;
+        }
+
+        .thumb-item:hover img {
+            transform: scale(1.05);
+        }
+
+    .product-card img {
+        transition: transform .18s ease;
+    }
+
+    .product-card:hover img {
+        transform: scale(1.03);
+    }
+
+    /* small utilities */
+    .border-light {
+        border-color: #e9ecef !important;
+    }
+
+    .border-3 {
+        border-width: 3px !important;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    /* Hiệu ứng hover cho sidebar items */
+    .action-hover:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+    }
+
+    .hover-primary:hover {
+        color: #696cff !important; /* Màu primary của Sneat */
+    }
+
+    /* Đảm bảo ảnh trong nội dung mô tả không bị tràn */
+    .content-text img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Đang tải thông tin sản phẩm...</p>
+        </div>
+    }
+    else if (product == null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bx bx-error-circle me-2"></i> Không tìm thấy sản phẩm hoặc sản phẩm đã bị xóa.
+            <a href="/" class="alert-link">Quay lại trang chủ</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+
+            <div class="col-lg-9 col-md-12 mb-4">
+
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+
+                        <div class="row gx-4">
+
+                            <div class="col-md-5 mb-4 mb-md-0">
+                                <div class="d-flex flex-column h-100">
+
+                                    <div class="ratio ratio-4x3 mb-3 rounded overflow-hidden bg-light position-relative d-flex align-items-center justify-content-center">
+                                        <img src="@selectedImage"
+                                             class="img-fluid p-2"
+                                             style="max-height:100%; max-width:100%; object-fit:contain;"
+                                             alt="@product.Name"
+                                             loading="lazy"
+                                             onerror="this.onerror=null;this.src='/assets/img/no-image.png';" />
+                                    </div>
+
+
+                                    <div class="d-flex gap-2 overflow-auto py-2" style="scrollbar-width: thin;">
+                                        @if (productImages != null && productImages.Any())
+                                        {
+                                            @foreach (var img in productImages)
+                                            {
+                                                var imgP = img.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                                ? img
+                                                : $"https://localhost:7049{img}";
+
+                                                <div class="thumb-item" @onclick="() => selectedImage = img" title="Xem ảnh">
+                                                    <div class="ratio ratio-1x1 rounded overflow-hidden position-relative border @(selectedImage == img ? "border-3 border-primary" : "border-light")">
+                                                        <img src="@imgP"
+                                                             class="w-100 h-100"
+                                                             style="object-fit:cover;"
+                                                             loading="lazy"
+                                                             onerror="this.onerror=null;this.src='/assets/img/no-image.png';" />
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-7">
+                                <small class="text-uppercase fw-semibold text-primary d-block mb-1">
+                                    <span class="text-danger">Thương hiệu:</span> @product.BrandName
+                                </small>
+
+                                <h3 class="fw-bold text-dark mb-2">@product.Name</h3>
+
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-2">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="bx bxs-star @(i <= product.Rating ? "text-warning" : "text-muted")"></i>
+                                        }
+                                    </div>
+                                    <small class="text-muted">(150 đánh giá) &middot; Đã bán: 1000</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h2 class="text-primary fw-bold display-6 mb-0">
+                                        @product.Price.ToString("N0") <small class="fs-5">VNĐ</small>
+                                    </h2>
+                                    <div class="text-muted small mt-1">Giá đã bao gồm thuế (nếu có)</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label text-muted mb-1">Mô tả ngắn</label>
+                                    <p class="text-secondary small">
+                                        @(product.Description?.Length > 150 ? product.Description.Substring(0, 150) + "..." : product.Description)
+                                    </p>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="input-group" style="width:160px;">
+                                        <button class="btn btn-outline-secondary" type="button" @onclick="DecreaseQty"><i class="bx bx-minus"></i></button>
+                                        <input type="text" class="form-control text-center" @bind="quantity" readonly />
+                                        <button class="btn btn-outline-secondary" type="button" @onclick="IncreaseQty"><i class="bx bx-plus"></i></button>
+                                    </div>
+                                    <div class="text-muted small">@product.Quantity sản phẩm có sẵn</div>
+                                </div>
+
+                                <div class="d-flex gap-3">
+                                    <button class="btn btn-outline-primary btn-lg flex-fill" @onclick="AddToCart">
+                                        <i class="bx bx-cart-alt me-2"></i> Thêm vào giỏ
+                                    </button>
+                                    <button class="btn btn-primary btn-lg flex-fill shadow-sm">
+                                        Mua ngay
+                                    </button>
+                                </div>
+
+ 
+                                <div class="mt-4 pt-3 border-top d-flex align-items-center">
+                                    <img src="@product.StoreLogo" alt="Store" class="rounded-circle me-3" style="width:48px; height:48px; object-fit:cover;" />
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0"><a href="/store/@product.StoreId" class="text-dark text-decoration-none">@product.StoreName</a></h6>
+                                        <small class="text-muted"><i class="bx bx-check-shield text-success"></i> Cửa hàng uy tín</small>
+                                    </div>
+                                    <a href="/store/@product.StoreId" class="btn btn-outline-secondary btn-sm rounded-pill">Xem Shop</a>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SIDEBAR -->
+            <div class="col-lg-3 d-none d-lg-block">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 85px;">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="fw-bold m-0 text-danger"><i class="bx bxs-hot me-1"></i> Bán chạy nhất</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            @if (bestSellers != null)
+                            {
+                                @foreach (var item in bestSellers)
+                                {
+                                    <li class="list-group-item d-flex gap-3 align-items-center py-3">
+                                        <a href="/product/@item.Id" class="flex-shrink-0">
+                                            <img src="https://localhost:7049 @item.ImageUrl" class="rounded border" style="width: 60px; height: 60px; object-fit: cover;" alt="@item.Name">
+                                        </a>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <h6 class="mb-1 text-truncate" style="font-size: 0.9rem;">
+                                                <a href="/product/@item.Id" class="text-dark text-decoration-none">@item.Name</a>
+                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-primary fw-bold small">@item.Price.ToString("N0")đ</span>
+                                                <small class="text-muted" style="font-size: 0.75rem;">Đã bán 10000</small>
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            }
+                            else
+                            {
+                                <li class="list-group-item text-center py-4 text-muted">Đang tải...</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ProductDto? product;
+    private List<ProductDto>? relatedProducts;
+    private List<ProductDto>? bestSellers;
+
+    private bool isLoading = true;
+    private int quantity = 1;
+    private string selectedImage = "";
+    private List<string> productImages = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        quantity = 1;
+        await LoadProductData();
+        isLoading = false;
+
+        _ = LoadRelatedAndBestSellers();
+    }
+
+    private async Task LoadProductData()
+    {
+        try
+        {
+            product = await ProductService.GetItemByIdAsync(Id);
+
+            if (product != null)
+            {
+                // Xử lý ảnh: Nếu có list ảnh phụ thì dùng, không thì dùng ảnh chính
+                // Giả lập list ảnh nếu DTO chưa có trường List<string> Images
+                productImages = new List<string> { product.ImageUrl };
+                productImages.AddRange(product.Images);
+
+                selectedImage = productImages.First();
+            }
+        }
+        catch (Exception)
+        {
+            product = null;
+        }
+    }
+
+    private async Task LoadRelatedAndBestSellers()
+    {
+        if (product == null) return;
+
+        // 2. Lấy sản phẩm liên quan (Cùng Category, trừ sản phẩm hiện tại)
+        // Gọi API: /api/products?categoryId=...&excludeId=...&pageSize=4
+        // Ở đây giả lập gọi hàm search
+        // var relatedData = await ProductService.GetProductsAsync(new ProductSearchDto { CategoryId = product.CategoryId, PageSize = 4 });
+        // relatedProducts = relatedData.Items.Where(p => p.Id != product.Id).Take(4).ToList();
+
+        // 3. Lấy Best Seller (Giả lập sắp xếp theo Sold)
+        // Gọi API: /api/products/bestsellers
+        // var bestSellerData = await ProductService.GetProductsAsync(new ProductSearchDto { SortBy = "sold_desc", PageSize = 5 });
+        // bestSellers = bestSellerData.Items;
+
+        StateHasChanged(); // Cập nhật lại UI sau khi tải xong dữ liệu phụ
+    }
+
+    private void IncreaseQty()
+    {
+        if (product != null && quantity < product.Quantity) quantity++;
+    }
+
+    private void DecreaseQty()
+    {
+        if (quantity > 1) quantity--;
+    }
+
+    private async Task AddToCart()
+    {
+        var request = new AddToCartDto
+            {
+                ProductId = product.Id,
+                Quantity = quantity
+            };
+
+        var response = await Http.PostAsJsonAsync("api/cart/add", request);
+
+        if(response.IsSuccessStatusCode)
+        {
+
+        } else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+        }
+    }
+}

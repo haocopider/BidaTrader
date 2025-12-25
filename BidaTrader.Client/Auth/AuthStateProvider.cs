@@ -16,7 +16,6 @@ namespace BidaTrader.Client.Auth
             _localStorage = localStorage;
         }
 
-        // Trong AuthStateProvider.cs
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             var token = await _localStorage.GetItemAsync<string>("authToken");
@@ -33,7 +32,6 @@ namespace BidaTrader.Client.Auth
                 var expTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(exp.Value));
                 if (expTime < DateTimeOffset.UtcNow)
                 {
-                    // Token hết hạn -> Coi như chưa đăng nhập
                     // (AuthService sẽ tự lo việc refresh khi gọi API sau)
                     return new AuthenticationState(_anonymous);
                 }
@@ -44,7 +42,6 @@ namespace BidaTrader.Client.Auth
 
             return new AuthenticationState(user);
         }
-        // Được gọi bởi AuthService khi đăng nhập
         public async Task NotifyUserAuthentication(string token)
         {
             var claims = JwtParser.ParseClaimsFromJwt(token);
@@ -55,7 +52,6 @@ namespace BidaTrader.Client.Auth
             NotifyAuthenticationStateChanged(authState);
         }
 
-        // Được gọi bởi AuthService khi đăng xuất
         public async Task NotifyUserLogout()
         {
             var authState = Task.FromResult(new AuthenticationState(_anonymous));

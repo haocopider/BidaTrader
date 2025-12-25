@@ -37,7 +37,6 @@ namespace BidaTrader.Client.Services
 
             var loginRequest = new { UserName = loginModel.UserName, Password = loginModel.Password };
 
-            // Compose absolute Uri from the configured BaseAddress to avoid invalid request URI errors on WASM.
             var requestUri = new Uri(_httpClient.BaseAddress, "api/Auth/login");
 
             var response = await _httpClient.PostAsJsonAsync(requestUri, loginRequest);
@@ -53,12 +52,9 @@ namespace BidaTrader.Client.Services
                 return false;
             }
 
-            // Lưu token vào Local Storage
             await _localStorage.SetItemAsync("authToken", loginResponse.Token);
-
             await _localStorage.SetItemAsync("tokenExpiryUtc", loginResponse.TokenExpiryUtc);
 
-            // Thông báo cho Blazor biết trạng thái xác thực đã thay đổi
             await ((AuthStateProvider)_authStateProvider).NotifyUserAuthentication(loginResponse.Token);
 
             return true;
@@ -93,18 +89,15 @@ namespace BidaTrader.Client.Services
         {
             try
             {
-                // 1. Lấy Token cũ từ LocalStorage
                 var token = await _localStorage.GetItemAsync<string>("authToken");
                 var refreshToken = await _localStorage.GetItemAsync<string>("refreshToken");
 
-                // Nếu không có token thì không thể refresh -> Logout
                 if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken))
                 {
                     await Logout();
                     return null;
                 }
 
-                // 2. Gửi yêu cầu lên Server
                 var refreshDto = new RefreshTokenDto
                 {
                     Token = token,
@@ -113,18 +106,14 @@ namespace BidaTrader.Client.Services
 
                 var response = await _httpClient.PostAsJsonAsync("api/auth/refresh-token", refreshDto);
 
-                // 3. Xử lý kết quả
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
 
                     if (result != null && result.IsSuccess && !string.IsNullOrEmpty(result.Token))
                     {
-                        // THÀNH CÔNG: Lưu Token mới đè lên cái cũ
                         await _localStorage.SetItemAsync("authToken", result.Token);
                         await _localStorage.SetItemAsync("refreshToken", result.RefreshToken);
-
-                        // Trả về token mới để HttpInterceptor sử dụng ngay lập tức
                         return result.Token;
                     }
                 }
