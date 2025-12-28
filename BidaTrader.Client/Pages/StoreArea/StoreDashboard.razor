@@ -1,5 +1,4 @@
 ﻿@page "/store/dashboard"
-@inject HttpClient Http
 
 <PageTitle>Tổng quan Cửa hàng</PageTitle>
 
@@ -19,7 +18,7 @@
         @* HEADER: THÔNG TIN SHOP *@
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card bg-primary text-white mb-3 shadow-sm" style="background: linear-gradient(45deg, #696cff, #888bff);">
+                <div class="card text-white mb-3 shadow-sm" style="background: linear-gradient(45deg, #696cff, #888bff);">
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center">
                             <div class="avatar avatar-xl me-3 bg-white p-1 rounded-circle">
@@ -33,7 +32,7 @@
                                 </p>
                             </div>
                             <div class="ms-auto d-none d-md-block">
-                                <button class="btn btn-white text-primary fw-bold shadow-sm">
+                                <button class="btn btn-outline-danger bg-danger text-white fw-bold shadow-sm">
                                     <i class="bx bx-show me-1"></i> Xem Shop
                                 </button>
                             </div>
@@ -113,7 +112,7 @@
                 <div class="card mb-4 shadow-sm ">
                     @if (!isOrderHidden)
                     {
-                        <ManagerOrderS></ManagerOrderS>
+                        <ManageOrder Model="orders" ></ManageOrder>
                     }
                     else if (!isProductHidden && products != null)
                     {
@@ -250,31 +249,26 @@
     private bool isProductHidden = true;
     private bool isOrderHidden = true;
 
-    // Các biến dữ liệu
     private StoreDetailDto mystore;
-    private DashboardStatsDto stats = new(); // Khởi tạo để tránh null
+    private DashboardStatsDto stats = new();
     private List<OrderSummaryDto> recentOrders = new();
     private ProductPerPage products;
+    private List<StoreOrderDto> orders;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             isLoading = true;
-            var taskStore = Http.GetFromJsonAsync<StoreDetailDto>("api/store/mystore");
-            var taskStats = Http.GetFromJsonAsync<DashboardStatsDto>("api/store/statistics");
-            var taskOrders = Http.GetFromJsonAsync<List<OrderSummaryDto>>("api/store/orders/recent");
+            var taskStore = Http.GetFromJsonAsync<StoreDetailDto>("api/stores/mystore");
 
-            await Task.WhenAll(taskStore, taskStats, taskOrders);
-
-            mystore = await taskStore;
-            stats = await taskStats;
-            recentOrders = await taskOrders;
+            if(taskStore != null)
+                mystore = await taskStore;
+            isLoading = false;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching dashboard data: {ex.Message}");
-            // Có thể thêm Toast thông báo lỗi ở đây
         }
         finally
         {
@@ -288,10 +282,20 @@
         {
             isOrderHidden = false;
             isProductHidden = true;
+            if(orders == null)
+            {
+                try
+                {
+                    orders = await Http.GetFromJsonAsync<List<StoreOrderDto>>("api/orders/store-orders");
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine("Lỗi tải đơn hàng: " + ex.Message);
+                }
+        }
         }
         else if (obj == 'p')
         {
-            // Chỉ load sản phẩm khi người dùng click vào nút
             if (products == null)
             {
                 try 

@@ -152,8 +152,8 @@
 
 @code{
     [Parameter] public ProductPerPage Model { get; set; }
-    [Parameter] public List<CategoryDto> categories { get; set; }
-    [Parameter] public List<BrandDto> brands { get; set; }
+    private List<CategoryDto> categories { get; set; }
+    private List<BrandDto> brands { get; set; }
 
     private bool isModalVisible = false;
     private bool isLoadingModal = false;

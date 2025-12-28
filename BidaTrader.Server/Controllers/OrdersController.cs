@@ -1,10 +1,6 @@
 ﻿using BidaTrader.Server.Services;
-using BidaTrader.Shared.DTOs;
-using BidaTrader.Shared.Models;
-using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BidaTrader.Server.Controllers
@@ -44,7 +40,6 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet("store-orders")]
-        [Authorize(Policy = "AdminOrStore")]
         public async Task<IActionResult> GetStoreOrders()
         {
             var userId = GetCurrentUserId();

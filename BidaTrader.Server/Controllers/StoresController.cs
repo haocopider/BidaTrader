@@ -30,10 +30,10 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet("mystore")]
-        public async Task<ActionResult<StoreDetailDto>> GetMyStore(string accountId)
+        public async Task<ActionResult<StoreDetailDto>> GetMyStore()
         {
             var usedId = GetCurrentUserId();
-            var response = ((StoreService)_storeService).GetMyStore(usedId);
+            var response = await ((StoreService)_storeService).GetMyStore(usedId);
             if (response == null) BadRequest("Chưa mở cửa hàng");
             return Ok(response);
         }

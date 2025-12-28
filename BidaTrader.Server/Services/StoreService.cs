@@ -13,17 +13,17 @@ namespace BidaTrader.Server.Services
 
         public async Task<StoreDetailDto> GetMyStore(int accountId)
         {
-            var myStore = await _context.Stores.FirstOrDefaultAsync(s => s.AccountId == accountId);
+            var myStore = await _context.Stores.Include(a => a.Accounts).FirstOrDefaultAsync(s => s.AccountId == accountId);
 
             if (myStore == null)
             {
-
+                return (new StoreDetailDto());
             }
 
             var dto = new StoreDetailDto
             {
                 StoreName = myStore.StoreName,
-                Address = myStore.Address,
+                Address = myStore.Address ?? "Chưa cập nhật địa chỉ",
                 AvatarUrl = myStore.LogoUrl,
                 TotalProducts = myStore.Products.Select(p => p.StoreId = myStore.Id).Count(),
                 Rating = 5,

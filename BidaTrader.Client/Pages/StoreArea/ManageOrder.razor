@@ -1,0 +1,151 @@
+﻿
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Sản phẩm</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+        @if (Model == null)
+                    {
+                        <tr><td colspan="6" class="text-center py-4">Đang tải...</td></tr>
+                    }
+        else if (!Model.Any())
+                    {
+                        <tr><td colspan="6" class="text-center py-4">Chưa có đơn hàng nào.</td></tr>
+                    }
+                    else
+                    {
+            @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td><span class="fw-bold">#@order.Id</span><br><small class="text-muted">@order.OrderDate.ToString("dd/MM HH:mm")</small></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-xs me-2 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:30px;height:30px;">
+                                            @order.CustomerName?.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">@order.CustomerName</div>
+                                            <div class="small text-muted">@order.PhoneNumber</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @* <div class="text-truncate" style="max-width: 200px;" title="@order.ProductNamesSummary">
+                                        @order.ProductNamesSummary
+                                    </div> *@
+                                </td>
+                                <td class="text-danger fw-bold">@order.TotalAmount.ToString("N0")</td>
+                                <td>
+                                    <span class="badge @GetBadgeClass(order.Status)">@order.Status</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var status = ParseStatus(order.Status);
+                                    }
+
+                                    @if (status == OrderStatus.Pending)
+                                    {
+                                        <button class="btn btn-success btn-sm me-1"
+                                                title="Xác nhận đơn"
+                                                @onclick="() => UpdateStatus(order.Id, OrderStatus.Processing)">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    }
+                                    else if (status == OrderStatus.Processing)
+                                    {
+                                        <button class="btn btn-primary btn-sm"
+                                                title="Bàn giao vận chuyển"
+                                                @onclick="() => UpdateStatus(order.Id, OrderStatus.Shipping)">
+                                            <i class="bi bi-truck"></i> Giao cho vận chuyển
+                                        </button>
+                                    }
+                                    else if (status == OrderStatus.Shipping)
+                                    {
+                                        <span class="badge bg-info">Đang giao – chờ khách xác nhận</span>
+                                    }
+                                    else if (status == OrderStatus.Completed)
+                                    {
+                                        <span class="badge bg-success">Hoàn tất</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+
+@code {
+    [Parameter] public List<StoreOrderDto> Model { get; set; } = new List<StoreOrderDto>();
+
+    public enum OrderStatus
+    {
+        Pending,
+        Processing,
+        Shipping,
+        Completed,
+        Cancelled
+    }
+
+    private async Task UpdateStatus(int orderId, OrderStatus newStatus)
+    {
+        // CHỈ CHO STORE
+        if (newStatus is OrderStatus.Completed)
+        {
+            await JSRuntime.InvokeVoidAsync(
+                "alert",
+                "Cửa hàng không thể xác nhận đã giao. Khách hàng sẽ xác nhận khi nhận hàng."
+            );
+            return;
+        }
+
+        var confirmMsg = newStatus switch
+        {
+            OrderStatus.Processing => "Xác nhận đơn hàng này?",
+            OrderStatus.Shipping => "Xác nhận bàn giao cho đơn vị vận chuyển?",
+            _ => "Cập nhật trạng thái?"
+        };
+
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", confirmMsg))
+            return;
+
+        var response = await Http.PutAsJsonAsync(
+            $"api/orders/{orderId}/status",
+            newStatus.ToString()
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Cập nhật thành công!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Có lỗi xảy ra.");
+        }
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Pending" => "bg-warning text-dark",
+        "Processing" => "bg-info text-white",
+        "Shipping" => "bg-primary",
+        "Completed" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private OrderStatus ParseStatus(string status)
+    {
+        return Enum.TryParse<OrderStatus>(status, out var result)
+            ? result
+            : OrderStatus.Pending;
+    }
+
+}
