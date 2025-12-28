@@ -5,6 +5,7 @@ using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Security.Claims;
 
 namespace BidaTrader.Server.Controllers
 {
@@ -16,6 +17,25 @@ namespace BidaTrader.Server.Controllers
         public StoresController(IService<Store> service)
         {
             _storeService = service;
+        }
+
+        private int GetCurrentUserId()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            throw new Exception("User not found in token");
+        }
+
+        [HttpGet("mystore")]
+        public async Task<ActionResult<StoreDetailDto>> GetMyStore(string accountId)
+        {
+            var usedId = GetCurrentUserId();
+            var response = ((StoreService)_storeService).GetMyStore(usedId);
+            if (response == null) BadRequest("Chưa mở cửa hàng");
+            return Ok(response);
         }
 
         [HttpGet]

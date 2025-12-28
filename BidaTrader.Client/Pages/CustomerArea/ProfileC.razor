@@ -134,14 +134,14 @@ else
 
 
 @code {
-    public UserDto? Model { get; set; }
+    public AccountDto? Model { get; set; }
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            Model = await Http.GetFromJsonAsync<UserDto>($"api/accounts/profile");
+            Model = await Http.GetFromJsonAsync<AccountDto>($"api/accounts/profile");
         }
         catch (Exception ex)
         {

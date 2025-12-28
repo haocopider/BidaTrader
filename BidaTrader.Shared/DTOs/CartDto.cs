@@ -7,10 +7,10 @@
         public string ProductImage { get; set; }
         public decimal Price { get; set; }
         public int Quantity { get; set; }
-        public int Stock { get; set; } // Để validate số lượng tồn kho
+        public int Stock { get; set; }
         public int StoreId { get; set; }
         public string StoreName { get; set; }
-        public bool IsSelected { get; set; } // Dùng ở frontend
+        public bool IsSelected { get; set; }
     }
 
     public class CartGroupDto

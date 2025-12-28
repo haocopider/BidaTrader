@@ -1,8 +1,10 @@
 ﻿using BidaTrader.Server.Helpers; // Chứa PasswordHelper, UidHelper
+using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -72,7 +74,7 @@ namespace BidaTrader.API.Controllers
                 await _context.SaveChangesAsync();
 
                 // --- TẠO TOKEN ĐỂ LOGIN LUÔN ---
-                var accessToken = GenerateJwtToken(newAccount);
+                var accessToken = await GenerateJwtToken(newAccount);
                 var refreshToken = GenerateRefreshToken();
 
                 // Lưu Refresh Token
@@ -122,7 +124,7 @@ namespace BidaTrader.API.Controllers
                 return Unauthorized(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Tài khoản đã bị khóa." });
 
             // Sinh Token mới
-            var accessToken = GenerateJwtToken(account);
+            var accessToken = await GenerateJwtToken(account);
             var refreshToken = GenerateRefreshToken();
 
             // Cập nhật Refresh Token vào DB
@@ -154,7 +156,7 @@ namespace BidaTrader.API.Controllers
             }
 
             // Cấp Token mới
-            var newAccessToken = GenerateJwtToken(account);
+            var newAccessToken = await GenerateJwtToken(account);
             var newRefreshToken = GenerateRefreshToken();
 
             // Xoay vòng Refresh Token (Token Rotation) để bảo mật
@@ -182,22 +184,26 @@ namespace BidaTrader.API.Controllers
             return Convert.ToBase64String(randomNumber);
         }
 
-        private string GenerateJwtToken(Account account)
+        private async Task<string> GenerateJwtToken(Account account)
         {
+            var permissions = await _context.AccountRoles
+                .Where(ar => ar.AccountId == account.Id)
+                .SelectMany(ar => ar.Role.RolePermissions)
+                .Select(rp => rp.Permission.Code)
+                .Distinct()
+                .ToListAsync();
+
             var claims = new List<Claim>
-    {
-        // ===== Standard claims =====
-        new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            {
+                // ===== Standard JWT claims =====
+                new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 
-        // ===== Identity =====
-        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
-        new Claim(ClaimTypes.Name, account.UserName),
-        new Claim("UID", account.Uid),
-
-        // ===== Role =====
-        new Claim(ClaimTypes.Role, account.Role.Trim())
-    };
+                new Claim(ClaimTypes.NameIdentifier, account.Uid),
+                new Claim(ClaimTypes.Name, account.UserName),
+                new Claim(ClaimTypes.Role, account.Role.Trim()),
+                new Claim("permissions", string.Join(",", permissions))
+            };
 
             // ===== Store-specific claims =====
             if (account.Role == "Store")

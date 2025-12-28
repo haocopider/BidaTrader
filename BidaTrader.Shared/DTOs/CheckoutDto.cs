@@ -7,7 +7,6 @@
         public string PaymentMethod { get; set; } // "COD", "MOMO", "BANK"
         public string? Note { get; set; }
 
-        // Danh sách các sản phẩm được chọn để thanh toán
         public List<CheckoutItemDto> SelectedItems { get; set; }
     }
 

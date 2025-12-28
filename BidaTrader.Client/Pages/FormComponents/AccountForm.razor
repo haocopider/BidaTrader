@@ -1,5 +1,4 @@
-﻿@attribute [Authorize(Roles = "Admin")]
-
+﻿
 @if(IsVisible){
     <div class="modal-backdrop fade show"> </div>
     <div class="modal fade show" tabindex="-1" style="display: block;">
@@ -98,6 +97,8 @@
     </div>
 </div>
 }
+
+
 @code {
 
     public AccountDto? Model { get; set; } = new ();

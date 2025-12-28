@@ -1,0 +1,284 @@
+﻿@if (isToast)
+{
+    <ToastComponet ToastClass="@classToast" Title="@titleToast" Messages="@messagesToast" OnCLose="CloseToast"></ToastComponet>
+}
+@if (isModalVisible)
+{
+    <!-- Backdrop -->
+    <div class="modal-backdrop fade show"></div>
+
+    <!-- Modal -->
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+
+                <!-- HEADER -->
+                <div class="modal-header border-bottom">
+                    <div>
+                        <h5 class="modal-title mb-0 fw-semibold">
+                            @(editingProduct.Id == 0
+                                                    ? "✨ Thêm sản phẩm mới"
+                                                    : $"✏️ Cập nhật sản phẩm")
+                        </h5>
+                        @if (editingProduct.Id != 0)
+                        {
+                            <small class="text-muted">
+                                ID: #@editingProduct.Id – @editingProduct.Name
+                            </small>
+                        }
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            aria-label="Close"
+                            @onclick="CloseModal">
+                    </button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body bg-light">
+
+                    @if (isLoadingModal)
+                    {
+                        <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                            <div class="spinner-border text-primary mb-3"></div>
+                            <div class="text-muted">Đang tải dữ liệu...</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-white rounded shadow-sm p-4">
+                            <ProductForm Product="editingProduct"
+                                         Categories="categories"
+                                         Brands="brands"
+                                         OnValidSubmit="SaveProduct"
+                                         OnClose="CloseModal" />
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+
+<div class="card">
+    <h5 class="card-header">Quản lý sản phẩm</h5>
+    <div class="table-responsive text-nowrap">
+        <table class="table">
+            <caption class="ms-4">
+                <small class="text-muted">
+                    Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount sản phẩm.
+                </small>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                            <button class="page-link bi bi-arrow-left" @onclick="() => ChangePage(Model.PageIndex - 1)"></button>
+                        </li>
+                        @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++)
+                        {
+                            var pageNumber = i;
+                            <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
+                                <button class="page-link" @onclick="() => ChangePage(pageNumber)">@pageNumber</button>
+                            </li>
+                        }
+                        <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                            <button class="page-link bi bi-arrow-right" @onclick="() => ChangePage(Model.PageIndex + 1)"></button>
+                        </li>
+                    </ul>
+                </nav>
+            </caption>
+            <thead>
+                <tr>
+                    <th>Tên sản phẩm</th>
+                    <th>Loại sản phẩm</th>
+                    <th>Hình ảnh</th>
+                    <th>Đơn giá</th>
+                    <th>Tồn kho</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var item in Model.Items)
+                {
+                    <tr>
+                        <td><i class="fab fa-angular fa-lg text-danger me-3"></i> <strong>@item.Name</strong></td>
+                        <td>@item.CategoryName</td>
+                        <td>
+                            <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
+                                <li data-bs-toggle="tooltip"
+                                    data-popup="tooltip-custom"
+                                    data-bs-placement="top"
+                                    class="avatar avatar-xs pull-up"
+                                    title="Lilian Fuller">
+                                    <img src="../assets/img/avatars/5.png" alt="Avatar" class="rounded-circle" />
+                                </li>
+                                <li data-bs-toggle="tooltip"
+                                    data-popup="tooltip-custom"
+                                    data-bs-placement="top"
+                                    class="avatar avatar-xs pull-up"
+                                    title="Sophia Wilkerson">
+                                    <img src="../assets/img/avatars/6.png" alt="Avatar" class="rounded-circle" />
+                                </li>
+                                <li data-bs-toggle="tooltip"
+                                    data-popup="tooltip-custom"
+                                    data-bs-placement="top"
+                                    class="avatar avatar-xs pull-up"
+                                    title="Christina Parker">
+                                    <img src="../assets/img/avatars/7.png" alt="Avatar" class="rounded-circle" />
+                                </li>
+                            </ul>
+                        </td>
+                        <td>@item.Price</td>
+                        <td>@item.Quantity</td>
+                        <td>
+                                <div class="btn-group shadow-sm border rounded">
+                                    <button class="btn btn-white btn-sm px-3" title="Chỉnh sửa" @onclick="() => OpenModal(item.Id)">
+                                        <i class="bi bi-pencil-square text-primary"></i>
+                                    </button>
+                                    <button class="btn btn-white btn-sm px-3" title="Xóa" @onclick="() => ConfirmDelete(item)">
+                                        <i class="bi bi-trash3 text-danger"></i>
+                                    </button>
+                                </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code{
+    [Parameter] public ProductPerPage Model { get; set; }
+    [Parameter] public List<CategoryDto> categories { get; set; }
+    [Parameter] public List<BrandDto> brands { get; set; }
+
+    private bool isModalVisible = false;
+    private bool isLoadingModal = false;
+    private ProductCreateUpdateDto editingProduct = new();
+
+    //4.Toast
+    private bool isToast = false;
+    private string titleToast;
+    private string classToast;
+    private string messagesToast;
+
+    private async Task ChangePage(int newPageIndex)
+    {
+        if (newPageIndex > 0 && newPageIndex <= Model.TotalPages)
+        {
+            var response = await Http.GetAsync($"api/products/mystore?pageIndex={newPageIndex}&pageSize=10");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ProductPerPage>();
+                if (result != null) Model = result;
+            }
+        }
+    }
+
+    private async Task OpenModal(int id)
+    {
+        isModalVisible = true;
+        isLoadingModal = true;
+
+        if (id == 0)
+        {
+            editingProduct = new ProductCreateUpdateDto { Images = new List<string>() };
+        }
+        else
+        {
+            try
+            {
+                var response = await Http.GetFromJsonAsync<ProductDto>($"api/products/{id}") ?? new ProductDto();
+
+                editingProduct = new ProductCreateUpdateDto
+                {
+                    Id = response.Id,
+                    Name = response.Name,
+                    Description = response.Description,
+                    Quantity = response.Quantity,
+                    Price = response.Price,
+                    Images = response.Images,
+                    BrandId = response.BrandId,
+                    CategoryId = response.CategoryId,
+                    CreatedAt = response.CreatedAt,
+                };
+
+                if (editingProduct.Images == null) editingProduct.Images = new List<string>();
+            }
+            catch
+            {
+                ShowToast("Cảnh báo", "Lỗi tải dữ liệu sản phẩm", "warning");
+                CloseModal();
+            }
+        }
+
+        isLoadingModal = false;
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
+
+    private async Task SaveProduct(ProductCreateUpdateDto dto)
+    {
+        HttpResponseMessage response;
+        if (dto.Id == 0)
+        {
+            response = await Http.PostAsJsonAsync("api/products", dto);
+        }
+        else
+        {
+            response = await Http.PutAsJsonAsync($"api/products/{dto.Id}", dto);
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            ShowToast("Thành công",
+                      dto.Id == 0 ? "Thêm sản phẩm thành công" : "Cập nhật sản phẩm thành công",
+                      "success");
+
+            CloseModal();
+        }
+        else
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            ShowToast("Lỗi", $"Có lỗi xảy ra: {err}", "danger");
+        }
+    }
+
+    private async Task ConfirmDelete(ProductDto product)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Xóa sản phẩm '{product.Name}'?");
+        if (confirmed)
+        {
+            var response = await Http.DeleteAsync($"api/products/{product.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Model.Items.Remove(product);
+                ShowToast("Thành công", "Xóa sản phẩm thành công", "success");
+            }
+            else
+            {
+                ShowToast("Lỗi", "Xóa sản phẩm thất bại", "danger");
+            }
+        }
+    }
+
+    private void ShowToast(string title, string message, string type = "success")
+    {
+        titleToast = title;
+        messagesToast = message;
+        classToast = type;
+        isToast = true;
+    }
+
+    private void CloseToast()
+    {
+        isToast = false;
+    }
+
+}

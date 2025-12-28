@@ -1,10 +1,10 @@
 ﻿using BidaTrader.Client.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection; // Cần thêm namespace này
+using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Headers;
 
-namespace BidaTrader.Client.Auth // Hoặc namespace đúng của bạn
+namespace BidaTrader.Client.Auth
 {
     public class AuthHeaderHandler : DelegatingHandler
     {

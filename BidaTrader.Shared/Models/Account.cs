@@ -34,12 +34,16 @@ public partial class Account
     public DateOnly? DateOfBirth { get; set; }
 
     public bool IsActive { get; set; }
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiryTime { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public string? RefreshToken { get; set; }
+
+    public DateTime? RefreshTokenExpiryTime { get; set; }
+
+    public virtual ICollection<AccountRole> AccountRoles { get; set; } = new List<AccountRole>();
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 

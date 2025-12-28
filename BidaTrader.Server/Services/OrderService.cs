@@ -42,7 +42,7 @@ namespace BidaTrader.Server.Services
 
                 // ===== Thanh toán & giao hàng =====
                 PaymentMethod = o.PaymentMethod,
-                IsPaid = o.IsPaid,
+                IsPaid = o.IsPaid ?? false,
                 ShippingAddress = o.ShippingAddress,
                 PhoneNumber = o.PhoneNumber,
 
