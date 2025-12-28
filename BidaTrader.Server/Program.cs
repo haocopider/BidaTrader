@@ -50,42 +50,63 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Cập nhật CORS Policy 
 builder.Services.AddAuthorization(options =>
 {
-    // ================= ADMIN =================
-    options.AddPolicy("AdminOnly", policy =>
-        policy.RequireRole("Admin")
+    // ================= ROLE BASE =================
+
+    options.AddPolicy("FullFeat", policy =>
+        policy.RequireRole("ADMIN")
     );
 
-    // ================= STORE =================
-    options.AddPolicy("StoreOnly", policy =>
-        policy.RequireRole("Store")
+    options.AddPolicy("StoreOwner", policy =>
+        policy.RequireRole("STORE")
     );
 
-    options.AddPolicy("ActiveStore", policy =>
-        policy.RequireRole("Store")
-              .RequireClaim("IsActive", "True")
+    options.AddPolicy("ForCustomer", policy =>
+        policy.RequireRole("CUSTOMER")
     );
 
-    // ================= CUSTOMER =================
-    options.AddPolicy("CustomerOnly", policy =>
-        policy.RequireRole("Customer")
+    options.AddPolicy("ForShipper", policy =>
+        policy.RequireRole("SHIPPER")
     );
 
-    // ================= COMBINED =================
+    // ================= COMBINED ROLE =================
+
     options.AddPolicy("AdminOrStore", policy =>
-        policy.RequireRole("Admin", "Store")
-    );
-
-    options.AddPolicy("AdminOrCustomer", policy =>
-        policy.RequireRole("Admin", "Customer")
+        policy.RequireRole("ADMIN", "STORE_OWNER")
     );
 
     options.AddPolicy("StoreOrCustomer", policy =>
-        policy.RequireRole("Store", "Customer")
+        policy.RequireRole("STORE", "CUSTOMER")
+    );
+
+    options.AddPolicy("ForAll", policy =>
+        policy.RequireRole("ADMIN", "STORE", "CUSTOMER")
+    );
+
+    // ================= STORE STATUS =================
+
+    options.AddPolicy("ActiveStore", policy =>
+        policy.RequireRole("STORE_OWNER")
+              .RequireClaim("StoreActive", "True")
     );
 
     // ================= AUTHENTICATED =================
+
     options.AddPolicy("Authenticated", policy =>
         policy.RequireAuthenticatedUser()
+    );
+
+    // ================= PERMISSION BASE =================
+
+    options.AddPolicy("PRODUCT.CREATE", policy =>
+        policy.RequireClaim("Permission", "PRODUCT.CREATE")
+    );
+
+    options.AddPolicy("PRODUCT.UPDATE", policy =>
+        policy.RequireClaim("Permission", "PRODUCT.UPDATE")
+    );
+
+    options.AddPolicy("PRODUCT.DELETE", policy =>
+        policy.RequireClaim("Permission", "PRODUCT.DELETE")
     );
 });
 
@@ -105,8 +126,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -119,7 +138,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseFileServer();
 app.UseStaticFiles();
-// Thay thế UseCors cũ bằng UseCors mới
+
 app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication(); // 1. Xác thực

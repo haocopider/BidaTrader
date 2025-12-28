@@ -70,26 +70,51 @@
 
         <!-- RIGHT: IMAGE UPLOAD -->
         <div class="col-lg-4">
-
             <div class="border rounded p-3 bg-light h-100">
                 <label class="form-label small text-muted mb-2">Hình ảnh sản phẩm</label>
 
                 <div class="d-flex flex-wrap gap-2">
 
+                    @* 1. HIỂN THỊ ẢNH ĐÃ LƯU (ẢNH CŨ TỪ SERVER) *@
+                    @if (Product.Images != null)
+                    {
+                        @foreach (var url in Product.Images)
+                        {
+                            var imgP = url.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                            ? url
+                            : $"https://localhost:7049{url}";
+                            <div class="position-relative border rounded overflow-hidden"
+                                 style="width: 96px; height: 96px;">
+                                <img src="@imgP" class="w-100 h-100 object-fit-cover" />
+                                @* Nút xóa ảnh cũ *@
+                                <button type="button"
+                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+                                        style="padding: 0px 5px;"
+                                        @onclick="() => RemoveOldImage(url)">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        }
+                    }
+
+                    @* 2. HIỂN THỊ ẢNH MỚI CHỌN (BASE64) *@
                     @foreach (var img in NewImages)
                     {
-                        <div class="position-relative border rounded overflow-hidden"
+                        <div class="position-relative border rounded overflow-hidden border-primary"
                              style="width: 96px; height: 96px;">
                             <img src="@img.Base64Data"
                                  class="w-100 h-100 object-fit-cover" />
                             <button type="button"
                                     class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+                                    style="padding: 0px 5px;"
                                     @onclick="() => RemoveNewImage(img)">
                                 <i class="bi bi-x"></i>
                             </button>
+                            <span class="badge bg-primary position-absolute bottom-0 start-0 m-1 small" style="font-size: 0.6rem;">Mới</span>
                         </div>
                     }
 
+                    @* 3. NÚT THÊM ẢNH *@
                     <label class="d-flex align-items-center justify-content-center border border-dashed rounded bg-white text-primary shadow-sm"
                            style="width: 96px; height: 96px; cursor: pointer;">
                         <InputFile OnChange="OnInputFileChange"
@@ -105,7 +130,6 @@
                     <div class="text-danger small mt-2">@UploadError</div>
                 }
             </div>
-
         </div>
     </div>
 
@@ -173,11 +197,22 @@
             return;
         }
 
-        // Gán ảnh
-        Product.Images = NewImages.Select(x => x.Base64Data).ToList();
+        // Đảm bảo danh sách không null
+        if (Product.Images == null) Product.Images = new List<string>();
+
+        // Lấy tất cả ảnh mới (Base64) gộp vào danh sách Images hiện tại
+        // Lưu ý: List Product.Images lúc này đã chứa các URL cũ (những cái chưa bị RemoveOldImage xóa)
+        var allImages = new List<string>();
+
+        // Giữ lại các URL cũ
+        allImages.AddRange(Product.Images.Where(x => x.StartsWith("/") || x.StartsWith("http")));
+
+        // Thêm các Base64 mới
+        allImages.AddRange(NewImages.Select(x => x.Base64Data));
+
+        Product.Images = allImages;
 
         await OnValidSubmit.InvokeAsync(Product);
     }
-
     public class ImagePreviewDto { public string Base64Data { get; set; } }
 }

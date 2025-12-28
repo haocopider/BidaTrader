@@ -17,6 +17,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Account> Accounts { get; set; }
 
+    public virtual DbSet<AccountRole> AccountRoles { get; set; }
+
     public virtual DbSet<Brand> Brands { get; set; }
 
     public virtual DbSet<Cart> Carts { get; set; }
@@ -29,11 +31,17 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
 
+    public virtual DbSet<Permission> Permissions { get; set; }
+
     public virtual DbSet<Post> Posts { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<ProductImage> ProductImages { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
 
     public virtual DbSet<Store> Stores { get; set; }
 
@@ -67,14 +75,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Passcode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(x => x.RefreshToken)
-                  .HasMaxLength(500);
-            entity.Property(x => x.RefreshTokenExpiryTime)
-                  .HasColumnType("datetime2");
             entity.Property(e => e.PasswordHash).HasMaxLength(500);
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.RefreshToken).HasMaxLength(500);
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -88,6 +93,23 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Store).WithMany(p => p.Accounts)
                 .HasForeignKey(d => d.StoreId)
                 .HasConstraintName("FK_Accounts_Stores");
+        });
+
+        modelBuilder.Entity<AccountRole>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__AccountR__3214EC07563DDF2D");
+
+            entity.HasIndex(e => new { e.AccountId, e.RoleId }, "UQ_AccountRoles").IsUnique();
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.AccountRoles)
+                .HasForeignKey(d => d.AccountId)
+                .HasConstraintName("FK_AccountRoles_Accounts");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.AccountRoles)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_AccountRoles_Roles");
         });
 
         modelBuilder.Entity<Brand>(entity =>
@@ -157,9 +179,9 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.StoreId, "IX_Orders_StoreId");
 
+            entity.Property(e => e.IsPaid).HasDefaultValue(false);
             entity.Property(e => e.OrderDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
-            entity.Property(e => e.IsPaid).HasDefaultValue(false);
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -185,6 +207,7 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__OrderDet__3214EC0749E6C210");
 
             entity.Property(e => e.PriceAtPurchase).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ProductName).HasDefaultValue("");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
@@ -194,6 +217,18 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderDetails_Products");
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Permissi__3214EC07BEE4C747");
+
+            entity.HasIndex(e => e.Code, "UQ_Permissions_Code").IsUnique();
+
+            entity.Property(e => e.Code).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Name).HasMaxLength(255);
         });
 
         modelBuilder.Entity<Post>(entity =>
@@ -254,6 +289,35 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK_ProductImages_Products");
         });
 
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3214EC07C10F29E1");
+
+            entity.HasIndex(e => e.Code, "UQ_Roles_Code").IsUnique();
+
+            entity.Property(e => e.Code).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.Name).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__RolePerm__3214EC07C2CD8C0B");
+
+            entity.HasIndex(e => new { e.RoleId, e.PermissionId }, "UQ_RolePermissions").IsUnique();
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
+
+            entity.HasOne(d => d.Permission).WithMany(p => p.RolePermissions)
+                .HasForeignKey(d => d.PermissionId)
+                .HasConstraintName("FK_RolePermissions_Permissions");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_RolePermissions_Roles");
+        });
+
         modelBuilder.Entity<Store>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Stores__3214EC07A5C8F039");
@@ -261,6 +325,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.LogoUrl).HasDefaultValue("");
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .IsUnicode(false);

@@ -1,4 +1,6 @@
-﻿using BidaTrader.Shared.DTOs;
+﻿using Azure.Core;
+using BidaTrader.Server.Helpers;
+using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
@@ -39,9 +41,14 @@ namespace BidaTrader.Server.Services
             return await _context.Accounts.FirstOrDefaultAsync(a => a.Uid == uid);
         }
 
-        public async Task<Account> GetAccountByUserNameAsync(string userName)
+        public async Task<List<string>> GetPermissionAsync(int accountId)
         {
-            return await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == userName);
+            return await _context.AccountRoles
+                .Where(ar => ar.AccountId == accountId)
+                .SelectMany(ar => ar.Role.RolePermissions)
+                .Select(rp => rp.Permission.Code)
+                .Distinct()
+                .ToListAsync();
         }
     }
 }

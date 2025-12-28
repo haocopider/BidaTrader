@@ -1,4 +1,5 @@
-﻿using BidaTrader.Shared.Models;
+﻿using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,30 @@ namespace BidaTrader.Server.Services
     {
         public StoreService(AppDbContext context) : base(context)
         {
+        }
+
+        public async Task<StoreDetailDto> GetMyStore(int accountId)
+        {
+            var myStore = await _context.Stores.FirstOrDefaultAsync(s => s.AccountId == accountId);
+
+            if (myStore == null)
+            {
+
+            }
+
+            var dto = new StoreDetailDto
+            {
+                StoreName = myStore.StoreName,
+                Address = myStore.Address,
+                AvatarUrl = myStore.LogoUrl,
+                TotalProducts = myStore.Products.Select(p => p.StoreId = myStore.Id).Count(),
+                Rating = 5,
+                Followers = 1000,
+                JoinDate = myStore.CreatedAt ?? DateTime.Now,
+                Id = myStore.Id                
+            };
+
+            return dto;
         }
 
         public async Task<(List<Store> Stores, int TotalCount)> GetStoresWithPagination(string? Sname, int pageIndex = 1, int pageSize = 10)

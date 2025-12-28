@@ -11,7 +11,6 @@ public partial class Store
 
     public string StoreName { get; set; } = null!;
 
-    public string LogoUrl { get; set; } = null!;
     public string? Phone { get; set; }
 
     public string? Address { get; set; }
@@ -25,6 +24,8 @@ public partial class Store
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public string LogoUrl { get; set; } = null!;
 
     public virtual Account Account { get; set; } = null!;
 

@@ -22,7 +22,7 @@ namespace BidaTrader.Server.Controllers
 
         [HttpGet("profile")]
         [Authorize]
-        public async Task<ActionResult<UserDto>> GetMyProfile()
+        public async Task<ActionResult<AccountDto>> GetMyProfile()
         {
             var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
@@ -31,7 +31,7 @@ namespace BidaTrader.Server.Controllers
             var account = await _accountService.GetItemByIdAsync(userId);
             if (account == null) return NotFound("Không tìm thấy tài khoản.");
 
-            return Ok(new UserDto
+            return Ok(new AccountDto
             {
                 Id = account.Id,
                 UID = account.Uid,
@@ -49,7 +49,7 @@ namespace BidaTrader.Server.Controllers
 
         [HttpPut("profile")]
         [Authorize]
-        public async Task<IActionResult> UpdateMyProfile([FromBody] UserDto dto)
+        public async Task<IActionResult> UpdateMyProfile([FromBody] AccountDto dto)
         {
             var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
