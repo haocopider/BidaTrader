@@ -87,7 +87,7 @@ public class ProductsController : ControllerBase
             highest,
             rating,
             pageIndex=1,
-            pageSize=10
+            pageSize=20
         );
 
         return Ok(response);

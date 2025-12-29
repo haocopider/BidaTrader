@@ -1,112 +1,136 @@
-﻿
-@if(IsVisible){
-    <div class="modal-backdrop fade show"> </div>
-    <div class="modal fade show" tabindex="-1" style="display: block;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+﻿@if (IsVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show" tabindex="-1" style="display:block;">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow">
+
+                <!-- HEADER -->
+                <div class="modal-header">
                     <h4 class="modal-title fw-bold">
                         <span class="text-muted fw-light">Tài khoản</span>
                     </h4>
                     <button type="button" class="btn-close" @onclick="CLoseModal"></button>
-            </div>
-                    <div class="card mb-4 shadow-sm">
-                        <div class="card-header"><h5 class="mb-0">Tìm kiếm theo UID (Khóa chính)</h5></div>
-                        <div class="card-body">
-                            <div class="input-group input-group-merge">
-                                <input type="text" class="form-control" placeholder="Nhập UID (GUID) để tải dữ liệu..." @bind="SearchUID" />
-                                <button class="btn btn-primary" @onclick="SearchAccountByUID" disabled="@string.IsNullOrWhiteSpace(SearchUID)">
-                                    <i class="bx bx-search"></i> Tìm kiếm
+                </div>
+
+                <!-- SEARCH BAR (TOP) -->
+                <div class="border-bottom p-3 bg-light">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white">
+                            <i class="bx bx-search"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Nhập UID (GUID) để tải dữ liệu tài khoản..."
+                               @bind="SearchUID" />
+
+                        <button class="btn btn-primary"
+                                @onclick="SearchAccountByUID"
+                                disabled="@string.IsNullOrWhiteSpace(SearchUID)">
+                            Tìm kiếm
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(SearchError))
+                    {
+                        <div class="text-danger small mt-2">@SearchError</div>
+                    }
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+
+                    @if (IsLoading)
+                    {
+                        <div class="d-flex justify-content-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+
+                            <div class="row g-4">
+
+                                <!-- LEFT: AVATAR -->
+                                <div class="col-md-4 text-center border-end">
+
+                                    <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl)
+                                                                                 ? (string.IsNullOrWhiteSpace(Model.AvatarUrl)
+                                                                                     ? "img/default-avatar.png"
+                                                                                     : Model.AvatarUrl)
+                                                                                 : ImagePreviewUrl)"
+                                         class="rounded-circle shadow-sm border mb-3"
+                                         style="width:160px;height:160px;object-fit:cover;"
+                                         alt="Avatar" />
+
+                                    <label class="form-label small">Ảnh đại diện</label>
+                                    <InputFile OnChange="HandleFileSelection"
+                                               class="form-control"
+                                               accept="image/*" />
+
+                                </div>
+
+                                <!-- RIGHT: FORM -->
+                                <div class="col-md-8">
+
+                                    <div class="row g-3">
+
+                                        <div class="col-md-6">
+                                            <label class="form-label">Tên đăng nhập</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bx bx-user"></i></span>
+                                                <InputText class="form-control"
+                                                           @bind-Value="Model.UserName"
+                                                           disabled />
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label">Mật khẩu</label>
+                                            <InputText type="password"
+                                                       class="form-control"
+                                                       @bind-Value="Model.PasswordHash"
+                                                       placeholder="Chỉ nhập khi tạo mới" />
+                                            <ValidationMessage For="@(() => Model.PasswordHash)" />
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- FOOTER -->
+                            <div class="mt-4 text-end border-top pt-3">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="bx bx-save me-1"></i> Lưu
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        @onclick="CLoseModal">
+                                    Hủy
                                 </button>
                             </div>
-                            @if (!string.IsNullOrWhiteSpace(SearchError))
-                            {
-                                <p class="text-danger mt-2 small">@SearchError</p>
-                            }
-                        </div>
-                    </div>
 
-                @if (IsLoading)
-                {
-                    <div class="alert alert-info">Đang tải dữ liệu...</div>
-                }
-                else
-                {
-                    <div class="card mb-4">
-                        <div class="card-header"><h5 class="mb-0">Thông tin Tài khoản</h5></div>
-                        <div class="card-body">
-                            <EditForm Model="Model" OnValidSubmit="HandleSubmit" >
-                                <DataAnnotationsValidator />
+                        </EditForm>
+                    }
 
-                                <div class="row g-3">
-
-                                    @* ẢNH ĐẠI DIỆN *@
-                                    <div class="col-12 text-center mb-4">
-
-                                        @* Ảnh sẽ hiển thị AvatarUrl (từ DB) hoặc ImagePreviewUrl (từ file chọn) *@
-                                        <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl) ?
-                                                                (string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "img/default-avatar.png" : Model.AvatarUrl)
-                                                                : ImagePreviewUrl)"
-                                             alt="Avatar"
-                                             class="rounded-circle shadow-sm border"
-                                             style="width: 150px; height: 150px; object-fit: cover;">
-
-                                        <div class="mt-2">
-                                            <label class="col-form-label small">Chọn ảnh đại diện</label>
-                                            <InputFile OnChange="HandleFileSelection" class="form-control text-center w-50 mx-auto" accept="image/*" />
-                                        </div>
-                                    </div>
-                                    @* USERNAME (Không sửa) *@
-                                    <div class="col-md-6">
-                                        <label class="form-label">Tên đăng nhập</label>
-                                        <div class="input-group input-group-merge">
-                                            <span class="input-group-text"><i class="bx bx-user"></i></span>
-                                            <InputText class="form-control" @bind-Value="Model.UserName" />
-                                        </div>
-                                    </div>
-
-                                    @* ROLE *@
-                                    <div class="col-md-6">
-                                        <label class="form-label">Vai trò</label>
-                                        <div class="input-group input-group-merge">
-                                            <span class="input-group-text"><i class="bx bx-id-card"></i></span>
-                                            <InputSelect class="form-select" @bind-Value="Model.Role">
-                                                <option value="Customer">Customer</option>
-                                                <option value="Store">Store</option>
-                                                <option value="Admin">Admin</option>
-                                            </InputSelect>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Mật khẩu</label>
-                                        <InputText type="password" class="form-control" @bind-Value="@Model.PasswordHash" placeholder="Chỉ nhập khi Tạo mới" />
-                                        <ValidationMessage For="@(() => Model.PasswordHash)" />
-                                    </div>
-
-                                    <div class="col-12 mt-4 text-end">
-                                        <button type="submit" class="btn btn-primary me-2">Lưu</button>
-                                        <button type="button" class="btn btn-outline-secondary" @onclick="() => CLoseModal()">Hủy</button>
-                                    </div>
-                                </div>
-                            </EditForm>
-                        </div>
-                    </div>
-                }
+                </div>
+            </div>
         </div>
     </div>
-</div>
 }
-
 
 @code {
 
     public AccountDto? Model { get; set; } = new ();
 
-    [Parameter] public int Id { get; set; } // ID được truyền từ cha
-    [Parameter] public bool IsVisible { get; set; } // Trạng thái hiển thị
-    [Parameter] public EventCallback OnClose { get; set; } // Callback khi đóng
-    [Parameter] public EventCallback OnDataSaved { get; set; } // Callback khi lưu thành công
+    [Parameter] public int Id { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDataSaved { get; set; }
     private bool IsLoading { get; set; } = false;
     private string SearchUID { get; set; } = string.Empty;
     private string SearchError { get; set; } = string.Empty;

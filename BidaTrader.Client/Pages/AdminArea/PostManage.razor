@@ -36,10 +36,10 @@
                         <strong>@item.Title</strong>
                     </td>
                     <td>
-                        @item.Auther
+                        @item.Store.StoreName
                     </td>
                     <td>
-                        @item.CreatedAt?.ToString("dd/MM/yyyy HH:mm")
+                        @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                     </td>
                     <td>
                         <span class="badge bg-label-@(item.IsActive == true ? "success" : "secondary")">

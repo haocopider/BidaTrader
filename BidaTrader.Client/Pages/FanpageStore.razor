@@ -1,10 +1,10 @@
-﻿@page "/stores/{StoreId:int}"
+﻿@page "/store/{StoreId:int}"
 
 <PageTitle>@storeInfo.StoreName - BidaTrader</PageTitle>
 
 @if(loading)
 {
-    <p>Đang tải dữ liệu...</p>
+    <MiniSpinner />
 }
 else
 {
@@ -146,7 +146,7 @@ else
 
                 @if (isLoading)
                 {
-                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+                    <MiniSpinner></MiniSpinner>
                 }
                 else if (Products.Items.Count == 0)
                 {
@@ -191,19 +191,19 @@ else
 
                     <div class="d-flex justify-content-center mt-5">
                         <nav aria-label="Page navigation">
-                            <ul class="pagination">
-                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Trước</button>
+                            <ul class="pagination mb-0">
+                                <li class="page-item @(Products.PageIndex == 1 ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-left" @onclick="() => ChangePage(Products.PageIndex - 1)"></button>
                                 </li>
-                                @for (int i = 1; i <= totalPages; i++)
+                                @for (int i = 1; i <= Math.Min(Products.TotalPages, 5); i++)
                                 {
-                                    int pageNum = i;
-                                    <li class="page-item @(currentPage == pageNum ? "active" : "")">
-                                        <button class="page-link" @onclick="() => ChangePage(pageNum)">@pageNum</button>
+                                    var pageNumber = i;
+                                    <li class="page-item @(Products.PageIndex == pageNumber ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(pageNumber)">@pageNumber</button>
                                     </li>
                                 }
-                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Sau</button>
+                                <li class="page-item @(Products.PageIndex == Products.TotalPages ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-right" @onclick="() => ChangePage(Products.PageIndex + 1)"></button>
                                 </li>
                             </ul>
                         </nav>
@@ -226,8 +226,6 @@ else
     private FilterModel filter = new FilterModel();
     private bool isLoading = true;
     private bool loading = true;
-    private int currentPage = 1;
-    private int totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -273,7 +271,6 @@ else
         else ErrorMessage = "Không có dữ liệu category trả về từ Server";
     }
 
-    // Handlers
     private async Task HandleSearch(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await LoadProducts();
@@ -282,7 +279,6 @@ else
     private async Task UpdateCategory(int catId)
     {
         filter.CategoryId = catId;
-        currentPage = 1;
         await LoadProducts();
     }
 
@@ -292,11 +288,17 @@ else
         await LoadProducts();
     }
 
-    private async Task ChangePage(int page)
+    private async Task ChangePage(int newPageIndex)
     {
-        if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        await LoadProducts();
+        if (newPageIndex > 0 && newPageIndex <= Products.TotalPages)
+        {
+            var response = await Http.GetAsync($"api/products/store/{StoreId}?pageIndex={newPageIndex}&pageSize=20");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ProductPerPage>();
+                if (result != null) Products = result;
+            }
+        }
     }
 
     public class FilterModel

@@ -2,7 +2,6 @@
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BidaTrader.Server.Controllers
@@ -29,11 +28,9 @@ namespace BidaTrader.Server.Controllers
                 AccountId = p.AccountId,
                 Title = p.Title,
                 Content = p.Content,
+                ThumbnailUrl = p.ImageUrl,
                 IsActive = p.IsActive,
-                IsCommentEnabled = p.IsCommentEnabled,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                Auther = p.Account.UserName
+                CreatedAt = p.CreatedAt ?? DateTime.Now,
             }).ToList();
 
             var response = new PostPerPage
@@ -45,7 +42,7 @@ namespace BidaTrader.Server.Controllers
             };
             return Ok(response);
         }
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult> GetPostById(int id)
         {
@@ -60,10 +57,9 @@ namespace BidaTrader.Server.Controllers
                 AccountId = post.AccountId,
                 Title = post.Title,
                 Content = post.Content,
+                ThumbnailUrl = post.ImageUrl,
                 IsActive = post.IsActive,
-                IsCommentEnabled = post.IsCommentEnabled,
-                CreatedAt = post.CreatedAt,
-                UpdatedAt = post.UpdatedAt
+                CreatedAt = post.CreatedAt ?? DateTime.Now,
             };
             return Ok(dto);
         }
@@ -76,8 +72,8 @@ namespace BidaTrader.Server.Controllers
                 AccountId = postDto.AccountId,
                 Title = postDto.Title,
                 Content = postDto.Content,
+                ImageUrl = postDto.ThumbnailUrl,
                 IsActive = postDto.IsActive,
-                IsCommentEnabled = postDto.IsCommentEnabled,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -88,7 +84,7 @@ namespace BidaTrader.Server.Controllers
             }
             return Ok("Tạo bài viết thành công");
         }
-    
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdatePost(int id, [FromBody] PostDto postDto)
         {
@@ -103,8 +99,8 @@ namespace BidaTrader.Server.Controllers
             }
             existingPost.Title = postDto.Title;
             existingPost.Content = postDto.Content;
+            existingPost.ImageUrl = postDto.ThumbnailUrl;
             existingPost.IsActive = postDto.IsActive;
-            existingPost.IsCommentEnabled = postDto.IsCommentEnabled;
             existingPost.UpdatedAt = DateTime.UtcNow;
             var updated = await _postService.UpdateItemAsync(existingPost);
             if (!updated)

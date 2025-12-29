@@ -1,0 +1,205 @@
+﻿@using BidaTrader.Shared.DTOs
+@using BidaTrader.Shared.Models
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+@if (IsVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">Đánh giá đơn hàng #@CurrentOrderId</h5>
+                    <button type="button" class="btn-close" @onclick="Close"></button>
+                </div>
+
+                <div class="modal-body py-0" style="max-height: 70vh; overflow-y: auto;">
+                    @if (IsLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var item in FeedbackItems)
+                        {
+                            <div class="card border mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex mb-3">
+                                        <img src="@item.ProductImage" class="rounded border me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-1 fw-bold">@item.ProductName</h6>
+                                            <small class="text-muted">Phân loại: @item.BrandName</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 text-center">
+                                        <div class="d-inline-flex gap-2">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                var star = i;
+                                                <i class="bx fs-3 cursor-pointer transition-hover @(item.Rating >= star ? "bxs-star text-warning" : "bx-star text-secondary")"
+                                                   @onclick="() => item.Rating = star"
+                                                   style="transition: transform 0.2s;">
+                                                </i>
+                                            }
+                                        </div>
+                                        <div class="small text-warning mt-1 fw-bold">@GetRatingText(item.Rating)</div>
+                                    </div>
+
+                                    <textarea class="form-control mb-2" rows="2"
+                                              placeholder="Chất lượng sản phẩm thế nào? Hãy chia sẻ với mọi người nhé..."
+                                              @bind="item.Content"></textarea>
+
+                                    <div class="mb-2">
+                                        <label class="btn btn-sm btn-light border w-100 text-start text-muted">
+                                            <i class="bx bx-camera me-1"></i> Thêm hình ảnh
+                                            <InputFile OnChange="@(e => HandleImageUpload(e, item))" multiple class="d-none" accept="image/*" />
+                                        </label>
+                                        @if (item.ImageUrls.Any())
+                                        {
+                                            <div class="d-flex gap-2 mt-2">
+                                                @foreach (var img in item.ImageUrls)
+                                                {
+                                                    <img src="@img" width="50" height="50" class="rounded border object-fit-cover" />
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" @onclick="Close">Để sau</button>
+                    <button type="button" class="btn btn-primary" @onclick="SubmitFeedback" disabled="@IsSubmitting">
+                        @if (IsSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Gửi đánh giá
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool IsVisible = false;
+    private bool IsLoading = false;
+    private bool IsSubmitting = false;
+    private int CurrentOrderId;
+
+    private class FeedbackDraft
+    {
+        public int ProductId { get; set; }
+        public int OrderDetailId { get; set; }
+        public string ProductName { get; set; } = "";
+        public string ProductImage { get; set; } = "";
+        public string BrandName { get; set; } = "";
+
+        public int Rating { get; set; } = 5;
+        public string Content { get; set; } = "";
+        public List<string> ImageUrls { get; set; } = new();
+    }
+
+    private List<FeedbackDraft> FeedbackItems = new();
+
+    public async Task Show(int orderId)
+    {
+        CurrentOrderId = orderId;
+        IsVisible = true;
+        IsLoading = true;
+        FeedbackItems.Clear();
+
+        try
+        {
+            // 1. Lấy chi tiết đơn hàng để biết sản phẩm nào cần đánh giá
+            // API này trả về Order với danh sách OrderDetails
+            var order = await Http.GetFromJsonAsync<Order>($"api/orders/{orderId}");
+
+            if (order != null && order.OrderDetails != null)
+            {
+                foreach (var detail in order.OrderDetails)
+                {
+                    // Chỉ thêm vào list nếu chưa đánh giá (Logic này nên check ở backend, nhưng frontend check sơ bộ)
+                    FeedbackItems.Add(new FeedbackDraft
+                    {
+                        ProductId = detail.ProductId,
+                        OrderDetailId = detail.Id,
+                        ProductName = detail.Product?.Name ?? "Sản phẩm",
+                        BrandName = detail.Product?.Brand?.Name ?? ""
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi tải đơn hàng: " + ex.Message);
+            IsVisible = false;
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Close() => IsVisible = false;
+
+    private string GetRatingText(int star) => star switch
+    {
+        1 => "Tệ",
+        2 => "Không hài lòng",
+        3 => "Bình thường",
+        4 => "Hài lòng",
+        5 => "Tuyệt vời",
+        _ => ""
+    };
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e, FeedbackDraft item)
+    {
+        // Xử lý upload ảnh (Convert base64 để preview nhanh)
+        // Trong thực tế bạn nên upload lên server ngay và lấy URL về
+        foreach (var file in e.GetMultipleFiles(3))
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).ReadAsync(buffer);
+            var base64 = Convert.ToBase64String(buffer);
+            item.ImageUrls.Add($"data:{file.ContentType};base64,{base64}");
+        }
+    }
+
+    private async Task SubmitFeedback()
+    {
+        IsSubmitting = true;
+        int successCount = 0;
+
+        // Gửi đánh giá cho từng sản phẩm
+        foreach (var item in FeedbackItems)
+        {
+            if (string.IsNullOrWhiteSpace(item.Content)) continue; // Bỏ qua nếu ko viết gì (tuỳ logic)
+
+            var dto = new CreateFeedbackDto
+            {
+                ProductId = item.ProductId,
+                OrderDetailId = item.OrderDetailId,
+                Rating = item.Rating,
+                Content = item.Content,
+                ImageUrls = item.ImageUrls
+            };
+
+            var response = await Http.PostAsJsonAsync("api/feedbacks", dto);
+            if (response.IsSuccessStatusCode) successCount++;
+        }
+
+        IsSubmitting = false;
+        IsVisible = false;
+
+        await JSRuntime.InvokeVoidAsync("alert", $"Đã gửi {successCount} đánh giá thành công!");
+    }
+}

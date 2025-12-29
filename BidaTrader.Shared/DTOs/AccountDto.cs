@@ -67,7 +67,7 @@ namespace BidaTrader.Shared.DTOs
     {
         [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc.")]
         [DataType(DataType.Password)]
-        public string CurrentPassword { get; set; } = string.Empty;
+        public string? CurrentPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Mật khẩu mới là bắt buộc.")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu mới phải dài từ 8 đến 100 ký tự.")]
@@ -82,4 +82,43 @@ namespace BidaTrader.Shared.DTOs
         public string ConfirmNewPassword { get; set; } = string.Empty;
     }
 
+    public class ForgotPasswordDto
+    {
+        [Required(ErrorMessage = "Vui lòng nhập Email")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
+        public string Email { get; set; } = "";
+    }
+
+    public class VerifyOtpDto
+    {
+        public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Vui lòng nhập mã OTP")]
+        public string Otp { get; set; } = "";
+    }
+
+    public class ResetPasswordDto
+    {
+        public string Email { get; set; } = "";
+        public string Otp { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải từ 6 ký tự")]
+        public string NewPassword { get; set; } = "";
+
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        public string ConfirmNewPassword { get; set; } = "";
+    }
+
+    public class UpdateRolePermissionsDto
+    {
+        public int RoleId { get; set; }
+        public List<int> PermissionIds { get; set; } = new();
+    }
+
+    public class RoleWithPermissionsDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public List<int> AssignedPermissionIds { get; set; } = new();
+    }
 }

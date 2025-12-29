@@ -1,4 +1,5 @@
-﻿using BidaTrader.Server.Services;
+﻿using BidaTrader.Server.Helpers;
+using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
@@ -20,12 +21,12 @@ builder.Services.AddScoped(typeof(IService<>), typeof(ServerService<>));
 builder.Services.AddScoped<ProductService, ProductService>();
 builder.Services.AddScoped<IService<Category>, CategoryService>();
 builder.Services.AddScoped<IService<Brand>, BrandService>();
-builder.Services.AddScoped<IService<Account>, AccountService>();
+builder.Services.AddScoped<AccountService, AccountService>();
 builder.Services.AddScoped<IService<Post>, PostService>();
 builder.Services.AddScoped<IService<Store>, StoreService>();
 builder.Services.AddScoped<CartService, CartService>();
 builder.Services.AddScoped<OrderService, OrderService>();
-
+builder.Services.AddScoped<MailHelper>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

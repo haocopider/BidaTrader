@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
-namespace BidaTrader.Shared.Models;
+namespace BidaTrader.Server.Models;
 
 public partial class AppDbContext : DbContext
 {
@@ -26,6 +28,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Comment> Comments { get; set; }
 
     public virtual DbSet<Feedback> Feedbacks { get; set; }
+
+    public virtual DbSet<FeedbackImage> FeedbackImages { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
 
@@ -65,17 +69,20 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.AvatarUrl).HasMaxLength(500);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())", "DF__Accounts__Create__3D5E1FD2");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.FirstName).HasMaxLength(50);
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsActive).HasDefaultValue(true, "DF__Accounts__IsActi__3B75D760");
             entity.Property(e => e.LastName).HasMaxLength(50);
             entity.Property(e => e.Passcode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.PasswordHash).HasMaxLength(500);
+            entity.Property(e => e.PasswordResetToken)
+                .HasMaxLength(6)
+                .IsFixedLength();
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -171,22 +178,34 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Feedback>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Feedback__3214EC07ECBFB05A");
+            entity.HasKey(e => e.Id).HasName("PK__Feedback__3214EC072FABA9F5");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.HasIndex(e => e.ProductId, "IX_Feedback_Product");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
 
             entity.HasOne(d => d.Account).WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Feedbacks_Accounts");
+                .HasConstraintName("FK_Feedback_Account");
+
+            entity.HasOne(d => d.OrderDetail).WithMany(p => p.Feedbacks)
+                .HasForeignKey(d => d.OrderDetailId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Feedback_OrderDetail");
 
             entity.HasOne(d => d.Product).WithMany(p => p.Feedbacks)
                 .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK_Feedbacks_Products");
+                .HasConstraintName("FK_Feedback_Product");
+        });
 
-            entity.HasOne(d => d.Store).WithMany(p => p.Feedbacks)
-                .HasForeignKey(d => d.StoreId)
-                .HasConstraintName("FK_Feedbacks_Stores");
+        modelBuilder.Entity<FeedbackImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Feedback__3214EC073BA8208B");
+
+            entity.HasOne(d => d.Feedback).WithMany(p => p.FeedbackImages)
+                .HasForeignKey(d => d.FeedbackId)
+                .HasConstraintName("FK_FeedbackImage_Feedback");
         });
 
         modelBuilder.Entity<Order>(entity =>

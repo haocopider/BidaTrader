@@ -19,6 +19,8 @@ public partial class Feedback
 
     public DateTime? CreatedAt { get; set; }
 
+    public virtual ICollection<FeedbackImage> FeedbackImages { get; set; } = new List<FeedbackImage>();
+
     public virtual Account Account { get; set; } = null!;
 
     public virtual Product? Product { get; set; }

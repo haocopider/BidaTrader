@@ -62,4 +62,30 @@ namespace BidaTrader.Shared.DTOs
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
     }
 
+    public class CreateFeedbackDto
+    {
+        public int ProductId { get; set; }
+        public int OrderDetailId { get; set; }
+        public int Rating { get; set; }
+        public string Content { get; set; } = "";
+        public List<string> ImageUrls { get; set; } = new();
+    }
+
+    public class ReplyFeedbackDto
+    {
+        public int FeedbackId { get; set; }
+        public string ReplyContent { get; set; } = "";
+    }
+
+    public class FeedbackDto
+    {
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = "";
+        public string? CustomerAvatar { get; set; }
+        public int Rating { get; set; }
+        public string Content { get; set; } = "";
+        public string? Reply { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public List<string> Images { get; set; } = new();
+    }
 }
