@@ -2,20 +2,24 @@
 
 <PageTitle>@(product?.Name ?? "Chi tiết sản phẩm") - BidaTrader</PageTitle>
 
-
 <style>
+    /* --- Styles cũ --- */
     .thumb-item {
         display: inline-block;
         width: 70px;
         min-width: 70px;
+        margin-right: 5px;
+        cursor: pointer;
     }
 
         .thumb-item img {
             transition: transform .18s ease;
+            border: 1px solid #e9ecef;
         }
 
-        .thumb-item:hover img {
+        .thumb-item:hover img, .thumb-item.active img {
             transform: scale(1.05);
+            border-color: #696cff;
         }
 
     .product-card img {
@@ -26,33 +30,45 @@
         transform: scale(1.03);
     }
 
-    /* small utilities */
-    .border-light {
-        border-color: #e9ecef !important;
+    /* --- Styles mới cho Feedback --- */
+    .feedback-avatar {
+        width: 45px;
+        height: 45px;
+        object-fit: cover;
+        border-radius: 50%;
     }
 
-    .border-3 {
-        border-width: 3px !important;
+    .feedback-img-thumb {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: zoom-in;
     }
 
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    /* Hiệu ứng hover cho sidebar items */
-    .action-hover:hover {
+    .reply-box {
         background-color: #f8f9fa;
-        transition: background-color 0.2s;
+        border-left: 3px solid #696cff;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 10px;
     }
 
-    .hover-primary:hover {
-        color: #696cff !important; /* Màu primary của Sneat */
+    .star-rating i {
+        color: #d1d5db;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: color 0.2s;
     }
 
-    /* Đảm bảo ảnh trong nội dung mô tả không bị tràn */
-    .content-text img {
-        max-width: 100%;
-        height: auto;
+        .star-rating i.active {
+            color: #ffc107;
+        }
+
+    .rating-summary-box {
+        background: #fff4e5;
+        border-radius: 8px;
+        color: #d48806;
     }
 </style>
 
@@ -60,166 +76,247 @@
     @if (isLoading)
     {
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2 text-muted">Đang tải thông tin sản phẩm...</p>
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
         </div>
     }
     else if (product == null)
     {
-        <div class="alert alert-danger" role="alert">
-            <i class="bx bx-error-circle me-2"></i> Không tìm thấy sản phẩm hoặc sản phẩm đã bị xóa.
-            <a href="/" class="alert-link">Quay lại trang chủ</a>
+        <div class="alert alert-danger">
+            <i class="bx bx-error-circle me-2"></i> Sản phẩm không tồn tại. <a href="/" class="alert-link">Về trang chủ</a>
         </div>
     }
     else
     {
         <div class="row">
-
-            <div class="col-lg-9 col-md-12 mb-4">
-
-
+            <div class="col-lg-9 mb-4">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-
                         <div class="row gx-4">
-
                             <div class="col-md-5 mb-4 mb-md-0">
-                                <div class="d-flex flex-column h-100">
-
-                                    <div class="ratio ratio-4x3 mb-3 rounded overflow-hidden bg-light position-relative d-flex align-items-center justify-content-center">
-                                        <img src="@selectedImage"
-                                             class="img-fluid p-2"
-                                             style="max-height:100%; max-width:100%; object-fit:contain;"
-                                             alt="@product.Name"
-                                             loading="lazy"
-                                             onerror="this.onerror=null;this.src='/assets/img/no-image.png';" />
-                                    </div>
-
-
-                                    <div class="d-flex gap-2 overflow-auto py-2" style="scrollbar-width: thin;">
-                                        @if (productImages != null && productImages.Any())
-                                        {
-                                            @foreach (var img in productImages)
-                                            {
-                                                var imgP = img.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-                                                ? img
-                                                : $"https://localhost:7049{img}";
-
-                                                <div class="thumb-item" @onclick="() => selectedImage = img" title="Xem ảnh">
-                                                    <div class="ratio ratio-1x1 rounded overflow-hidden position-relative border @(selectedImage == img ? "border-3 border-primary" : "border-light")">
-                                                        <img src="@imgP"
-                                                             class="w-100 h-100"
-                                                             style="object-fit:cover;"
-                                                             loading="lazy"
-                                                             onerror="this.onerror=null;this.src='/assets/img/no-image.png';" />
-                                                    </div>
-                                                </div>
-                                            }
-                                        }
-                                    </div>
+                                <div class="ratio ratio-4x3 mb-3 rounded bg-light d-flex align-items-center justify-content-center border">
+                                    <img src="@selectedImage" class="img-fluid p-2" style="max-height:100%; object-fit:contain;"
+                                         onerror="this.src='/assets/img/no-image.png';" />
+                                </div>
+                                <div class="d-flex overflow-auto py-2">
+                                    @foreach (var img in productImages)
+                                    {
+                                        <div class="thumb-item @(selectedImage == img ? "active" : "")" @onclick="() => selectedImage = img">
+                                            <div class="ratio ratio-1x1 rounded overflow-hidden">
+                                                <img src="@img" class="w-100 h-100" style="object-fit:cover;" />
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
 
-
                             <div class="col-md-7">
-                                <small class="text-uppercase fw-semibold text-primary d-block mb-1">
-                                    <span class="text-danger">Thương hiệu:</span> @product.BrandName
-                                </small>
-
+                                <small class="text-uppercase fw-bold text-muted">@product.BrandName</small>
                                 <h3 class="fw-bold text-dark mb-2">@product.Name</h3>
 
                                 <div class="d-flex align-items-center mb-3">
-                                    <div class="me-2">
+                                    <div class="text-warning me-2">
                                         @for (int i = 1; i <= 5; i++)
                                         {
-                                            <i class="bx bxs-star @(i <= product.Rating ? "text-warning" : "text-muted")"></i>
+                                            <i class="bx @(i <= product.Rating ? "bxs-star" : "bx-star")"></i>
                                         }
                                     </div>
-                                    <small class="text-muted">(150 đánh giá) &middot; Đã bán: 1000</small>
+                                    <small class="text-muted">(@Feedbacks.Count đánh giá)</small>
                                 </div>
 
-                                <div class="mb-4">
-                                    <h2 class="text-primary fw-bold display-6 mb-0">
-                                        @product.Price.ToString("N0") <small class="fs-5">VNĐ</small>
-                                    </h2>
-                                    <div class="text-muted small mt-1">Giá đã bao gồm thuế (nếu có)</div>
-                                </div>
+                                <h2 class="text-primary fw-bold mb-3">@product.Price.ToString("N0") ₫</h2>
 
-                                <div class="mb-4">
-                                    <label class="form-label text-muted mb-1">Mô tả ngắn</label>
-                                    <p class="text-secondary small">
-                                        @(product.Description?.Length > 150 ? product.Description.Substring(0, 150) + "..." : product.Description)
-                                    </p>
-                                </div>
+                                <p class="text-secondary small mb-4">
+                                    @(product.Description?.Length > 200 ? product.Description[..200] + "..." : product.Description)
+                                </p>
 
-                                <div class="d-flex align-items-center gap-3 mb-3">
-                                    <div class="input-group" style="width:160px;">
-                                        <button class="btn btn-outline-secondary" type="button" @onclick="DecreaseQty"><i class="bx bx-minus"></i></button>
-                                        <input type="text" class="form-control text-center" @bind="quantity" readonly />
-                                        <button class="btn btn-outline-secondary" type="button" @onclick="IncreaseQty"><i class="bx bx-plus"></i></button>
+                                <div class="d-flex align-items-center gap-3 mb-4">
+                                    <div class="input-group" style="width:140px;">
+                                        <button class="btn btn-outline-secondary btn-sm" @onclick="DecreaseQty"><i class="bx bx-minus"></i></button>
+                                        <input type="text" class="form-control text-center form-control-sm" @bind="quantity" readonly />
+                                        <button class="btn btn-outline-secondary btn-sm" @onclick="IncreaseQty"><i class="bx bx-plus"></i></button>
                                     </div>
-                                    <div class="text-muted small">@product.Quantity sản phẩm có sẵn</div>
+                                    <small class="text-muted">Còn @product.Quantity sản phẩm</small>
                                 </div>
 
-                                <div class="d-flex gap-3">
-                                    <button class="btn btn-outline-primary btn-lg flex-fill" @onclick="AddToCart">
-                                        <i class="bx bx-cart-alt me-2"></i> Thêm vào giỏ
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary flex-grow-1" @onclick="AddToCart">
+                                        <i class="bx bx-cart-add me-1"></i> Thêm giỏ hàng
                                     </button>
-                                    <button class="btn btn-primary btn-lg flex-fill shadow-sm">
-                                        Mua ngay
-                                    </button>
+                                    <button class="btn btn-primary flex-grow-1 shadow-sm">Mua ngay</button>
                                 </div>
 
- 
-                                <div class="mt-4 pt-3 border-top d-flex align-items-center">
-                                    <img src="@product.StoreLogo" alt="Store" class="rounded-circle me-3" style="width:48px; height:48px; object-fit:cover;" />
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0"><a href="/store/@product.StoreId" class="text-dark text-decoration-none">@product.StoreName</a></h6>
-                                        <small class="text-muted"><i class="bx bx-check-shield text-success"></i> Cửa hàng uy tín</small>
+                                <div class="mt-4 pt-3 border-top d-flex align-items-center cursor-pointer" @onclick='() => Navigation.NavigateTo($"/store/{product.StoreId}")'>
+                                    <img src="@(product.StoreLogo ?? "/assets/img/avatars/1.png")" class="rounded-circle me-3 border" width="40" height="40">
+                                    <div>
+                                        <h6 class="mb-0 text-dark">@product.StoreName</h6>
+                                        <small class="text-success"><i class="bx bx-shield-check"></i> Gian hàng chính hãng</small>
                                     </div>
-                                    <a href="/store/@product.StoreId" class="btn btn-outline-secondary btn-sm rounded-pill">Xem Shop</a>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
+                <div class="card shadow-sm border-0" id="feedback-section">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="fw-bold mb-0"><i class="bx bx-message-square-detail me-2"></i>Đánh giá sản phẩm</h5>
+                    </div>
+                    <div class="card-body">
+
+                        @* --- TỔNG QUAN RATING --- *@
+                        @if (Feedbacks.Any())
+                        {
+                            <div class="rating-summary-box p-3 mb-4 d-flex align-items-center gap-3">
+                                <div class="text-center">
+                                    <h2 class="mb-0 fw-bold text-warning">@Math.Round(Feedbacks.Average(f => f.Rating), 1)</h2>
+                                    <div class="text-warning small">
+                                        <i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i><i class="bx bxs-star"></i>
+                                    </div>
+                                </div>
+                                <div class="vr mx-2"></div>
+                                <div class="flex-grow-1">
+                                    <span class="fw-bold">@Feedbacks.Count</span> nhận xét từ khách hàng đã mua.
+                                </div>
+                            </div>
+                        }
+
+                        @* --- FORM VIẾT ĐÁNH GIÁ (Chỉ hiện khi có OrderDetailId trên URL) --- *@
+                        @if (TargetOrderDetailId.HasValue)
+                        {
+                            <div class="card bg-light mb-4 border border-dashed">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">Viết đánh giá của bạn</h6>
+                                    <EditForm Model="NewFeedback" OnValidSubmit="SubmitFeedback">
+                                        <DataAnnotationsValidator />
+
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted">Mức độ hài lòng</label>
+                                            <div class="star-rating">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    var star = i;
+                                                    <i class="bx bxs-star @(NewFeedback.Rating >= star ? "active" : "")"
+                                                       @onclick="() => NewFeedback.Rating = star"></i>
+                                                }
+                                                <span class="ms-2 fw-bold text-warning">@GetRatingText(NewFeedback.Rating)</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <textarea class="form-control" rows="3" placeholder="Chia sẻ cảm nhận về sản phẩm..."
+                                                      @bind="NewFeedback.Content" required></textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small text-muted"><i class="bx bx-image"></i> Thêm ảnh (Tối đa 3)</label>
+                                            <InputFile OnChange="HandleImageUpload" multiple class="form-control form-control-sm" accept="image/*" />
+                                            @if (NewFeedback.ImageUrls.Any())
+                                            {
+                                                <div class="d-flex gap-2 mt-2">
+                                                    @foreach (var url in NewFeedback.ImageUrls)
+                                                    {
+                                                        <img src="@url" class="rounded border" width="60" height="60" style="object-fit:cover" />
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                                @(isSubmitting ? "Đang gửi..." : "Gửi đánh giá")
+                                            </button>
+                                        </div>
+                                    </EditForm>
+                                </div>
+                            </div>
+                        }
+
+                        @* --- DANH SÁCH ĐÁNH GIÁ --- *@
+                        @if (!Feedbacks.Any())
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <img src="/assets/img/illustrations/girl-doing-yoga-light.png" width="100" class="mb-2 opacity-50" />
+                                <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-column gap-4">
+                                @foreach (var fb in Feedbacks)
+                                {
+                                    <div class="d-flex gap-3 border-bottom pb-4 last-no-border">
+                                        <img src="@(fb.CustomerAvatar ?? "/assets/img/avatars/5.png")" class="feedback-avatar shadow-sm" alt="User">
+
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="fw-bold text-dark">@fb.CustomerName</span>
+                                                <small class="text-muted" style="font-size: 0.75rem;">@fb.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                            </div>
+
+                                            <div class="text-warning mb-2" style="font-size: 0.85rem;">
+                                                @for (int i = 0; i < fb.Rating; i++)
+                                                {
+                                                    <i class="bx bxs-star"></i>
+                                                }
+                                            </div>
+
+                                            <p class="mb-2 text-secondary">@fb.Content</p>
+
+                                            @if (fb.Images != null && fb.Images.Any())
+                                            {
+                                                <div class="d-flex gap-2 mb-2">
+                                                    @foreach (var img in fb.Images)
+                                                    {
+                                                        <img src="@img" class="feedback-img-thumb border" />
+                                                    }
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(fb.Reply))
+                                            {
+                                                <div class="reply-box">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <strong class="text-primary small me-2">Phản hồi từ Cửa hàng</strong>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">
+                                                            @fb.CreatedAt.ToString("dd/MM/yyyy")
+                                                        </small>
+                                                    </div>
+                                                    <p class="mb-0 small text-secondary">@fb.Reply</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
 
-            <!-- SIDEBAR -->
             <div class="col-lg-3 d-none d-lg-block">
-                <div class="card shadow-sm border-0 sticky-top" style="top: 85px;">
-                    <div class="card-header bg-white border-bottom">
-                        <h6 class="fw-bold m-0 text-danger"><i class="bx bxs-hot me-1"></i> Bán chạy nhất</h6>
+                <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="fw-bold m-0 text-primary">Sản phẩm cùng loại</h6>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
-                            @if (bestSellers != null)
+                            @if (relatedProducts != null)
                             {
-                                @foreach (var item in bestSellers)
+                                foreach (var item in relatedProducts)
                                 {
-                                    <li class="list-group-item d-flex gap-3 align-items-center py-3">
-                                        <a href="/product/@item.Id" class="flex-shrink-0">
-                                            <img src="https://localhost:7049 @item.ImageUrl" class="rounded border" style="width: 60px; height: 60px; object-fit: cover;" alt="@item.Name">
+                                    <li class="list-group-item d-flex gap-2 align-items-center py-2 border-bottom-0 action-hover">
+                                        <a href="/product/@item.Id">
+                                            <img src="@item.ImageUrl" class="rounded border" style="width: 50px; height: 50px; object-fit: cover;">
                                         </a>
                                         <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="mb-1 text-truncate" style="font-size: 0.9rem;">
-                                                <a href="/product/@item.Id" class="text-dark text-decoration-none">@item.Name</a>
-                                            </h6>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="text-primary fw-bold small">@item.Price.ToString("N0")đ</span>
-                                                <small class="text-muted" style="font-size: 0.75rem;">Đã bán 10000</small>
-                                            </div>
+                                            <a href="/product/@item.Id" class="text-dark text-decoration-none d-block text-truncate small fw-semibold hover-primary">
+                                                @item.Name
+                                            </a>
+                                            <span class="text-primary fw-bold small">@item.Price.ToString("N0")đ</span>
                                         </div>
                                     </li>
                                 }
-                            }
-                            else
-                            {
-                                <li class="list-group-item text-center py-4 text-muted">Đang tải...</li>
                             }
                         </ul>
                     </div>
@@ -229,13 +326,17 @@
     }
 </div>
 
-
 @code {
     [Parameter] public int Id { get; set; }
 
     private ProductDto? product;
     private List<ProductDto>? relatedProducts;
-    private List<ProductDto>? bestSellers;
+    private List<FeedbackDto> Feedbacks = new();
+
+    // Biến cho form feedback
+    private CreateFeedbackDto NewFeedback = new() { Rating = 5 };
+    private int? TargetOrderDetailId;
+    private bool isSubmitting = false;
 
     private bool isLoading = true;
     private int quantity = 1;
@@ -246,10 +347,23 @@
     {
         isLoading = true;
         quantity = 1;
+        NewFeedback = new() { Rating = 5 }; // Reset form
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("orderDetailId", out var oidStr))
+        {
+            if (int.TryParse(oidStr, out int oid)) TargetOrderDetailId = oid;
+        }
+        else
+        {
+            TargetOrderDetailId = null;
+        }
+
         await LoadProductData();
+        await LoadFeedbacks();
         isLoading = false;
 
-        _ = LoadRelatedAndBestSellers();
+        _ = LoadRelatedProducts();
     }
 
     private async Task LoadProductData()
@@ -257,67 +371,99 @@
         try
         {
             product = await ProductService.GetItemByIdAsync(Id);
-
             if (product != null)
             {
-                // Xử lý ảnh: Nếu có list ảnh phụ thì dùng, không thì dùng ảnh chính
-                // Giả lập list ảnh nếu DTO chưa có trường List<string> Images
-                productImages = new List<string> { product.ImageUrl };
-                productImages.AddRange(product.Images);
-
-                selectedImage = productImages.First();
+                productImages = new List<string>();
+                if (!string.IsNullOrEmpty(product.ImageUrl)) productImages.Add(product.ImageUrl);
+                if (product.Images != null) productImages.AddRange(product.Images);
+                selectedImage = productImages.FirstOrDefault() ?? "/assets/img/no-image.png";
             }
         }
-        catch (Exception)
+        catch { product = null; }
+    }
+
+    private async Task LoadFeedbacks()
+    {
+        try
         {
-            product = null;
+            Feedbacks = await Http.GetFromJsonAsync<List<FeedbackDto>>($"api/feedbacks/product/{Id}") ?? new();
+        }
+        catch { Feedbacks = new(); }
+    }
+
+    private async Task LoadRelatedProducts()
+    {
+        if (product == null) return;
+        // Giả lập load sản phẩm liên quan
+        var res = await Http.GetAsync($"api/products/home?categoryId={product.CategoryId}&pageSize=5");
+        if (res.IsSuccessStatusCode)
+        {
+            var data = await res.Content.ReadFromJsonAsync<ProductPerPage>();
+            relatedProducts = data?.Items.Where(p => p.Id != Id).Take(5).ToList();
+            StateHasChanged();
         }
     }
 
-    private async Task LoadRelatedAndBestSellers()
+    private void IncreaseQty() { if (product != null && quantity < product.Quantity) quantity++; }
+    private void DecreaseQty() { if (quantity > 1) quantity--; }
+
+    private string GetRatingText(int star) => star switch
     {
-        if (product == null) return;
+        1 => "Tệ",
+        2 => "Không hài lòng",
+        3 => "Bình thường",
+        4 => "Hài lòng",
+        5 => "Tuyệt vời",
+        _ => ""
+    };
 
-        // 2. Lấy sản phẩm liên quan (Cùng Category, trừ sản phẩm hiện tại)
-        // Gọi API: /api/products?categoryId=...&excludeId=...&pageSize=4
-        // Ở đây giả lập gọi hàm search
-        // var relatedData = await ProductService.GetProductsAsync(new ProductSearchDto { CategoryId = product.CategoryId, PageSize = 4 });
-        // relatedProducts = relatedData.Items.Where(p => p.Id != product.Id).Take(4).ToList();
-
-        // 3. Lấy Best Seller (Giả lập sắp xếp theo Sold)
-        // Gọi API: /api/products/bestsellers
-        // var bestSellerData = await ProductService.GetProductsAsync(new ProductSearchDto { SortBy = "sold_desc", PageSize = 5 });
-        // bestSellers = bestSellerData.Items;
-
-        StateHasChanged(); // Cập nhật lại UI sau khi tải xong dữ liệu phụ
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        // Giả lập upload: Trong thực tế bạn cần gọi API upload file thật
+        // Ở đây mình chỉ convert sang base64 để demo hiển thị preview
+        NewFeedback.ImageUrls.Clear();
+        foreach (var file in e.GetMultipleFiles(3))
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).ReadAsync(buffer);
+            var base64 = Convert.ToBase64String(buffer);
+            NewFeedback.ImageUrls.Add($"data:{file.ContentType};base64,{base64}");
+        }
     }
 
-    private void IncreaseQty()
+    private async Task SubmitFeedback()
     {
-        if (product != null && quantity < product.Quantity) quantity++;
-    }
+        if (!TargetOrderDetailId.HasValue) return;
+        isSubmitting = true;
 
-    private void DecreaseQty()
-    {
-        if (quantity > 1) quantity--;
+        NewFeedback.ProductId = Id;
+        NewFeedback.OrderDetailId = TargetOrderDetailId.Value;
+
+        // Lưu ý: AccountId sẽ được lấy tự động từ Token ở Backend (Authorize)
+        var response = await Http.PostAsJsonAsync("api/feedbacks", NewFeedback);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Cảm ơn bạn đã đánh giá!");
+            TargetOrderDetailId = null; // Ẩn form đi
+            await LoadFeedbacks(); // Reload lại list
+        }
+        else
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {err}");
+        }
+        isSubmitting = false;
     }
 
     private async Task AddToCart()
     {
-        var request = new AddToCartDto
-            {
-                ProductId = product.Id,
-                Quantity = quantity
-            };
-
+        if (product == null) return;
+        var request = new AddToCartDto { ProductId = product.Id, Quantity = quantity };
         var response = await Http.PostAsJsonAsync("api/cart/add", request);
-
-        if(response.IsSuccessStatusCode)
-        {
-
-        } else
-        {
-            var error = await response.Content.ReadAsStringAsync();
-        }
+        if (response.IsSuccessStatusCode)
+            await JSRuntime.InvokeVoidAsync("alert", "Đã thêm vào giỏ!"); // Thay bằng Toast nếu có
+        else
+            await JSRuntime.InvokeVoidAsync("alert", "Lỗi thêm giỏ hàng. Vui lòng đăng nhập.");
     }
 }

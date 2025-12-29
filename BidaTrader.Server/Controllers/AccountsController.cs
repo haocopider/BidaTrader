@@ -13,9 +13,9 @@ namespace BidaTrader.Server.Controllers
     [ApiController]
     public class AccountsController : ControllerBase
     {
-        private readonly IService<Account> _accountService;
+        private readonly AccountService _accountService;
 
-        public AccountsController(IService<Account> service)
+        public AccountsController(AccountService service)
         {
             _accountService = service;
         }
@@ -196,6 +196,69 @@ namespace BidaTrader.Server.Controllers
                 return StatusCode(500, "Xóa tài khoản thất bại.");
             }
             return Ok("Xóa thành công");
+        }
+
+
+        [HttpPost("forgot-password-request")]
+        public async Task<IActionResult> ForgotPasswordRequest([FromBody] ForgotPasswordDto dto)
+        {
+            var result = await _accountService.SendForgotPasswordOtpAsync(dto.Email);
+
+            if (result == "EMAIL_NOT_FOUND")
+                return BadRequest("Email không tồn tại trong hệ thống.");
+
+            if (result.StartsWith("MAIL_ERROR"))
+                return StatusCode(500, "Lỗi gửi email. Vui lòng thử lại sau.");
+
+            return Ok(new { message = "Mã OTP đã được gửi đến email của bạn." });
+        }
+
+        // BƯỚC 2: Kiểm tra OTP (Để chuyển màn hình)
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            var isValid = await _accountService.VerifyOtpAsync(dto.Email, dto.Otp);
+
+            if (!isValid)
+                return BadRequest("Mã OTP không đúng hoặc đã hết hạn.");
+
+            return Ok(new { message = "OTP hợp lệ." });
+        }
+
+        // BƯỚC 3: Đổi mật khẩu
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var result = await _accountService.ResetPasswordAsync(dto.Email, dto.Otp, dto.NewPassword);
+
+            if (result == "SUCCESS")
+                return Ok(new { message = "Đổi mật khẩu thành công." });
+
+            if (result == "OTP_INVALID_OR_EXPIRED")
+                return BadRequest("Phiên giao dịch hết hạn, vui lòng yêu cầu lại OTP.");
+
+            return BadRequest("Có lỗi xảy ra.");
+        }
+
+
+        [HttpGet("permissions")]
+        public async Task<IActionResult> GetAllPermissions()
+        {
+            return Ok(await _accountService.GetAllPermissionsAsync());
+        }
+
+        [HttpGet("with-permissions")]
+        public async Task<IActionResult> GetRoles()
+        {
+            return Ok(await _accountService.GetAllRolesWithPermissionsAsync());
+        }
+
+        [HttpPut("update-permissions")]
+        public async Task<IActionResult> UpdatePermissions([FromBody] UpdateRolePermissionsDto dto)
+        {
+            var result = await _accountService.UpdateRolePermissionsAsync(dto);
+            if (!result) return BadRequest("Cập nhật thất bại");
+            return Ok("Cập nhật quyền thành công");
         }
 
     }

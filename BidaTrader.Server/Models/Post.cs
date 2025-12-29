@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BidaTrader.Shared.Models;
+namespace BidaTrader.Server.Models;
 
 public partial class Post
 {
@@ -26,5 +26,6 @@ public partial class Post
     public DateTime? UpdatedAt { get; set; }
 
     public virtual Account Account { get; set; } = null!;
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

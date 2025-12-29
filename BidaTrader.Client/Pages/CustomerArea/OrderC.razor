@@ -73,10 +73,9 @@
                                         <i class="bi bi-check-circle"></i> Đã nhận hàng
                                     </button>
                                 }
-
                                 @if (order.Status == "Completed")
                                 {
-                                    <button class="btn btn-warning btn-sm me-2">
+                                    <button class="btn btn-warning btn-sm me-2" @onclick="() => OpenRatingModal(order.Id)">
                                         <i class="bi bi-star"></i> Đánh giá
                                     </button>
                                 }
@@ -94,7 +93,11 @@
     }
 </div>
 
+<FeedbackModal @ref="feedbackModal" />
+
 @code {
+    private FeedbackModal feedbackModal;
+
     private List<OrderDto> orders = new();
     private bool isLoading = true;
     private string currentStatus = "All";
@@ -102,6 +105,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadOrders();
+    }
+
+    private async Task OpenRatingModal(int orderId)
+    {
+        await feedbackModal.Show(orderId);
     }
 
     private async Task LoadOrders()
