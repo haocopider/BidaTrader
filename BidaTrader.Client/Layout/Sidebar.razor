@@ -32,7 +32,7 @@
             </a>
         </li>
 
-        <AuthorizeView Roles="Admin">
+        <AuthorizeView Roles="ADMIN">
             <Authorized>
                 <li class="menu-header small text-uppercase"><span class="menu-header-text">Quản trị viên</span></li>
                 <li class="menu-item">
@@ -42,24 +42,31 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a href="/admin/manage-roleperm" class="menu-link">
+                        <i class="menu-icon bi bi-person-lines-fill"></i>
+                        <div>Phân quyền</div>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a href="javascript:void(0);" class="menu-link menu-toggle">
                         <i class="menu-icon tf-icons bx bx-data"></i>
                         <div>Dữ liệu</div>
                     </a>
                     <ul class="menu-sub">
-                        <li class="menu-item"><a href="/admin/categories" class="menu-link"><div>Danh mục</div></a></li>
-                        <li class="menu-item"><a href="/admin/brands" class="menu-link"><div>Thương hiệu</div></a></li>
+                        <li class="menu-item"><a href="/admin/manage-categories" class="menu-link"><div>Danh mục</div></a></li>
+                        <li class="menu-item"><a href="/admin/manage-brands" class="menu-link"><div>Thương hiệu</div></a></li>
                         <li class="menu-item"><a href="/admin/manage-products" class="menu-link"><div>Sản phẩm</div></a></li>
+                        <li class="menu-item"><a href="/admin/manage-posts" class="menu-link"><div>Bài viết</div></a></li>
                     </ul>
                 </li>
                 <li class="menu-item">
-                    <a href="/admin/accounts" class="menu-link">
+                    <a href="/admin/manage-accounts" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-user-pin"></i>
                         <div>Tài khoản</div>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="/admin/stores" class="menu-link">
+                    <a href="/admin/manage-stores" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-store"></i>
                         <div>Cửa hàng</div>
                     </a>
@@ -67,7 +74,7 @@
             </Authorized>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Store">
+        <AuthorizeView Roles="STORE">
             <Authorized>
                 <li class="menu-header small text-uppercase"><span class="menu-header-text">Kênh người bán</span></li>
                 <li class="menu-item">

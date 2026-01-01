@@ -4,6 +4,7 @@ using BidaTrader.Client.Auth;
 using BidaTrader.Client.Helpers;
 using BidaTrader.Client.Services;
 using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -54,5 +55,8 @@ AddClientService<VerifyOtpDto>("accounts");
 AddClientService<PostDto>("posts");
 AddClientService<StoreDto>("stores");
 AddClientService<AddToCartDto>("cart");
+AddClientService<OrderDto>("orders");
+AddClientService<RoleDto>("roles");
+AddClientService<Permission>("permissions");
 
 await builder.Build().RunAsync();

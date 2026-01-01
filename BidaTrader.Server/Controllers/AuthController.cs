@@ -1,10 +1,9 @@
-﻿using BidaTrader.Server.Helpers; // Chứa PasswordHelper, UidHelper
+﻿using BidaTrader.Server.Helpers;
 using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -49,7 +48,6 @@ namespace BidaTrader.API.Controllers
                     UserName = request.UserName,
                     Email = request.Email ?? $"{request.UserName}@bidatrader.com",
                     PasswordHash = passwordHash,
-                    Role = "Customer",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     FirstName = request.UserName,
@@ -62,14 +60,7 @@ namespace BidaTrader.API.Controllers
                 _context.Accounts.Add(newAccount);
                 await _context.SaveChangesAsync();
 
-                var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
-
-                if (customerRole == null)
-                {
-                    customerRole = new Role { Name = "Customer", Description = "Khách hàng mặc định" };
-                    _context.Roles.Add(customerRole);
-                    await _context.SaveChangesAsync();
-                }
+                var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "CUSTOMER");
 
                 var accountRole = new AccountRole
                 {
@@ -84,20 +75,7 @@ namespace BidaTrader.API.Controllers
 
                 return Ok(new AuthResponseDto
                 {
-                    IsSuccess = true,
-                    ErrorMessage = null,
-                    Token = null,
-                    RefreshToken = null
-                });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                await transaction.RollbackAsync();
-                var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
-                return StatusCode(500, new AuthResponseDto
-                {
-                    IsSuccess = false,
-                    ErrorMessage = "Lỗi Database: " + errorMsg
+                    IsSuccess = true
                 });
             }
             catch (Exception ex)
@@ -110,13 +88,17 @@ namespace BidaTrader.API.Controllers
                 });
             }
         }
-        
+
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponseDto>> Login(LoginDto request)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+            var account = await _context.Accounts
+                .Include(u => u.AccountRoles)
+                    .ThenInclude(ar => ar.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(u => u.UserName == request.UserName);
 
-            // Kiểm tra tồn tại và Hash Password
             if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHash))
             {
                 return Unauthorized(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Sai thông tin đăng nhập." });
@@ -125,11 +107,9 @@ namespace BidaTrader.API.Controllers
             if (account.IsActive == false)
                 return Unauthorized(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Tài khoản đã bị khóa." });
 
-            // Sinh Token mới
-            var accessToken = await GenerateJwtToken(account);
+            var accessToken = GenerateJwtToken(account);
             var refreshToken = GenerateRefreshToken();
 
-            // Cập nhật Refresh Token vào DB
             account.RefreshToken = refreshToken;
             account.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _context.SaveChangesAsync();
@@ -148,22 +128,23 @@ namespace BidaTrader.API.Controllers
             if (string.IsNullOrEmpty(request.RefreshToken))
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Token không hợp lệ." });
 
-            // Tìm user có refresh token này
-            var account = await _context.Accounts.FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
+            var account = await _context.Accounts
+                .Include(u => u.AccountRoles)
+                    .ThenInclude(ar => ar.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
 
-            // Kiểm tra tính hợp lệ
             if (account == null || account.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Phiên hết hạn." });
             }
 
-            // Cấp Token mới
-            var newAccessToken = await GenerateJwtToken(account);
+            var newAccessToken = GenerateJwtToken(account);
             var newRefreshToken = GenerateRefreshToken();
 
-            // Xoay vòng Refresh Token (Token Rotation) để bảo mật
             account.RefreshToken = newRefreshToken;
-            account.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Gia hạn thêm
+            account.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _context.SaveChangesAsync();
 
             return Ok(new AuthResponseDto
@@ -181,40 +162,53 @@ namespace BidaTrader.API.Controllers
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
         }
-
-        private async Task<string> GenerateJwtToken(Account account)
+        private string GenerateJwtToken(Account account)
         {
-            var permissions = await _context.AccountRoles
-                .Where(ar => ar.AccountId == account.Id)
-                .SelectMany(ar => ar.Role.RolePermissions)
-                .Select(rp => rp.Permission.Code)
-                .Distinct()
-                .ToListAsync();
+            var role = account.AccountRoles?
+                    .Select(ar => ar.Role)
+                    .FirstOrDefault();
 
-            var avatarUrl = "https://localhost:7049" + account.AvatarUrl;
+            var permissions = new List<string>();
+
+            if (role != null && role.RolePermissions != null)
+            {
+                permissions = role.RolePermissions
+                    .Where(rp => rp.Permission != null)
+                    .Select(rp => rp.Permission.Code)
+                    .Where(code => !string.IsNullOrEmpty(code))
+                    .Distinct()
+                    .ToList();
+            }
+
+            var avatarUrl = "https://localhost:7049" + (account.AvatarUrl ?? "");
 
             var claims = new List<Claim>
             {
-                // ===== Standard JWT claims =====
                 new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, account.Uid ?? ""),
+                new Claim(ClaimTypes.Name, account.UserName ?? ""),
 
-                new Claim(ClaimTypes.NameIdentifier, account.Uid),
-                new Claim(ClaimTypes.Name, account.UserName),
-                new Claim(ClaimTypes.Role, account.Role.Trim()),
                 new Claim("permissions", string.Join(",", permissions)),
                 new Claim("avatarUrl", avatarUrl)
             };
 
-            // ===== Store-specific claims =====
-            if (account.Role == "Store")
+            if (role != null)
             {
-                claims.Add(new Claim("IsActive", account.IsActive ? "True" : "False"));
+                claims.Add(new Claim(ClaimTypes.Role, role.Code ?? ""));
 
-                if (account.StoreId.HasValue)
+                if (role.Code == "STORE")
                 {
-                    claims.Add(new Claim("StoreId", account.StoreId.Value.ToString()));
+                    claims.Add(new Claim("IsActive", account.IsActive ? "True" : "False"));
+                    if (account.StoreId.HasValue)
+                    {
+                        claims.Add(new Claim("StoreId", account.StoreId.Value.ToString()));
+                    }
                 }
+            }
+            else
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "GUEST"));
             }
 
             var key = new SymmetricSecurityKey(

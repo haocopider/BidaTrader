@@ -1,55 +1,106 @@
-﻿<div class="mb-3">
-    <button @onclick="() => ShowCategoryModel(0)" class="btn btn-primary btn-sm"><i class="bx bx-plus"></i> Thêm danh mục sản phẩm</button>
-</div>
+﻿@page "/admin/manage-categories"
 
-<div class="table-responsive text-nowrap">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên Danh mục</th>
-                <th>Mô tả</th>
-                <th>Hành động</th>
-            </tr>
-            </thead>
-        <tbody>
-            @foreach (var c in Model.Categories)
-            {
-                <tr>
-                    <td>@c.Id</td>
-                    <td><strong>@c.Name</strong></td>
-                    <td>@c.Description</td>
-                    <td>
-                        <button @onclick="() => ShowCategoryModel(c.Id)" class="btn btn-sm btn-icon"><i class="bx bx-edit"></i></button>
-                        <button class="btn btn-sm btn-icon text-danger"><i class="bx bx-trash"></i></button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-<div class="d-flex justify-content-between align-items-center mt-3">
-    <small class="text-muted">
-        Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount loại sản phẩm.
-    </small>
-    <nav aria-label="Page navigation">
-        <ul class="pagination mb-0">
-            <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
-                <button class="page-link bi bi-arrow-left" @onclick="() => ChangeCategoryPage(Model.PageIndex - 1)"></button>
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="nav-align-top mb-4">
+        <ul class="nav nav-pills mb-3" role="tablist">
+            <li class="nav-item">
+                <a href="/admin/manage-accounts" class="nav-link">
+                    <i class="bx bx-user me-1"></i> Tài khoản
+                </a>
             </li>
-            @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++)
-            {
-                var pageNumber = i;
-                <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
-                    <button class="page-link" @onclick="() => ChangeCategoryPage(pageNumber)">@pageNumber</button>
-                </li>
-            }
-            <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
-                <button class="page-link bi bi-arrow-right" @onclick="() => ChangeCategoryPage(Model.PageIndex + 1)"></button>
+            <li class="nav-item">
+                <a href="/admin/manage-stores" class="nav-link">
+                    <i class="bx bx-store me-1"></i> Cửa hàng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-categories" class="nav-link active">
+                    <i class="bx bx-category me-1"></i> Danh mục
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-brands" class="nav-link">
+                    <i class="bx bx-purchase-tag me-1"></i> Thương hiệu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-posts" class="nav-link">
+                    <i class="bx bx-news me-1"></i> Bài viết
+                </a>
             </li>
         </ul>
-    </nav>
+
+        <div class="tab-content shadow-sm">
+
+            <div class="tab-pane fade show active" id="navs-accounts" role="tabpanel">
+
+                <div class="mb-3">
+                    <button @onclick="() => ShowCategoryModel(0)" class="btn btn-primary btn-sm"><i class="bx bx-plus"></i> Thêm danh mục sản phẩm</button>
+                </div>
+                @if (IsLoading)
+                {
+                    <MiniSpinner></MiniSpinner>
+                }
+                else
+                {
+
+                    <div class="table-responsive text-nowrap">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên Danh mục</th>
+                                    <th>Mô tả</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.Categories)
+                                {
+                                    <tr>
+                                        <td>@c.Id</td>
+                                        <td><strong>@c.Name</strong></td>
+                                        <td>@c.Description</td>
+                                        <td>
+                                            <button @onclick="() => ShowCategoryModel(c.Id)" class="btn btn-sm btn-icon"><i class="bx bx-edit"></i></button>
+                                            <button class="btn btn-sm btn-icon text-danger"><i class="bx bx-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">
+                            Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount loại sản phẩm.
+                        </small>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0">
+                                <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-left" @onclick="() => ChangeCategoryPage(Model.PageIndex - 1)"></button>
+                                </li>
+                                @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++)
+                                {
+                                    var pageNumber = i;
+                                    <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangeCategoryPage(pageNumber)">@pageNumber</button>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-right" @onclick="() => ChangeCategoryPage(Model.PageIndex + 1)"></button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                }
+            </div>
+
+        </div>
+    </div>
 </div>
+
+
 
 <CategoryForm Id="currentId"
     IsVisible="isCategoryFormVisible"
@@ -57,11 +108,19 @@
     OnDataSaved="RefreshCategoryData" />
 
 @code{
-    [Parameter] public CategoryPerPage Model { get; set; }
+    private CategoryPerPage Model { get; set; }
     private int currentId { get; set; }
     private bool isCategoryFormVisible { get; set; }
+    private bool IsLoading { get; set; }
     private const int PageSize = 7;
 
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        var result = await Http.GetFromJsonAsync<CategoryPerPage>($"api/categories?pageIndex={1}&pageSize={PageSize}");
+        if (result != null) Model = result;
+        IsLoading = false;
+    }
 
     private async Task ChangeCategoryPage(int newPageIndex)
     {

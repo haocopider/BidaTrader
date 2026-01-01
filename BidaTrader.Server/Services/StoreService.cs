@@ -225,21 +225,7 @@ namespace BidaTrader.Server.Services
 
                 var account = await _context.Accounts.FindAsync(userId);
                 if (account == null) throw new Exception("Không tìm thấy tài khoản.");
-                account.Role = "Store";
-                _context.Accounts.Update(account);
-
                 var storeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "STORE");
-                if (storeRole == null)
-                {
-                    storeRole = new Role
-                    {
-                        Name = "Store",
-                        Code = "STORE",
-                        Description = "Chủ cửa hàng/Người bán hàng"
-                    };
-                    _context.Roles.Add(storeRole);
-                    await _context.SaveChangesAsync();
-                }
 
                 bool hasRole = await _context.AccountRoles
                     .AnyAsync(ar => ar.AccountId == userId && ar.RoleId == storeRole.Id);
