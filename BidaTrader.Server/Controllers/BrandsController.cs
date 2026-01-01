@@ -2,6 +2,7 @@
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

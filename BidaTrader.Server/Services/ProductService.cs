@@ -52,13 +52,15 @@ namespace BidaTrader.Server.Services
         {
             try
             {
+                // 1. Kiểm tra Store
                 var store = await _context.Stores.FirstOrDefaultAsync(s => s.AccountId == accountId);
                 if (store == null)
                 {
-                    Console.WriteLine($"Không tìm thấy cửa hàng cho AccountId: {accountId}");
+                    Console.WriteLine($"[ERROR] Account {accountId} không có quyền tạo SP vì không tìm thấy Store tương ứng.");
                     return false;
                 }
 
+                // 2. Khởi tạo Product
                 var product = new Product
                 {
                     Name = dto.Name,
@@ -72,13 +74,15 @@ namespace BidaTrader.Server.Services
                     UpdatedAt = DateTime.Now,
                     IsActive = true,
                     Rating = 5,
+                    ProductImages = new List<ProductImage>() // Đảm bảo không bị Null
                 };
 
+                // 3. Xử lý ảnh
                 if (dto.Images != null && dto.Images.Any())
                 {
                     for (int i = 0; i < dto.Images.Count; i++)
                     {
-                        string imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
+                        string imageUrl = await SaveImageToFolder(dto.Images[i], store.StoreName);
 
                         if (!string.IsNullOrEmpty(imageUrl))
                         {
@@ -92,18 +96,21 @@ namespace BidaTrader.Server.Services
                 }
 
                 await _context.Products.AddAsync(product);
-                return await _context.SaveChangesAsync() > 0;
+
+                // 4. Lưu và kiểm tra
+                var result = await _context.SaveChangesAsync();
+                return result > 0;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi tạo sản phẩm: {ex.Message}");
+                // Log chi tiết để bạn copy paste vào đây nếu vẫn lỗi
+                Console.WriteLine($"[CRITICAL ERROR]: {ex.Message}");
                 if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Chi tiết lỗi: {ex.InnerException.Message}");
-                }
+                    Console.WriteLine($"[INNER ERROR]: {ex.InnerException.Message}");
                 return false;
             }
         }
+
         public override async Task<bool> UpdateItemAsync( ProductDto dto)
         {
             try
@@ -114,7 +121,6 @@ namespace BidaTrader.Server.Services
 
                 if (product == null) return false;
 
-                // Cập nhật thông tin cơ bản
                 product.Name = dto.Name;
                 product.Description = dto.Description;
                 product.Price = dto.Price;
@@ -127,7 +133,6 @@ namespace BidaTrader.Server.Services
                 {
                     for (int i = 0; i < dto.Images.Count; i++)
                     {
-                        // Gọi hàm lưu ảnh ra folder
                         string imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
 
                         product.ProductImages.Add(new ProductImage
@@ -341,10 +346,8 @@ namespace BidaTrader.Server.Services
             else if (latest == true)
                 query = query.OrderByDescending(p => p.CreatedAt);
             
-            // 1. Lấy tổng số lượng (trước khi phân trang)
             int totalCount = await query.CountAsync();
 
-            // 2. Phân trang (Skip/Take)
             var pagedProducts = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)

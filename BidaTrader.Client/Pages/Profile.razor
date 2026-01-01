@@ -21,13 +21,13 @@ else
                 <div class="col-md-12">
                     <ul class="nav nav-pills flex-column flex-md-row mb-3">
                         <li class="nav-item">
-                            <a class="nav-link active" href="javascript:void(0);"><i class="bx bx-user me-1"></i> Tài khoản</a>
+                            <a class="nav-link active" href="/profile"><i class="bx bx-user me-1"></i> Tài khoản</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="pages-account-settings-notifications.html"><i class="bx bx-bell me-1"></i> Thông báo</a>
+                            <a class="nav-link" href="/change-password"><i class="bx bx-bell me-1"></i>Đổi mật khẩu</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="pages-account-settings-connections.html"><i class="bx bx-link-alt me-1"></i> Liên kết </a>
+                            <a class="nav-link" href="/register-store"><i class="bx bx-link-alt me-1"></i> Bật bán hàng </a>
                         </li>
                     </ul>
                     <div class="card mb-4">
@@ -35,7 +35,7 @@ else
                         <!-- Account -->
                         <div class="card-body">
                             <div class="d-flex align-items-start align-items-sm-center gap-4">
-                                <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl) ? (string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "./assets/img/avatars/1.png" : Model.AvatarUrl) : ImagePreviewUrl)"
+                                <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl) ? "https://localhost:7049" + Model.AvatarUrl  : ImagePreviewUrl)"
                                      alt="user-avatar"
                                      class="d-block rounded"
                                      height="100"
@@ -49,7 +49,7 @@ else
                                                    id="upload"
                                                    class="account-file-input"
                                                    hidden
-                                                   accept="image/png, image/jpeg" />
+                                                   accept=".jpg,.png,.jpeg,.webp" />
 
                                     </label>
                                     <button type="button" class="btn btn-outline-secondary account-image-reset mb-4">
@@ -95,6 +95,20 @@ else
                                         <label for="address" class="form-label">Địa chỉ</label>
                                         <InputText class="form-control" @bind-Value="@Model.Address" />
                                     </div>
+                                    <div class="divider divider-dashed">
+                                        <div class="divider-text text-uppercase small fw-bold">Bảo mật (Mã Passcode)</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="mb-3 col-md-6">
+                                            <label class="form-label text-primary fw-bold">Mã Passcode (6 số)</label>
+                                            <div class="input-group input-group-merge">
+                                                <span class="input-group-text"><i class="bx bx-lock-alt"></i></span>
+                                                <InputText maxlength="6" @bind-Value="@Model.Passcode"
+                                                           class="form-control" placeholder="Nhập 6 số để bảo vệ tài khoản" />
+                                            </div>
+                                            <small class="text-muted">Mã này dùng để xác nhận khi bạn muốn thay đổi mật khẩu.</small>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <button type="submit" class="btn btn-primary me-2">Lưu thay đổi</button>
@@ -134,41 +148,58 @@ else
 
 
 @code {
-    public AccountDto? Model { get; set; }
+    public ProfileDto? Model { get; set; }
     private bool isLoading = true;
+    private string? ImagePreviewUrl { get; set; }
+    private IBrowserFile? selectedFile;
+    public string Base64Data { get; set; } ="";
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        isLoading = true;
         try
         {
-            Model = await Http.GetFromJsonAsync<AccountDto>($"api/accounts/profile");
+            Model = await Http.GetFromJsonAsync<ProfileDto>("api/accounts/profile");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isLoading = false; }
     }
 
     private async Task HandleUpdateProfile()
     {
-        var response = await Http.PutAsJsonAsync("api/accounts/profile", Model);
+        if (Model == null) return;
+
+
+        if (selectedFile != null)
+        {
+            var newImageUrl = Base64Data;
+            Model.AvatarUrl = newImageUrl;
+        }
+
+        var response = await Http.PutAsJsonAsync("api/accounts", Model);
+
         if (response.IsSuccessStatusCode)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Cập nhật thông tin thành công!");
+            await JSRuntime.InvokeVoidAsync("alert", "Hồ sơ đã được cập nhật thành công!");
+            await LoadProfile();
+            ImagePreviewUrl = null;
+            selectedFile = null;
         }
         else
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Cập nhật thất bại.");
+            var error = await response.Content.ReadAsStringAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Lỗi: {error}");
         }
     }
-
-    private string? ImagePreviewUrl { get; set; }
-    private IBrowserFile? selectedFile;
     private const int MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+
+
     private async Task HandleFileSelection(InputFileChangeEventArgs e)
     {
         // 1. Lấy file đầu tiên được chọn
@@ -182,8 +213,6 @@ else
                 return;
             }
 
-            // 2. Tạo Data URL để hiển thị ảnh
-            // Blazor cung cấp phương thức RequestImageFileAsync để tối ưu hóa việc tạo thumbnail
             var imageFile = await selectedFile.RequestImageFileAsync(
                 selectedFile.ContentType,
                 100,
@@ -197,9 +226,7 @@ else
             var imageBase64 = Convert.ToBase64String(memoryStream.ToArray());
 
             ImagePreviewUrl = $"data:{imageFile.ContentType};base64,{imageBase64}";
-
-            // 3. (TÙY CHỌN): Nếu bạn muốn Model.AvatarUrl lưu Data URL (Không nên nếu bạn upload)
-            // Model.AvatarUrl = ImagePreviewUrl;
+            Base64Data = ImagePreviewUrl;
         }
     }
 

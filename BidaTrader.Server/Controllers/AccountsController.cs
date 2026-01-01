@@ -6,6 +6,7 @@ using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BidaTrader.Server.Controllers
 {
@@ -157,31 +158,23 @@ namespace BidaTrader.Server.Controllers
             return Ok(dto);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAccount(int id, AccountDto accountDto)
+        [HttpPut]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] ProfileDto accountDto)
         {
-            if (id != accountDto.Id)
+            var userId = GetCurrentUserId();
+
+            var success = await _accountService.UpdateProfileAsync(userId, accountDto);
+
+            if (!success)
             {
-                return BadRequest();
-            }
-            var account = await _accountService.GetItemByIdAsync(id);
-            if (account == null)
-            {
-                return NotFound();
+                return BadRequest("Cập nhật hồ sơ thất bại hoặc không tìm thấy tài khoản.");
             }
 
-            account.UserName = accountDto.UserName;
-            account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(accountDto.PasswordHash);
-            account.Role = accountDto.Role;
-            account.IsActive = accountDto.IsActive ?? account.IsActive;
-            var updated =   await _accountService.UpdateItemAsync(account);
-            if (!updated)
-            {
-                return StatusCode(500, "Cập nhật thông tin thất bại.");
-            }
-            return NoContent();
+            return Ok(new { message = "Cập nhật thành công!" });
         }
-       
+        
+
         [HttpDelete("{id}")]    
         public async Task<IActionResult> DeleteAccount(int id)
         {
@@ -196,6 +189,45 @@ namespace BidaTrader.Server.Controllers
                 return StatusCode(500, "Xóa tài khoản thất bại.");
             }
             return Ok("Xóa thành công");
+        }
+
+
+
+        [HttpGet("has-passcode")]
+        [Authorize]
+        public async Task<IActionResult> HasPasscode()
+        {
+            var userId = GetCurrentUserId();
+            var result = await _accountService.HasPasscodeAsync(userId);
+            return Ok(result);
+        }
+
+        [HttpPost("check-passcode")]
+        [Authorize]
+        public async Task<IActionResult> VerifyPasscode([FromBody] string passcode)
+        {
+            var userId = GetCurrentUserId();
+            var isValid = await _accountService.CheckPasscodeAsync(userId, passcode);
+
+            if (!isValid) return BadRequest("Mã Passcode không chính xác.");
+
+            return Ok(new { message = "Xác thực thành công." });
+        }
+
+        [HttpPost("change-password-secure")]
+        [Authorize]
+        public async Task<IActionResult> ChangePasswordSecure([FromBody] ChangePasswordDto dto)
+        {
+            var userId = GetCurrentUserId();
+
+            var success = await _accountService.ChangePasswordSecureAsync(userId, dto.NewPassword, dto.CurrentPasscode);
+
+            if (!success)
+            {
+                return BadRequest("Đổi mật khẩu thất bại. Vui lòng kiểm tra lại Passcode.");
+            }
+
+            return Ok(new { message = "Đổi mật khẩu thành công." });
         }
 
 
@@ -261,5 +293,14 @@ namespace BidaTrader.Server.Controllers
             return Ok("Cập nhật quyền thành công");
         }
 
+        private int GetCurrentUserId()
+        {
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            throw new Exception("User not found in token");
+        }
     }
 }

@@ -1,21 +1,20 @@
-﻿using Azure.Core;
-using BidaTrader.Server.Helpers;
-using BidaTrader.Shared.DTOs;
+﻿using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Mail;
-using System.Security.Cryptography;
 
 namespace BidaTrader.Server.Services
 {
     public class AccountService : ServerService<Account>
     {
         private readonly IConfiguration _configuration;
-        public AccountService(AppDbContext context, IConfiguration configuration) : base(context)
+        private readonly IWebHostEnvironment _env;
+        public AccountService(AppDbContext context, IConfiguration configuration, IWebHostEnvironment env) : base(context)
         {
             _configuration = configuration;
+            _env = env;
         }
 
         #region MailService
@@ -188,6 +187,37 @@ namespace BidaTrader.Server.Services
             return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
+        public async Task<bool> UpdateProfileAsync(int userId, ProfileDto dto)
+        {
+            var account = await _context.Accounts.FindAsync(userId);
+            if (account == null) return false;
+
+            account.FirstName = dto.FirstName;
+            account.LastName = dto.LastName;
+            account.Email = dto.Email;
+            account.Phone = dto.Phone;
+            account.Address = dto.Address;
+
+            if (!string.IsNullOrWhiteSpace(dto.Passcode))
+            {
+                account.Passcode = dto.Passcode;
+            }
+
+            // Xử lý ảnh đại diện
+            if (!string.IsNullOrWhiteSpace(dto.AvatarUrl) && dto.AvatarUrl.StartsWith("data:image"))
+            {
+
+                string savedPath = await SaveImageToFolder(dto.AvatarUrl, account.UserName);
+
+                if (!string.IsNullOrEmpty(savedPath))
+                {
+                    account.AvatarUrl = savedPath;
+                }
+            }
+
+            _context.Accounts.Update(account);
+            return await _context.SaveChangesAsync() > 0;
+        }
         public async Task<(List<Account> Accounts, int totalItems)> GetAccountWithPagination(string? username, string? role, int pageIndex=1, int pageSize = 10)
         {
             var query = _context.Accounts.AsQueryable();
@@ -224,6 +254,72 @@ namespace BidaTrader.Server.Services
                 .Select(rp => rp.Permission.Code)
                 .Distinct()
                 .ToListAsync();
+        }
+
+        public async Task<bool> CheckPasscodeAsync(int userId, string passcode)
+        {
+            var account = await _context.Accounts.FindAsync(userId);
+            // Nếu không tìm thấy account hoặc user chưa thiết lập passcode
+            if (account == null || string.IsNullOrEmpty(account.Passcode)) return false;
+
+            return account.Passcode == passcode;
+        }
+
+        public async Task<bool> ChangePasswordSecureAsync(int userId, string newPassword, string passcode)
+        {
+            var account = await _context.Accounts.FindAsync(userId);
+            if (account == null) return false;
+
+            if (account.Passcode != passcode) return false;
+
+            account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            _context.Accounts.Update(account);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> HasPasscodeAsync(int userId)
+        {
+            var account = await _context.Accounts.FindAsync(userId);
+            return !string.IsNullOrEmpty(account?.Passcode);
+        }
+
+        private async Task<string> SaveImageToFolder(string base64String, string username)
+        {
+            if (string.IsNullOrEmpty(base64String) || !base64String.Contains("base64,"))
+                return base64String;
+
+            try
+            {
+                string webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+                var uploadsFolder = Path.Combine(webRootPath, "uploads", "avatars");
+
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                // 1. Làm sạch tên đăng nhập để làm tên file (Xóa ký tự lạ)
+                string safeFileName = string.Join("_", username.Split(Path.GetInvalidFileNameChars()));
+
+                // 2. Thêm Ticks (thời gian) để tránh trùng lặp và tránh lỗi Cache trình duyệt
+                // Kết quả sẽ dạng: username_638456789.jpg
+                var fileName = $"{safeFileName}_{DateTime.Now.Ticks}.jpg";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // 3. Giải mã Base64
+                var dataIndex = base64String.IndexOf("base64,") + 7;
+                var cleanBase64 = base64String.Substring(dataIndex);
+                var buffer = Convert.FromBase64String(cleanBase64);
+
+                // 4. Ghi file
+                await File.WriteAllBytesAsync(filePath, buffer);
+
+                // Trả về đường dẫn để lưu vào Database
+                return $"/uploads/avatars/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi SaveImage: {ex.Message}");
+                return string.Empty;
+            }
         }
     }
 }

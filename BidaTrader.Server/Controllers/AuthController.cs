@@ -29,69 +29,70 @@ namespace BidaTrader.API.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto request)
         {
-            // Validate cơ bản
             if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Thông tin không hợp lệ." });
 
-            // Kiểm tra trùng username
             if (await _context.Accounts.AnyAsync(u => u.UserName == request.UserName))
                 return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = "Tên đăng nhập đã tồn tại." });
 
-            var lastAccount = await _context.Accounts.OrderByDescending(a => a.Id).FirstOrDefaultAsync();
-            string newUid;
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                newUid = SequentialUidHelper.GenerateNextUid(lastAccount?.Uid);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new AuthResponseDto { IsSuccess = false, ErrorMessage = ex.Message });
-            }
+                var lastAccount = await _context.Accounts.OrderByDescending(a => a.Id).FirstOrDefaultAsync();
+                string newUid = SequentialUidHelper.GenerateNextUid(lastAccount?.Uid);
 
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                var newAccount = new Account
+                {
+                    Uid = newUid,
+                    UserName = request.UserName,
+                    Email = request.Email ?? $"{request.UserName}@bidatrader.com",
+                    PasswordHash = passwordHash,
+                    Role = "Customer",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    FirstName = request.UserName,
+                    LastName = "",
+                    Phone = "",
+                    Address = "",
+                    AvatarUrl = ""
+                };
 
-            // --- TẠO ACCOUNT ---
-            var newAccount = new Account
-            {
-                Uid = newUid,
-                UserName = request.UserName,
-                Email = request.Email ?? $"{request.UserName}@bidatrader.com",
-                PasswordHash = passwordHash,
-                Role = "Customer",
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                FirstName = request.UserName,
-                LastName = "",
-                Phone = "",
-                Address = "",
-                AvatarUrl = ""
-            };
-
-            try
-            {
                 _context.Accounts.Add(newAccount);
                 await _context.SaveChangesAsync();
 
-                // --- TẠO TOKEN ĐỂ LOGIN LUÔN ---
-                var accessToken = await GenerateJwtToken(newAccount);
-                var refreshToken = GenerateRefreshToken();
+                var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
 
-                // Lưu Refresh Token
-                newAccount.RefreshToken = refreshToken;
-                newAccount.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                if (customerRole == null)
+                {
+                    customerRole = new Role { Name = "Customer", Description = "Khách hàng mặc định" };
+                    _context.Roles.Add(customerRole);
+                    await _context.SaveChangesAsync();
+                }
+
+                var accountRole = new AccountRole
+                {
+                    AccountId = newAccount.Id,
+                    RoleId = customerRole.Id
+                };
+
+                _context.AccountRoles.Add(accountRole);
                 await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
 
                 return Ok(new AuthResponseDto
                 {
                     IsSuccess = true,
-                    Token = accessToken,
-                    RefreshToken = refreshToken
+                    ErrorMessage = null,
+                    Token = null,
+                    RefreshToken = null
                 });
             }
             catch (DbUpdateException dbEx)
             {
-                // Lấy chi tiết lỗi từ InnerException để biết chính xác cột nào gây lỗi
+                await transaction.RollbackAsync();
                 var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
                 return StatusCode(500, new AuthResponseDto
                 {
@@ -101,6 +102,7 @@ namespace BidaTrader.API.Controllers
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return StatusCode(500, new AuthResponseDto
                 {
                     IsSuccess = false,
@@ -108,7 +110,7 @@ namespace BidaTrader.API.Controllers
                 });
             }
         }
-
+        
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponseDto>> Login(LoginDto request)
         {
@@ -172,10 +174,6 @@ namespace BidaTrader.API.Controllers
             });
         }
 
-        // =========================================================================
-        // HELPERS (HÀM HỖ TRỢ)
-        // =========================================================================
-
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
@@ -193,6 +191,8 @@ namespace BidaTrader.API.Controllers
                 .Distinct()
                 .ToListAsync();
 
+            var avatarUrl = "https://localhost:7049" + account.AvatarUrl;
+
             var claims = new List<Claim>
             {
                 // ===== Standard JWT claims =====
@@ -202,7 +202,8 @@ namespace BidaTrader.API.Controllers
                 new Claim(ClaimTypes.NameIdentifier, account.Uid),
                 new Claim(ClaimTypes.Name, account.UserName),
                 new Claim(ClaimTypes.Role, account.Role.Trim()),
-                new Claim("permissions", string.Join(",", permissions))
+                new Claim("permissions", string.Join(",", permissions)),
+                new Claim("avatarUrl", avatarUrl)
             };
 
             // ===== Store-specific claims =====

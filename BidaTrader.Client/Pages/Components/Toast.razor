@@ -1,41 +1,66 @@
-﻿<div class="toast-top-center">
-    <div class="bs-toast toast fade show bg-@ToastClass slide-down"
-         role="alert"
-         aria-live="assertive"
-         aria-atomic="true">
-        <div class="toast-header">
-            <i class="bx bx-bell me-2"></i>
-            <div class="me-auto fw-semibold">@Title</div>
-            @time.ToString("hh:mm")
-            <button @onclick="OnCLose" type="button" class="btn-close" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            @Messages
+﻿@inject ToastHelper ToastService
+@implements IDisposable
+
+@if (isToast)
+{
+    <div class="toast-top-center">
+        <div class="bs-toast toast fade show bg-@ToastClass slide-down shadow"
+             role="alert"
+             aria-live="assertive"
+             aria-atomic="true">
+
+            <div class="toast-header">
+                <i class="bx bx-bell me-2"></i>
+                <strong class="me-auto">@Title</strong>
+                <small class="text-muted">@time.ToString("HH:mm")</small>
+                <button class="btn-close ms-2" @onclick="Hide"></button>
+            </div>
+
+            <div class="toast-body">
+                @Messages
+            </div>
         </div>
     </div>
-</div>
+}
+
 
 
 @code {
-    [Parameter] public string ToastClass { get; set; } = "primary";
-    [Parameter] public string Title { get; set; } = "Thông báo";
-    [Parameter] public string Messages { get; set; } = "Lorem";
-    [Parameter] public EventCallback OnCLose { get; set; }
+    private bool isToast;
+    private string Title = string.Empty;
+    private string Messages = string.Empty;
+    private string ToastClass = "success";
+    private DateTime time;
 
-    private DateTime time = DateTime.Now;
-    private bool _autoCloseStarted = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (!_autoCloseStarted)
-        {
-            _autoCloseStarted = true;
-            await Task.Delay(5000);
+        ToastService.OnShow += ShowToast;
+    }
 
-            if (OnCLose.HasDelegate)
-            {
-                await OnCLose.InvokeAsync();
-            }
-        }
+    private async void ShowToast(string title, string message, string type)
+    {
+        Title = title;
+        Messages = message;
+        ToastClass = type;
+        time = DateTime.Now;
+        isToast = true;
+
+        StateHasChanged();
+
+        // ⏱ Auto close sau 3s
+        await Task.Delay(3000);
+        Hide();
+    }
+
+    private void Hide()
+    {
+        isToast = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= ShowToast;
     }
 }
+

@@ -1,5 +1,7 @@
-﻿using BidaTrader.Client;
+﻿using ApexCharts;
+using BidaTrader.Client;
 using BidaTrader.Client.Auth;
+using BidaTrader.Client.Helpers;
 using BidaTrader.Client.Services;
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Services;
@@ -21,6 +23,8 @@ builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 
 // Auth service and HTTP handler
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ToastHelper>();
+builder.Services.AddScoped<CartStateService>();
 builder.Services.AddTransient<AuthHeaderHandler>();
 
 // Configure a named HttpClient for calling the server API.
@@ -32,6 +36,7 @@ builder.Services.AddHttpClient("API", client =>
 }).AddHttpMessageHandler<AuthHeaderHandler>();
 
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
+builder.Services.AddApexCharts();
 // Provide default HttpClient for components that inject HttpClient
 void AddClientService<T>(string endpoint) where T : class
 {

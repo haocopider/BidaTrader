@@ -1,7 +1,14 @@
 ﻿@using System.Security.Claims
+@inject CartStateService CartState
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
      style="position: sticky; top: 0; z-index: 1000; width: 100%; border-bottom: 1px solid #d9dee3;"
      id="layout-navbar">
+
+    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+            <i class="bx bx-menu bx-sm"></i>
+        </a>
+    </div>
     <div class="app-brand demo me-4">
         <a href="/" class="app-brand-link">
             <img src="../assets/img/logo.png" alt="Logo" width="40" class="app-brand-logo demo" />
@@ -9,19 +16,13 @@
         </a>
     </div>
 
-    @* Nút Menu Toggle trên Mobile
-    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
-        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
-            <i class="bx bx-menu bx-sm"></i>
-        </a>
-    </div> *@
+
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
 
         <div class="navbar-nav align-items-center d-none d-md-flex">
             <div class="nav-item d-flex align-items-center bg-light rounded-pill px-3 py-1">
 
-                @* --- ICON & INPUT TÌM KIẾM --- *@
                 <i class="bx bx-search fs-4 lh-0 me-2 text-muted"></i>
                 <input type="text"
                        class="form-control border-0 shadow-none bg-transparent p-0"
@@ -67,8 +68,6 @@
             <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                     <i class="bx bx-bell bx-sm"></i>
-                    @* Badge số lượng thông báo (Demo) *@
-                    <span class="badge bg-danger rounded-pill badge-notifications">0</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end py-0">
                     <li class="dropdown-header border-bottom">
@@ -85,10 +84,7 @@
             <AuthorizeView>
                 <Authorized>
                     <li class="nav-item navbar-dropdown dropdown me-3 me-xl-1">
-                        <a class="nav-link hide-arrow" href="/cart">
-                            <i class="bx bx-cart bx-sm text-danger"></i>
-                            <span class="badge bg-primary rounded-pill badge-notifications">@CartItemCount</span>
-                        </a>
+                        <CartWidget />
                     </li>
                 </Authorized>
             </AuthorizeView>
@@ -108,7 +104,7 @@
                     <li class="nav-item navbar-dropdown dropdown-user dropdown">
                         <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                             <div class="avatar avatar-online">
-                                <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                <img src="@avatarUrl" alt class="w-px-40 h-auto rounded-circle" />
                             </div>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" style="position: absolute; z-index: 9999;">
@@ -117,7 +113,7 @@
                                     <div class="d-flex">
                                         <div class="flex-shrink-0 me-3">
                                             <div class="avatar avatar-online">
-                                                <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                                <img src="@avatarUrl" alt class="w-px-40 h-auto rounded-circle" />
                                             </div>
                                         </div>
                                         <div class="flex-grow-1">
@@ -172,6 +168,7 @@
     private Task<AuthenticationState> AuthStateTask { get; set; }
     private string? userName { get; set; }
     private string? role { get; set; }
+    private string? avatarUrl { get; set; }
     private List<BrandDto>? brands;
     private int CartItemCount = 10;
 
@@ -204,6 +201,7 @@
                          ?? "Người dùng";
 
                 role = user.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
+                avatarUrl = user.FindFirst("avatarUrl")?.Value;
             }
         } 
         try
@@ -214,6 +212,31 @@
         {
 
         }
+    }
+
+    private async Task AddToCart(ProductDto product)
+    {
+        // 1. Logic lấy giỏ hàng cũ từ LocalStorage
+        var cart = await LocalStorage.GetItemAsync<List<CartItemDto>>("cart") ?? new List<CartItemDto>();
+
+        // 2. Logic thêm sản phẩm vào list
+        var existingItem = cart.FirstOrDefault(x => x.ProductId == product.Id);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += 1;
+        }
+        else
+        {
+            cart.Add(new CartItemDto { ProductId = product.Id, Quantity = 1 });
+        }
+
+        // 3. Lưu lại LocalStorage
+        await LocalStorage.SetItemAsync("cart", cart);
+
+        // 4. QUAN TRỌNG: Thông báo cho Widget cập nhật số ngay lập tức
+        await CartState.UpdateCartCount();
+
+        await JSRuntime.InvokeVoidAsync("alert", "Đã thêm vào giỏ hàng!");
     }
 
     private async Task HandleLogout()

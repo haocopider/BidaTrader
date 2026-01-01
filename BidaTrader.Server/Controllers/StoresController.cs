@@ -2,8 +2,10 @@
 using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Security.Claims;
 
@@ -19,6 +21,55 @@ namespace BidaTrader.Server.Controllers
             _storeService = service;
         }
 
+
+        [HttpGet("dashboard-summary")]
+        public async Task<ActionResult<StoreDashboardSummaryDto>> GetDashboardSummary()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            try
+            {
+                // Gọi Service
+                var result = await ((StoreService)_storeService).GetDashboardSummaryAsync(userId);
+                if (result == null) return NotFound("Không tìm thấy thông tin cửa hàng.");
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Lỗi Server: " + ex.Message);
+            }
+        }
+
+        [HttpGet("{storeId}/revenue-stats")]
+        public async Task<ActionResult<StoreRevenueStatsResponse>> GetRevenueStats(int storeId, [FromQuery] int? year)
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+            var ownerStoreId = await ((StoreService)_storeService).GetStoreIdAsync(userId);
+
+            if (ownerStoreId != storeId || ownerStoreId == 0)
+            {
+                return Forbid(); 
+            }
+
+            int targetYear = year ?? DateTime.Now.Year;
+            var response = new StoreRevenueStatsResponse();
+            response.MonthlyStats = await ((StoreService)_storeService).GetMonthlyRevenueAsync(storeId, targetYear);
+            response.YearlyStats = await ((StoreService)_storeService).GetYearlyRevenueAsync(storeId);
+            response.AvailableYears = await ((StoreService)_storeService).GetAvailableYearsAsync(storeId);
+
+            if (!response.AvailableYears.Contains(targetYear))
+            {
+                response.AvailableYears.Insert(0, targetYear);
+            }
+
+            return Ok(response);
+        }
         private int GetCurrentUserId()
         {
             var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -38,6 +89,20 @@ namespace BidaTrader.Server.Controllers
             return Ok(response);
         }
 
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterStore([FromBody] CreateStoreDto dto)
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await ((StoreService)_storeService).RegisterStoreAsync(userId, dto);
+
+            if (result == "SUCCESS")
+            {
+                return Ok(new { message = "Đăng ký cửa hàng thành công!" });
+            }
+
+            return BadRequest(new { message = result });
+        }
         [HttpGet]
         public async Task<ActionResult> GetStores([FromQuery] string? seachKey, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
         {
@@ -95,9 +160,10 @@ namespace BidaTrader.Server.Controllers
         public async Task<IActionResult> CreateStore([FromBody] StoreDto store)
         {
             if (store == null) BadRequest();
+            var userId = GetCurrentUserId();
             var newStore = new Store
             {
-                AccountId = store.AccountId,
+                AccountId = userId,
                 StoreName = store.StoreName,
                 Phone = store.Phone,
                 Address = store.Address,
