@@ -92,11 +92,11 @@
 </div>
 
 @code {
+
     private RegisterDto registerModel = new();
     private string? errorMessage;
     private bool isSubmitting = false;
 
-    // Logic ẩn/hiện password
     private bool showPass = false;
     private string passType => showPass ? "text" : "password";
     private void TogglePass() => showPass = !showPass;
@@ -113,10 +113,16 @@
         try
         {
             var result = await AuthService.Register(registerModel);
+
             if (result.IsSuccess)
             {
-                // Đăng ký thành công -> Chuyển sang login
-                Navigation.NavigateTo("/login");
+                
+                await Task.Delay(3000);
+                ToastHelper.Show(
+                    "Thành công",
+                    "Đăng ký tài khoản thành công! 3s sau sẽ chuyển tới trang đăng nhập.",
+                    "success"
+);                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -132,4 +138,6 @@
             isSubmitting = false;
         }
     }
+    
+                
 }

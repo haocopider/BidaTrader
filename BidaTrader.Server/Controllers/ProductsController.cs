@@ -1,5 +1,6 @@
 ﻿using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -93,6 +94,14 @@ public class ProductsController : ControllerBase
         return Ok(response);
     }
 
+
+    [HttpGet]
+    public async Task<ActionResult<List<ProductDto>>> GetProducts()
+    {
+        var response = await _productService.GetItemsAsync();
+        return Ok(response);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductDto>> GetProductById(int id)
     {
@@ -103,7 +112,6 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreatePrduct([FromBody] ProductCreateUpdateDto dto)
     {
-        // Kiểm tra tính hợp lệ của Model (DataAnnotations trong DTO)
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -125,7 +133,7 @@ public class ProductsController : ControllerBase
                 return BadRequest("Tạo mới sản phẩm thất bại. Vui lòng kiểm tra lại thông tin cửa hàng hoặc dữ liệu nhập.");
             }
 
-            return NoContent();
+            return Ok();
         }
         catch (Exception ex)
         {

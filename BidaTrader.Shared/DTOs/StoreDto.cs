@@ -1,6 +1,7 @@
 ﻿using BidaTrader.Shared.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace BidaTrader.Shared.DTOs
@@ -29,6 +30,24 @@ namespace BidaTrader.Shared.DTOs
         public List<string> BannerImages { get; set; }
     }
 
+    public class CreateStoreDto
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tên cửa hàng")]
+        [StringLength(100, ErrorMessage = "Tên cửa hàng không được quá 100 ký tự")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập mô tả")]
+        public string Description { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập địa chỉ lấy hàng")]
+        public string Address { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại cửa hàng")]
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+        public string Phone { get; set; } = string.Empty;
+
+        public string? LogoUrl { get; set; } // Chuỗi Base64 hoặc URL ảnh
+    }
     public class StoreDetailDto
     {
         public int Id { get; set; }

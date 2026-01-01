@@ -1,6 +1,5 @@
 ﻿@page "/"
 
-@using Microsoft.AspNetCore.WebUtilities
 
 <PageTitle>BidaTrader - Sàn Thương Mại Bida Hàng Đầu</PageTitle>
 
@@ -295,8 +294,6 @@
         await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 500);
     }
 
-    // --- Giữ nguyên các hàm logic cũ của bạn (ParseUrlParameters, SelectCategory, LoadProducts, AddToCart v.v.) ---
-    // (Tôi đã copy lại logic để đảm bảo code chạy, chỉ thay đổi UI)
 
     private void ParseUrlParameters()
     {
@@ -327,7 +324,12 @@
 
     private async Task HandleSearchEnter(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") await ApplyFilters();
+        if (e.Key == "Enter")
+        { 
+            await Task.Yield();
+            await ApplyFilters();
+        }
+
     }
 
     private async Task SelectCategory(int? id)
@@ -339,13 +341,15 @@
     private async Task SelectPrice(PriceRange range)
     {
         SelectedPriceRange = range;
-        MaxPriceSlider = 50000000; // Reset slider khi chọn radio
+        MaxPriceSlider = 50000000;
+        await Task.Yield();
         await ApplyFilters();
     }
 
     private async Task OnSliderChanged()
     {
-        SelectedPriceRange = PriceRange.None; // Reset radio khi dùng slider
+        SelectedPriceRange = PriceRange.None; 
+        await Task.Yield();
         await ApplyFilters();
     }
 

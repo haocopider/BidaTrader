@@ -104,6 +104,11 @@
                 errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng.";
                 return;
             };
+                            await Task.Delay(3000);
+                ToastHelper.Show(
+                    "Thông báo",
+                    "Chào mừng bạn quay trở lại. Chúc bạn có khoảng thời gian mua sắm vui vẻ!",
+                    "success");
             Navigation.NavigateTo("/");
         }
         catch (Exception ex)

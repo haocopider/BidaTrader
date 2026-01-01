@@ -1,0 +1,37 @@
+﻿@using BidaTrader.Client.Services
+@inject CartStateService CartState
+@implements IDisposable
+
+<div class="nav-item navbar-dropdown dropdown-user dropdown">
+    <a class="nav-link dropdown-toggle hide-arrow position-relative" href="/my-cart">
+        @* Icon Giỏ hàng *@
+        <i class="bx bx-cart fs-3 text-primary"></i>
+
+        @* Badge hiển thị số lượng (chỉ hiện khi > 0) *@
+        @if (CartState.TotalItems > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light shadow-sm"
+                  style="font-size: 0.7rem; padding: 0.35em 0.5em;">
+                @CartState.TotalItems
+                <span class="visually-hidden">sản phẩm trong giỏ</span>
+            </span>
+        }
+    </a>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Đăng ký nhận sự kiện thay đổi
+        CartState.OnChange += StateHasChanged;
+
+        // 2. Load số lượng lần đầu (nếu user F5 trang)
+        await CartState.InitializeAsync();
+    }
+
+    // Quan trọng: Hủy đăng ký khi component bị tắt để tránh rò rỉ bộ nhớ
+    public void Dispose()
+    {
+        CartState.OnChange -= StateHasChanged;
+    }
+}

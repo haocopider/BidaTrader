@@ -1,5 +1,5 @@
 ﻿@page "/product/{Id:int}"
-
+@implements IDisposable
 <PageTitle>@(product?.Name ?? "Chi tiết sản phẩm") - BidaTrader</PageTitle>
 
 <style>
@@ -343,6 +343,18 @@
     private string selectedImage = "";
     private List<string> productImages = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        CartState.OnChange += StateHasChanged;
+
+        await CartState.InitializeAsync();
+    }
+
+    public void Dispose()
+    {
+        CartState.OnChange -= StateHasChanged;
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
@@ -419,8 +431,6 @@
 
     private async Task HandleImageUpload(InputFileChangeEventArgs e)
     {
-        // Giả lập upload: Trong thực tế bạn cần gọi API upload file thật
-        // Ở đây mình chỉ convert sang base64 để demo hiển thị preview
         NewFeedback.ImageUrls.Clear();
         foreach (var file in e.GetMultipleFiles(3))
         {
@@ -439,14 +449,13 @@
         NewFeedback.ProductId = Id;
         NewFeedback.OrderDetailId = TargetOrderDetailId.Value;
 
-        // Lưu ý: AccountId sẽ được lấy tự động từ Token ở Backend (Authorize)
         var response = await Http.PostAsJsonAsync("api/feedbacks", NewFeedback);
 
         if (response.IsSuccessStatusCode)
         {
             await JSRuntime.InvokeVoidAsync("alert", "Cảm ơn bạn đã đánh giá!");
-            TargetOrderDetailId = null; // Ẩn form đi
-            await LoadFeedbacks(); // Reload lại list
+            TargetOrderDetailId = null;
+            await LoadFeedbacks();
         }
         else
         {
@@ -461,9 +470,7 @@
         if (product == null) return;
         var request = new AddToCartDto { ProductId = product.Id, Quantity = quantity };
         var response = await Http.PostAsJsonAsync("api/cart/add", request);
-        if (response.IsSuccessStatusCode)
-            await JSRuntime.InvokeVoidAsync("alert", "Đã thêm vào giỏ!"); // Thay bằng Toast nếu có
-        else
+        if (!response.IsSuccessStatusCode)
             await JSRuntime.InvokeVoidAsync("alert", "Lỗi thêm giỏ hàng. Vui lòng đăng nhập.");
     }
 }

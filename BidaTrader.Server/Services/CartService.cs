@@ -3,12 +3,18 @@ using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
+using System.Net.Mail;
+using System.Net.WebSockets;
 
 namespace BidaTrader.Server.Services
 {
     public class CartService : ServerService<Cart>
     {
-        public CartService(AppDbContext context) : base(context) { }
+        private readonly IConfiguration _configuration;
+        public CartService(AppDbContext context, IConfiguration configuration) : base(context) { 
+            _configuration = configuration;
+        }
 
         public async Task<List<CartGroupDto>> MyCart(int accountId)
         {
@@ -190,6 +196,60 @@ namespace BidaTrader.Server.Services
             {
                 await transaction.RollbackAsync();
                 throw;
+            }
+            finally {
+                var account = await _context.Accounts
+    .FirstOrDefaultAsync(a => a.Id == accountId);
+                await SendEmailAsync(account.Email);
+            }
+        }
+
+        private async Task SendEmailAsync(string accountEmail)
+        {
+            var smtpConfig = _configuration.GetSection("Smtp");
+
+            try
+            {
+                using var smtpClient = new SmtpClient
+                {
+                    // Lưu ý: Tên key phải khớp với JSON (Host)
+                    Host = smtpConfig["Host"],
+                    Port = int.Parse(smtpConfig["Port"] ?? "587"),
+                    EnableSsl = bool.Parse(smtpConfig["EnableSsl"] ?? "true"),
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(
+                        smtpConfig["UserName"],
+                        smtpConfig["Password"]
+                    )
+                };
+
+                using var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(
+                        smtpConfig["UserName"]!,
+                        smtpConfig["FromName"] ?? "BidaTrader"
+                    ),
+                    Subject = "Thông báo mua hàng",
+                    Body = @"
+                        <p>Bạn vừa thực hiện một giao dịch.</p>
+                        <p>
+                            Vui lòng truy cập:
+                            <a href='https://localhost:7103/my-orders'>
+                                Xem chi tiết đơn hàng
+                            </a>
+                        </p>",
+                    IsBodyHtml = true
+                };
+
+
+                mailMessage.To.Add(accountEmail);
+
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Gửi email thất bại: {ex.Message}");
             }
         }
 

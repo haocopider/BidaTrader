@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using System.Security.Claims
 @using System.Net
+@using ApexCharts
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
@@ -18,8 +19,11 @@
 @using BidaTrader.Client.Pages.FormComponents
 @using BidaTrader.Client.Pages.AdminArea
 
+
+@inject CartStateService CartState
 @inject IJSRuntime JSRuntime
 @inject IAuthService AuthService
+@inject ToastHelper ToastHelper
 @inject IService<ProductDto> ProductService
 @inject IService<CategoryDto> CategoryService
 @inject IService<AccountDto> AccountService
@@ -34,10 +38,9 @@
 @using BidaTrader.Shared.DTOs;
 @using BidaTrader.Shared.Models;
 @using BidaTrader.Shared.Services;
-@* === CÁC DÒNG MỚI CHO AUTHENTICATION === *@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Blazored.LocalStorage
 @using BidaTrader.Client.Auth
 @using BidaTrader.Client.Services
-@using Microsoft.AspNetCore.Authorization\
+@using Microsoft.AspNetCore.Authorization
 

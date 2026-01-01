@@ -1,10 +1,5 @@
-﻿@page "/store/manage-product"
+﻿@page "/store/manage-products"
 
-
-@if(isToast)
-{
-    <Toast ToastClass="@classToast" Title="@titleToast" Messages="@messagesToast" OnCLose="CloseToast" ></Toast>
-}
 
 <PageTitle>Quản lý sản phẩm - BidaTrader</PageTitle>
 
@@ -227,12 +222,7 @@
     private bool isLoadingModal = false;
     private ProductCreateUpdateDto editingProduct = new();
 
-    //4.Toast
-    private bool isToast = false;
-    private string titleToast;
-    private string classToast;
-    private string messagesToast;
-
+    
     protected override async Task OnInitializedAsync()
     {
         await LoadMetaData();
@@ -318,7 +308,6 @@
             }
             catch
             {
-                ShowToast("Cảnh báo", "Lỗi tải dữ liệu sản phẩm", "warning");
                 CloseModal();
             }
         }
@@ -364,7 +353,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            ShowToast("Thành công",
+            ToastHelper.Show("Thông báo",
                       dto.Id == 0 ? "Thêm sản phẩm thành công" : "Cập nhật sản phẩm thành công",
                       "success");
 
@@ -374,7 +363,11 @@
         else
         {
             var err = await response.Content.ReadAsStringAsync();
-            ShowToast("Lỗi", $"Có lỗi xảy ra: {err}", "danger");
+            ToastHelper.Show(
+                    "Lỗi",
+                    $"{err}",
+                    "danger"
+                    );
         }
     }
 
@@ -389,26 +382,21 @@
                 allProducts.Items.Remove(product);
                 ApplyFilters();
 
-                ShowToast("Thành công", "Xóa sản phẩm thành công", "success");
+                ToastHelper.Show(
+                "Thông báo",
+                "Xóa sản phẩm thành công",
+                "success"
+                );
             }
             else
             {
-                ShowToast("Lỗi", "Xóa sản phẩm thất bại", "danger");
+                ToastHelper.Show(
+                "Lỗi",
+                "Xóa sản phẩm thất bại",
+                "danger"
+                );
             }
         }
     }
 
-    private void ShowToast(string title, string message, string type = "success")
-    {
-        titleToast = title;
-        messagesToast = message;
-        classToast = type; // success | danger | warning
-        isToast = true;
-    }
-
-
-    private void CloseToast()
-    {
-        isToast = false;
-    }
 }

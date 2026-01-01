@@ -1,4 +1,4 @@
-﻿@page "/cart"
+﻿@page "/my-cart"
 @attribute [Authorize]
 
 <PageTitle>Giỏ hàng</PageTitle>
@@ -132,7 +132,7 @@ else
                             @onclick="Checkout">
                         @if (isCheckingOut)
                         {
-                            <span class="spinner-border spinner-border-sm me-2">Đang xử lý...</span>
+                            <MiniSpinner/>
                         }
                         else
                         {
@@ -267,11 +267,8 @@ else
             await LoadCart();
             CalculateTotal();
 
-            // Option 1: chuyển trang
-            Navigation.NavigateTo("/orders");
+            Navigation.NavigateTo("/my-orders");
 
-            // Option 2: toast / alert
-            // toastService.Success("Đặt hàng thành công!");
         }
         else
         {

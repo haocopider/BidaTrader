@@ -1,9 +1,9 @@
 ﻿using BidaTrader.Server.Helpers;
 using BidaTrader.Server.Services;
-using BidaTrader.Shared.DTOs;
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -32,7 +32,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// === BẮT ĐẦU CẤU HÌNH JWT ===
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -48,68 +47,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Cập nhật CORS Policy 
-builder.Services.AddAuthorization(options =>
-{
-    // ================= ROLE BASE =================
 
-    options.AddPolicy("FullFeat", policy =>
-        policy.RequireRole("ADMIN")
-    );
-
-    options.AddPolicy("StoreOwner", policy =>
-        policy.RequireRole("STORE")
-    );
-
-    options.AddPolicy("ForCustomer", policy =>
-        policy.RequireRole("CUSTOMER")
-    );
-
-    options.AddPolicy("ForShipper", policy =>
-        policy.RequireRole("SHIPPER")
-    );
-
-    // ================= COMBINED ROLE =================
-
-    options.AddPolicy("AdminOrStore", policy =>
-        policy.RequireRole("ADMIN", "STORE_OWNER")
-    );
-
-    options.AddPolicy("StoreOrCustomer", policy =>
-        policy.RequireRole("STORE", "CUSTOMER")
-    );
-
-    options.AddPolicy("ForAll", policy =>
-        policy.RequireRole("ADMIN", "STORE", "CUSTOMER")
-    );
-
-    // ================= STORE STATUS =================
-
-    options.AddPolicy("ActiveStore", policy =>
-        policy.RequireRole("STORE_OWNER")
-              .RequireClaim("StoreActive", "True")
-    );
-
-    // ================= AUTHENTICATED =================
-
-    options.AddPolicy("Authenticated", policy =>
-        policy.RequireAuthenticatedUser()
-    );
-
-    // ================= PERMISSION BASE =================
-
-    options.AddPolicy("PRODUCT.CREATE", policy =>
-        policy.RequireClaim("Permission", "PRODUCT.CREATE")
-    );
-
-    options.AddPolicy("PRODUCT.UPDATE", policy =>
-        policy.RequireClaim("Permission", "PRODUCT.UPDATE")
-    );
-
-    options.AddPolicy("PRODUCT.DELETE", policy =>
-        policy.RequireClaim("Permission", "PRODUCT.DELETE")
-    );
-});
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
 
 builder.Services.AddCors(options =>
