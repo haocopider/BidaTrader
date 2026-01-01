@@ -18,14 +18,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped(typeof(IService<>), typeof(ServerService<>));
-builder.Services.AddScoped<ProductService, ProductService>();
+builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<IService<Category>, CategoryService>();
 builder.Services.AddScoped<IService<Brand>, BrandService>();
-builder.Services.AddScoped<AccountService, AccountService>();
+builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<IService<Post>, PostService>();
 builder.Services.AddScoped<IService<Store>, StoreService>();
-builder.Services.AddScoped<CartService, CartService>();
-builder.Services.AddScoped<OrderService, OrderService>();
+builder.Services.AddScoped<IService<Cart>, CartService>();
+builder.Services.AddScoped<IService<Order>, OrderService>();
+builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<MailHelper>();
 
 builder.Services.AddControllers();

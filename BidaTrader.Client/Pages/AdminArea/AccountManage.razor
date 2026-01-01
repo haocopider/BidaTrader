@@ -1,64 +1,107 @@
-﻿<div class="mb-3">
-    <button @onclick="() => ShowAccountModel(0)" class="btn btn-primary btn-sm"><i class="bx bx-plus"></i> Thêm tài khoản</button>
-</div>
+﻿@page "/admin/manage-accounts"
 
-<div class="table-responsive text-nowrap">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>UID</th>
-                <th>Tên tài khoản</th>
-                <th>Trạng thái</th>
-                <th>Quyền hạn</th>
-                <th>Chức năng</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.Accounts)
-            {
-                <tr>
-                    <td><strong>@item.UID</strong></td>
-                    <td>@item.UserName</td>
-                    <td>
-                        <span class="badge bg-label-@(item.IsActive == true ? "success" : "danger") me-1">
-                            @(item.IsActive == true ? "Active" : "Locked")
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge bg-label-@(item.Role == "Admin" ? "primary" : (item.Role == "Store" ? "warning" : "info")) me-1">
-                            @item.Role
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary btn-icon item-edit" @onclick="() => ShowAccountModel(item.Id)"><i class="bx bx-edit-alt"></i></button>
-                        <button class="btn btn-sm btn-outline-danger  btn-icon item-trash" @onclick="() => DeleteAccount(item.Id)"><i class="bx bx-trash"></i></button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-<div class="d-flex justify-content-between align-items-center mt-3">
-    <small class="text-muted">
-        Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount tài khoản.
-    </small>
-    <nav aria-label="Page navigation">
-        <ul class="pagination mb-0">
-            <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
-                <button class="page-link bi bi-arrow-left" @onclick="() => ChangeAccountPage(Model.PageIndex - 1)"></button>
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="nav-align-top mb-4">
+        <ul class="nav nav-pills mb-3" role="tablist">
+            <li class="nav-item">
+                <a href="/admin/manage-accounts" class="nav-link active">
+                    <i class="bx bx-user me-1"></i> Tài khoản
+                </a>
             </li>
-            @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++) // Giới hạn 5 nút trang
-            {
-                var pageNumber = i;
-                <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
-                    <button class="page-link" @onclick="() => ChangeAccountPage(pageNumber)">@pageNumber</button>
-                </li>
-            }
-            <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
-                <button class="page-link bi bi-arrow-right" @onclick="() => ChangeAccountPage(Model.PageIndex + 1)"></button>
+            <li class="nav-item">
+                <a href="/admin/manage-stores" class="nav-link">
+                    <i class="bx bx-store me-1"></i> Cửa hàng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-categories" class="nav-link">
+                    <i class="bx bx-category me-1"></i> Danh mục
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-brands" class="nav-link">
+                    <i class="bx bx-purchase-tag me-1"></i> Thương hiệu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/manage-posts" class="nav-link">
+                    <i class="bx bx-news me-1"></i> Bài viết
+                </a>
             </li>
         </ul>
-    </nav>
+
+        <div class="tab-content shadow-sm">
+
+            <div class="tab-pane fade show active" id="navs-accounts" role="tabpanel">
+
+                    <div class="mb-3">
+                        <button @onclick="() => ShowAccountModel(0)" class="btn btn-primary btn-sm"><i class="bx bx-plus"></i> Thêm tài khoản</button>
+                    </div>
+                    @if(IsLoading)
+                {
+                    <MiniSpinner></MiniSpinner>
+                }
+                else
+                {
+                    <div class="table-responsive text-nowrap">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>UID</th>
+                                    <th>Tên tài khoản</th>
+                                    <th>Trạng thái</th>
+                                    <th>Chức năng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Accounts)
+                                {
+                                    <tr>
+                                        <td><strong>@item.UID</strong></td>
+                                        <td>@item.UserName</td>
+                                        <td>
+                                            <span class="badge bg-label-@(item.IsActive == true ? "success" : "danger") me-1">
+                                                @(item.IsActive == true ? "Active" : "Locked")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary btn-icon item-edit" @onclick="() => ShowAccountModel(item.Id)"><i class="bx bx-edit-alt"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger  btn-icon item-trash" @onclick="() => DeleteAccount(item.Id)"><i class="bx bx-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">
+                            Trang @Model.PageIndex / @Model.TotalPages | Tổng số @Model.TotalCount tài khoản.
+                        </small>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0">
+                                <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-left" @onclick="() => ChangeAccountPage(Model.PageIndex - 1)"></button>
+                                </li>
+                                @for (int i = 1; i <= Math.Min(Model.TotalPages, 5); i++) // Giới hạn 5 nút trang
+                                {
+                                    var pageNumber = i;
+                                    <li class="page-item @(Model.PageIndex == pageNumber ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangeAccountPage(pageNumber)">@pageNumber</button>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.PageIndex == Model.TotalPages ? "disabled" : "")">
+                                    <button class="page-link bi bi-arrow-right" @onclick="() => ChangeAccountPage(Model.PageIndex + 1)"></button>
+                                </li>
+                            </ul>
+                        </nav>
+                        }
+                    </div>
+
+                }
+            </div>
+
+        </div>
+    </div>
 </div>
 
 <AccountForm @ref="AccountFormComponent"
@@ -71,11 +114,18 @@
     private AccountForm? AccountFormComponent;
     private int currentId { get; set; }
     private bool isAccountFormVisible = false;
-    private bool IsLoadingAccounts = true;
+    private bool IsLoading = true;
     private string? ErrorMessage;
-    [Parameter] public AccountPerPage Model { get; set; }
+    public AccountPerPage Model { get; set; }
     private const int PageSize = 7;
 
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        var result = await Http.GetFromJsonAsync<AccountPerPage>($"api/accounts?pageIndex={1}&pageSize={PageSize}");
+        if (result != null) Model = result;
+        IsLoading = false;
+    }
 
     private async Task ChangeAccountPage(int newPageIndex)
     {

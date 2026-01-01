@@ -15,8 +15,6 @@ public partial class Account
 
     public string? Passcode { get; set; }
 
-    public string Role { get; set; } = null!;
-
     public int? StoreId { get; set; }
 
     public string? FirstName { get; set; }

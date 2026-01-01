@@ -55,8 +55,6 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Accounts__3214EC078E11B0EA");
 
-            entity.HasIndex(e => e.Role, "IX_Accounts_Role");
-
             entity.HasIndex(e => e.Email, "UQ__Accounts__A9D10534D69508C9").IsUnique();
 
             entity.HasIndex(e => e.Uid, "UQ__Accounts__C5B196038F5F790E").IsUnique();
@@ -80,9 +78,6 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
-            entity.Property(e => e.Role)
-                .HasMaxLength(20)
-                .IsUnicode(false);
             entity.Property(e => e.Uid)
                 .HasMaxLength(36)
                 .HasColumnName("UID");

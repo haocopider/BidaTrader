@@ -51,7 +51,6 @@ namespace BidaTrader.Shared.DTOs
         public string? Address { get; set; }
         public string? AvatarUrl { get; set; }
         public DateOnly? DateOfBirth { get; set; }
-        public string Role { get; set; } = "Customer";
         public string? Passcode { get; set; }
         public bool IsActive { get; set; }
     }
@@ -125,16 +124,4 @@ namespace BidaTrader.Shared.DTOs
         public string ConfirmNewPassword { get; set; } = "";
     }
 
-    public class UpdateRolePermissionsDto
-    {
-        public int RoleId { get; set; }
-        public List<int> PermissionIds { get; set; } = new();
-    }
-
-    public class RoleWithPermissionsDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public List<int> AssignedPermissionIds { get; set; } = new();
-    }
 }
