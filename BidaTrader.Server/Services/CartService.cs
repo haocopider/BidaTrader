@@ -115,14 +115,13 @@ namespace BidaTrader.Server.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task Checkout(int accountId, CheckoutRequestDto crd)
+        public async Task<(List<int> OrderIds, decimal TotalAmount)> Checkout(int accountId, CheckoutRequestDto crd)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
                 var productIds = crd.SelectedItems.Select(x => x.ProductId).ToList();
-
                 var productsInDb = await _context.Products
                     .Where(p => productIds.Contains(p.Id))
                     .Include(p => p.Store)
@@ -140,6 +139,9 @@ namespace BidaTrader.Server.Services
 
                 var ordersByStore = productsInDb.GroupBy(p => p.StoreId);
 
+                var createdOrders = new List<Order>();
+                decimal grandTotal = 0;
+
                 foreach (var storeGroup in ordersByStore)
                 {
                     decimal storeTotal = 0;
@@ -147,8 +149,7 @@ namespace BidaTrader.Server.Services
 
                     foreach (var product in storeGroup)
                     {
-                        var qty = crd.SelectedItems
-                            .First(x => x.ProductId == product.Id).Quantity;
+                        var qty = crd.SelectedItems.First(x => x.ProductId == product.Id).Quantity;
 
                         product.Quantity -= qty;
 
@@ -170,7 +171,6 @@ namespace BidaTrader.Server.Services
                         OrderDate = DateTime.Now,
                         TotalAmount = storeTotal,
                         Status = "Pending",
-                        ConfirmedAt = null,
                         PaymentMethod = crd.PaymentMethod,
                         IsPaid = false,
                         Note = string.IsNullOrWhiteSpace(crd.Note) ? null : crd.Note,
@@ -180,30 +180,35 @@ namespace BidaTrader.Server.Services
                     };
 
                     _context.Orders.Add(order);
+                    createdOrders.Add(order);
+                    grandTotal += storeTotal;
                 }
 
                 var cartItems = await _context.Carts
-                    .Where(ci => ci.AccountId == accountId &&
-                                 productIds.Contains(ci.ProductId))
+                    .Where(ci => ci.AccountId == accountId && productIds.Contains(ci.ProductId))
                     .ToListAsync();
 
                 _context.Carts.RemoveRange(cartItems);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                try
+                {
+                    var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+                    if (account != null) await SendEmailAsync(account.Email);
+                }
+                catch { }
+
+                var orderIds = createdOrders.Select(o => o.Id).ToList();
+                return (orderIds, grandTotal);
             }
             catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
-            finally {
-                var account = await _context.Accounts
-    .FirstOrDefaultAsync(a => a.Id == accountId);
-                await SendEmailAsync(account.Email);
-            }
         }
-
         private async Task SendEmailAsync(string accountEmail)
         {
             var smtpConfig = _configuration.GetSection("Smtp");

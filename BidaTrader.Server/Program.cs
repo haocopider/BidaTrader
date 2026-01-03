@@ -24,9 +24,10 @@ builder.Services.AddScoped<IService<Brand>, BrandService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<IService<Post>, PostService>();
 builder.Services.AddScoped<IService<Store>, StoreService>();
-builder.Services.AddScoped<IService<Cart>, CartService>();
-builder.Services.AddScoped<IService<Order>, OrderService>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<VnPayService>();
 builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<MailHelper>();
 

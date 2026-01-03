@@ -1,0 +1,56 @@
+﻿@page "/payment-result"
+
+<div class="container py-5 text-center">
+    <div class="card shadow border-0 mx-auto" style="max-width: 500px;">
+        <div class="card-body p-5">
+            @if (IsSuccess)
+            {
+                <div class="mb-4 text-success">
+                    <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="fw-bold text-success mb-3">Thanh toán thành công!</h2>
+                <p class="text-muted mb-4">
+                    Đơn hàng <b>#@OrderId</b> của bạn đã được thanh toán.
+                    <br />Chúng tôi sẽ sớm giao hàng cho bạn.
+                </p>
+                <button class="btn btn-primary w-100" @onclick='() => Navigation.NavigateTo("/my-orders")'>
+                    Xem đơn hàng
+                </button>
+            }
+            else
+            {
+                <div class="mb-4 text-danger">
+                    <i class="bi bi-x-circle-fill" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="fw-bold text-danger mb-3">Thanh toán thất bại</h2>
+                <p class="text-muted mb-4">
+                    Giao dịch cho đơn hàng <b>#@OrderId</b> không thành công.
+                    <br />
+                    @if (!string.IsNullOrEmpty(ErrorCode))
+                    {
+                        <span class="badge bg-danger">Mã lỗi: @ErrorCode</span>
+                    }
+                </p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" @onclick='() => Navigation.NavigateTo("/my-cart")'>
+                        Thử lại
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick='() => Navigation.NavigateTo("/")'>
+                        Về trang chủ
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public bool IsSuccess { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? OrderId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? ErrorCode { get; set; }
+}
