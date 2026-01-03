@@ -4,10 +4,17 @@
     {
         public string ShippingAddress { get; set; }
         public string PhoneNumber { get; set; }
-        public string PaymentMethod { get; set; } // "COD", "MOMO", "BANK"
+        public string PaymentMethod { get; set; }
         public string? Note { get; set; }
 
         public List<CheckoutItemDto> SelectedItems { get; set; }
+    }
+
+    public class CheckoutResultDto
+    {
+        public int OrderId { get; set; }
+        public long TotalAmount { get; set; }
+
     }
 
     public class CheckoutItemDto

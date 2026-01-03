@@ -153,6 +153,7 @@
                         <div class="col">
                             <div class="card product-card h-100 position-relative overflow-hidden bg-white">
 
+                                @* --- BADGE TRẠNG THÁI (Mới / Hot) --- *@
                                 @if (IsNewProduct(product.CreatedAt))
                                 {
                                     <span class="badge bg-success badge-float rounded-pill shadow-sm">Mới</span>
@@ -162,10 +163,17 @@
                                     <span class="badge bg-warning text-dark badge-float rounded-pill shadow-sm"><i class="bi bi-fire"></i> Hot</span>
                                 }
 
-                                <div class="ratio ratio-1x1 bg-light">
-                                    <img src="@product.ImageUrl" class="card-img-top object-fit-cover" alt="@product.Name"
-                                         style="cursor: pointer;" @onclick='() => Navigation.NavigateTo($"/product/{product.Id}")'>
+                                @* --- HÌNH ẢNH SẢN PHẨM --- *@
+                                <div class="ratio ratio-1x1 bg-light position-relative">
+                                    @* Logic: Nếu hết hàng thì làm mờ ảnh (opacity-50) *@
+                                    <img src="@product.ImageUrl"
+                                         class="card-img-top object-fit-cover @(product.Quantity <= 0 ? "opacity-50" : "")"
+                                         alt="@product.Name"
+                                         style="cursor: pointer;"
+                                         @onclick='() => Navigation.NavigateTo($"/product/{product.Id}")'>
 
+
+                                    @* Thông tin cửa hàng (Overlay bên dưới ảnh) *@
                                     <div class="position-absolute bottom-0 start-0 w-100 p-2 bg-gradient-to-t"
                                          style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);">
                                         <div class="d-flex align-items-center text-white" style="cursor: pointer;"
@@ -176,6 +184,7 @@
                                     </div>
                                 </div>
 
+                                @* --- BODY THẺ SẢN PHẨM --- *@
                                 <div class="card-body p-3 d-flex flex-column">
                                     <div class="mb-auto">
                                         <h6 class="card-title text-truncate-2 mb-1" style="font-size: 0.95rem; min-height: 2.4em; line-height: 1.2em;">
@@ -188,7 +197,18 @@
                                                     <i class="bi @(i <= product.Rating ? "bi-star-fill" : "bi-star")"></i>
                                                 }
                                             </div>
-                                            <small class="text-muted" style="font-size: 0.75rem;">(@product.Quantity)</small>
+
+                                            @* Logic: Hiển thị text trạng thái kho *@
+                                            @if (product.Quantity > 0)
+                                            {
+                                                <small class="text-muted" style="font-size: 0.75rem;">(Còn @product.Quantity)</small>
+                                            }
+                                            else
+                                            {
+                                                <div class="out-of-stock-overlay">
+                                                    <span class="badge bg-danger fs-6 px-3 py-2 shadow">Hết hàng</span>
+                                                </div>
+                                            }
                                         </div>
                                     </div>
 
@@ -196,12 +216,6 @@
                                         <div class="fw-bold text-primary" style="font-size: 1.1rem;">
                                             @product.Price.ToString("N0")<span class="small align-top text-decoration-underline">đ</span>
                                         </div>
-
-                                        <button class="btn btn-icon btn-sm btn-outline-primary rounded-circle position-relative z-2"
-                                                title="Thêm vào giỏ"
-                                                @onclick="() => AddToCart(product.Id)">
-                                            <i class="bx bx-cart-add"></i>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -212,6 +226,39 @@
         </main>
     </div>
 </div>
+
+<style>
+
+    .product-card {
+        transition: all 0.3s ease;
+        border-radius: 14px;
+    }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+
+        .product-card img {
+            transition: transform 0.4s ease;
+        }
+
+        .product-card:hover img {
+            transform: scale(1.05);
+        }
+
+    .out-of-stock-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: transparent ;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        backdrop-filter: blur(1px);
+    }
+
+</style>
 
 <div class="pagination-fixed">
     <nav aria-label="Page navigation">
@@ -420,6 +467,5 @@
     {
         var request = new AddToCartDto { ProductId = productId, Quantity = 1 };
         var response = await Http.PostAsJsonAsync("api/cart/add", request);
-        // Có thể thêm Toast notification tại đây nếu cần
     }
 }
