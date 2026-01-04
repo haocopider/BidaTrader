@@ -1,7 +1,7 @@
 ﻿using Azure;
 using BidaTrader.Server.Helpers;
-using BidaTrader.Server.Models;
 using BidaTrader.Shared.DTOs;
+using BidaTrader.Shared.Models;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace BidaTrader.Server.Services

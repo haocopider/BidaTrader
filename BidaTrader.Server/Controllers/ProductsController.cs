@@ -110,6 +110,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "PRODUCT.CREATE")]
     public async Task<IActionResult> CreatePrduct([FromBody] ProductCreateUpdateDto dto)
     {
         if (!ModelState.IsValid)
@@ -141,6 +142,7 @@ public class ProductsController : ControllerBase
         }
     }
     [HttpPut("{id}")]
+    [Authorize(Policy = "PRODUCT.UPDATE")]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto dto)
     {
         if (id != dto.Id) return BadRequest("ID không khớp.");
@@ -152,6 +154,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "PRODUCT.DELETE")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var item = await _productService.GetItemByIdAsync(id);

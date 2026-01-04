@@ -1,0 +1,130 @@
+﻿@page "/store/manage-orders/{OrderId:int}"
+
+<PageTitle>Chi tiết đơn hàng</PageTitle>
+
+<div class="container py-4">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+        </div>
+    }
+    else if (order == null)
+    {
+        <div class="alert alert-danger text-center">
+            Không tìm thấy đơn hàng.
+        </div>
+    }
+    else
+    {
+        <!-- THÔNG TIN ĐƠN -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <div>
+                    <strong>Mã đơn:</strong> #@order.Id <br />
+                    <small class="text-muted">Ngày đặt: @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</small>
+                </div>
+                <span class="badge @GetStatusColor(order.Status)">
+                    @GetStatusLabel(order.Status)
+                </span>
+            </div>
+        </div>
+
+        <!-- DANH SÁCH SẢN PHẨM -->
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-light fw-bold">
+                <i class="bi bi-box-seam"></i> Sản phẩm
+            </div>
+            <div class="card-body p-0">
+                @foreach (var item in order.Items)
+                {
+                    <div class="p-3 border-bottom d-flex align-items-center">
+                        <img src="@item.ImageUrl"
+                             class="rounded border me-3"
+                             style="width:80px;height:80px;object-fit:cover" />
+
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">@item.ProductName</h6>
+                            <small class="text-muted">
+                                SL: @item.Quantity
+                            </small>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="text-muted small">Đơn giá</div>
+                            <div class="fw-bold">@item.Price.ToString("N0") ₫</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- THANH TOÁN -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tạm tính</span>
+                    <span>@order.SubTotal.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Phí vận chuyển</span>
+                    <span>@order.ShippingFee.ToString("N0") ₫</span>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between fs-5 fw-bold">
+                    <span>Tổng cộng</span>
+                    <span class="text-danger">@order.TotalAmount.ToString("N0") ₫</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+
+    private bool isLoading = true;
+    private OrderDetailDto? order { get; set; } = new OrderDetailDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrderDetail();
+    }
+
+    private async Task LoadOrderDetail()
+    {
+        isLoading = true;
+        var response = await Http.GetAsync($"api/orders/{OrderId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            order = await response.Content.ReadFromJsonAsync<OrderDetailDto>();
+        }
+        else if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            //error = "Không tìm thấy đơn hàng";
+        }
+
+        isLoading = false;
+    }
+
+    private string GetStatusLabel(string status) => status switch
+    {
+        "Pending" => "Chờ xác nhận",
+        "Processing" => "Đang xử lý",
+        "Shipping" => "Đang giao",
+        "Completed" => "Hoàn thành",
+        "Cancelled" => "Đã hủy",
+        _ => status
+    };
+
+    private string GetStatusColor(string status) => status switch
+    {
+        "Pending" => "bg-warning",
+        "Processing" => "bg-info",
+        "Shipping" => "bg-primary",
+        "Completed" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

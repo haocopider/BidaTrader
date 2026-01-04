@@ -1,7 +1,9 @@
 ﻿using BidaTrader.Server.Services;
 using BidaTrader.Shared.DTOs;
+using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace BidaTrader.API.Controllers
@@ -26,7 +28,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpGet("profile")]
-        public async Task<ActionResult<AccountDto>> GetMyProfile()
+        public async Task<ActionResult<ProfileDto>> GetMyProfile()
         {
             try
             {
@@ -75,6 +77,48 @@ namespace BidaTrader.API.Controllers
             return Ok(account);
         }
 
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdateAccount(int id, [FromBody] AccountDto model)
+        {
+
+            var existingAccount = await _accountService.GetItemByIdAsync(id);
+
+            if (existingAccount == null)
+            {
+                return BadRequest("Không tìm thấy tài khoản.");
+            }
+
+            existingAccount.UserName = model.UserName;
+            existingAccount.Email = model.Email;
+            existingAccount.Phone = model.Phone;
+            existingAccount.Passcode = model.Passcode;
+            existingAccount.IsActive = model.IsActive;
+
+            if (!string.IsNullOrEmpty(model.PasswordHash))
+            {
+                existingAccount.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.PasswordHash);
+            }
+
+            try
+            {
+                var result = await _accountService.UpdateItemAsync(existingAccount);
+                if (result)
+                {
+                    return Ok(new { message = "Cập nhật thành công." });
+                }
+                else
+                {
+                    return NotFound("Không tìm thấy tài khoản để cập nhật.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> DeleteAccount(int id)
@@ -83,8 +127,6 @@ namespace BidaTrader.API.Controllers
             if (!success) return BadRequest("Xóa thất bại hoặc không tìm thấy tài khoản.");
             return Ok("Xóa thành công");
         }
-
-        // --- Các API bảo mật (Passcode, Password) ---
 
         [HttpGet("has-passcode")]
         [Authorize]
@@ -119,8 +161,6 @@ namespace BidaTrader.API.Controllers
             }
             catch (UnauthorizedAccessException) { return Unauthorized(); }
         }
-
-        // --- Các API Quên mật khẩu (Public) ---
 
         [HttpPost("forgot-password-request")]
         public async Task<IActionResult> ForgotPasswordRequest([FromBody] ForgotPasswordDto dto)

@@ -1,7 +1,7 @@
 ﻿@page "/"
 
 
-<PageTitle>BidaTrader - Sàn Thương Mại Bida Hàng Đầu</PageTitle>
+<PageTitle>Trang chủ</PageTitle>
 
 
 <div class="hero-section text-center mb-5">
@@ -165,7 +165,6 @@
 
                                 @* --- HÌNH ẢNH SẢN PHẨM --- *@
                                 <div class="ratio ratio-1x1 bg-light position-relative">
-                                    @* Logic: Nếu hết hàng thì làm mờ ảnh (opacity-50) *@
                                     <img src="@product.ImageUrl"
                                          class="card-img-top object-fit-cover @(product.Quantity <= 0 ? "opacity-50" : "")"
                                          alt="@product.Name"
@@ -178,7 +177,10 @@
                                          style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);">
                                         <div class="d-flex align-items-center text-white" style="cursor: pointer;"
                                              @onclick='() => Navigation.NavigateTo($"/store/{product.StoreId}")'>
-                                            <img src="@product.StoreLogo" class="rounded-circle border border-white" width="24" height="24">
+                                            @{
+                                                var simg = "https://localhost:7049" + product.StoreLogo;
+                                            }
+                                            <img src="@simg" class="rounded-circle border border-white" width="24" height="24">
                                             <small class="ms-2 text-truncate fw-medium" style="max-width: 80%;">@product.StoreName</small>
                                         </div>
                                     </div>

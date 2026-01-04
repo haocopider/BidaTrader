@@ -17,6 +17,7 @@ namespace BidaTrader.API.Controllers
         public CategoriesController(IService<Category> service) => _categoryService = service;
 
         [HttpGet]
+        [Authorize(Policy = "CATEGORY.VIEW")]
         public async Task<ActionResult<CategoryPerPage>> GetCategoriesWithPagination([FromQuery] string? search, [FromQuery] int pageIndex =1, [FromQuery] int pageSize =10)
         {
             var (items, total) = await ((CategoryService)_categoryService).GetItemsPerPage(search, pageIndex, pageSize);
@@ -52,6 +53,7 @@ namespace BidaTrader.API.Controllers
             return Ok(dtos);
         }
         [HttpGet("{id:int}")]
+        [Authorize(Policy = "CATEGORY.VIEW")]
         public async Task<ActionResult<CategoryDto>> GetCategory(int id)
         {
             var category = await _categoryService.GetItemByIdAsync(id);
@@ -68,6 +70,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "CATEGORY.CREATE")]
         public async Task<IActionResult> CreateCategory([FromBody] CategoryDto dto)
         {
             var item = new Category
@@ -83,6 +86,7 @@ namespace BidaTrader.API.Controllers
         }
         
         [HttpPut("{id}")]
+        [Authorize(Policy = "CATEGORY.UPDATE")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryDto dto)
         {
             if (id != dto.Id) return BadRequest("ID không khớp.");
@@ -103,6 +107,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Policy = "CATEGORY.DELETE")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var existingCategory = await _categoryService.GetItemByIdAsync(id);

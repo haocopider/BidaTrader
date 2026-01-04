@@ -9,7 +9,7 @@ namespace BidaTrader.Server.Services
     public class ProductService : ServerService<ProductDto>
     {
         private readonly IWebHostEnvironment _env;
-        public ProductService(AppDbContext context, IWebHostEnvironment env) : base(context) { 
+        public ProductService(AppDbContext context, IWebHostEnvironment env) : base(context) {
             _env = env;
         }
 
@@ -111,7 +111,7 @@ namespace BidaTrader.Server.Services
             }
         }
 
-        public override async Task<bool> UpdateItemAsync( ProductDto dto)
+        public override async Task<bool> UpdateItemAsync(ProductDto dto)
         {
             try
             {
@@ -121,19 +121,28 @@ namespace BidaTrader.Server.Services
 
                 if (product == null) return false;
 
+                // --- Update thông tin cơ bản ---
                 product.Name = dto.Name;
                 product.Description = dto.Description;
                 product.Price = dto.Price;
                 product.Quantity = dto.Quantity ?? 1;
                 product.CategoryId = dto.CategoryId;
                 product.BrandId = dto.BrandId;
-                product.UpdatedAt = DateTime.Now;
+                product.UpdatedAt = DateTime.UtcNow;
 
                 if (dto.Images != null && dto.Images.Any())
                 {
+                    foreach (var oldImage in product.ProductImages)
+                    {
+                        DeleteImageFile(oldImage.ImageUrl);
+                    }
+
+                    _context.ProductImages.RemoveRange(product.ProductImages);
+                    product.ProductImages.Clear();
+
                     for (int i = 0; i < dto.Images.Count; i++)
                     {
-                        string imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
+                        var imageUrl = await SaveImageToFolder(dto.Images[i], dto.Name);
 
                         product.ProductImages.Add(new ProductImage
                         {
@@ -143,11 +152,11 @@ namespace BidaTrader.Server.Services
                     }
                 }
 
-                _context.Products.Update(product);
                 return await _context.SaveChangesAsync() > 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Update Product Error: {ex}");
                 return false;
             }
         }
@@ -169,7 +178,7 @@ namespace BidaTrader.Server.Services
             }
         }
 
-        public async Task<ProductPerPage> GetMyStore(int accountId,int pageIndex, int pageSize)
+        public async Task<ProductPerPage> GetMyStore(int accountId, int pageIndex, int pageSize)
         {
             var store = await _context.Stores
                 .FirstOrDefaultAsync(s => s.AccountId == accountId);
@@ -275,13 +284,14 @@ namespace BidaTrader.Server.Services
                 .Take(pageSize)
                 .ToListAsync();
 
+
             var dtos = products.Select(p => new ProductDto
             {
                 Id = p.Id,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 Name = p.Name,
-                ImageUrl = p.ProductImages?
+                ImageUrl = "https://localhost:7049" + p.ProductImages?
                             .Where(i => i.IsMain)
                             .Select(i => i.ImageUrl)
                             .FirstOrDefault(),
@@ -303,7 +313,7 @@ namespace BidaTrader.Server.Services
                 TotalCount = totalCount
             };
         }
-        
+
         public async Task<ProductPerPage> GetProductsForStorePageAsync(
             int storeId,
             int? categoryId,
@@ -345,7 +355,7 @@ namespace BidaTrader.Server.Services
                 query = query.OrderByDescending(p => p.Price);
             else if (latest == true)
                 query = query.OrderByDescending(p => p.CreatedAt);
-            
+
             int totalCount = await query.CountAsync();
 
             var pagedProducts = await query
@@ -415,5 +425,19 @@ namespace BidaTrader.Server.Services
                 return string.Empty;
             }
         }
+
+        private void DeleteImageFile(string imageUrl)
+        {
+            if (string.IsNullOrEmpty(imageUrl)) return;
+
+            var filePath = Path.Combine(_env.WebRootPath, imageUrl.TrimStart('/'));
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+
     }
 }
+

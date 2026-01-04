@@ -18,6 +18,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet("my-orders")]
+        [Authorize(Policy = "ORDER.VIEW")]
         public async Task<IActionResult> GetMyOrders([FromQuery] string? status)
         {
             var userId = GetCurrentUserId();
@@ -27,6 +28,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet("{orderId}")]
+        [Authorize(Policy = "ORDER.VIEW")]
         public async Task<IActionResult> GetOrderDetail(int orderId)
         {
             var userId = GetCurrentUserId();
@@ -40,6 +42,8 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet("store-orders")]
+        [Authorize(Policy = "ORDER.VIEW")]
+        [Authorize(Roles ="STORE")]
         public async Task<IActionResult> GetStoreOrders()
         {
             var userId = GetCurrentUserId();
@@ -49,6 +53,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpPut("{orderId}/status")]
+        [Authorize(Policy = "ORDER.UPDATE")]
         public async Task<IActionResult> UpdateOrderStatus(
             int orderId,
             [FromBody] string newStatus)

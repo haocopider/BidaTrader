@@ -55,6 +55,8 @@ namespace BidaTrader.Shared.DTOs
         public string AvatarUrl { get; set; }
         public string CoverUrl { get; set; }
         public string Address { get; set; }
+        public string Phone { get; set; }
+        public string Description { get; set; }
         public int Followers { get; set; }
         public double Rating { get; set; }
         public int TotalProducts { get; set; }

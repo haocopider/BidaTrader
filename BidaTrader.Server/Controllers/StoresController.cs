@@ -103,6 +103,23 @@ namespace BidaTrader.Server.Controllers
 
             return BadRequest(new { message = result });
         }
+
+        [HttpPost("edit-store")]
+        public async Task<IActionResult> EditStore([FromBody] CreateStoreDto dto)
+        {
+            var userId = GetCurrentUserId();
+
+            var result = await ((StoreService)_storeService).EditStoreAsync(userId, dto);
+
+            if (result == "SUCCESS")
+            {
+                return Ok(new { message = "Đăng ký cửa hàng thành công!" });
+            }
+
+            return BadRequest(new { message = result });
+        }
+
+
         [HttpGet]
         public async Task<ActionResult> GetStores([FromQuery] string? seachKey, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
         {

@@ -17,12 +17,14 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "PERM.VIEW")]
         public async Task<ActionResult<List<Permission>>> GetAll()
         {
             return Ok(await _permService.GetAllAsync());
         }
 
         [HttpPost]
+        [Authorize(Policy = "PERM.CREATE")]
         public async Task<IActionResult> Create([FromBody] Permission dto)
         {
             var result = await _permService.CreateAsync(dto);
@@ -31,6 +33,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpPut]
+        [Authorize(Policy = "PERM.UPDATE")]
         public async Task<IActionResult> Update([FromBody] Permission dto)
         {
             var result = await _permService.UpdateAsync(dto);
@@ -39,6 +42,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "PERM.DELETE")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _permService.DeleteAsync(id);

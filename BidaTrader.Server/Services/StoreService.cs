@@ -2,6 +2,7 @@
 using BidaTrader.Shared.Models;
 using BidaTrader.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace BidaTrader.Server.Services
 {
@@ -15,7 +16,6 @@ namespace BidaTrader.Server.Services
 
         #region Thống kê doanh thu
 
-        // Trong StoreService.cs
         public async Task<StoreDashboardSummaryDto> GetDashboardSummaryAsync(int userId)
         {
             // 1. Lấy thông tin Shop
@@ -106,7 +106,6 @@ namespace BidaTrader.Server.Services
             return summary;
         }
 
-        // 1. Thêm phương thức thống kê tháng
         public async Task<List<MonthlyRevenueStatDto>> GetMonthlyRevenueAsync(int storeId, int year)
         {
             // Chỉ lấy các đơn hàng đã hoàn thành của cửa hàng đó trong năm được chọn
@@ -138,7 +137,6 @@ namespace BidaTrader.Server.Services
             return fullStats;
         }
 
-        // 2. Thêm phương thức thống kê năm
         public async Task<List<YearlyRevenueStatDto>> GetYearlyRevenueAsync(int storeId)
         {
             var query = _context.Orders
@@ -159,7 +157,6 @@ namespace BidaTrader.Server.Services
             return stats;
         }
 
-        // 3. Helper để lấy danh sách các năm có đơn hàng
         public async Task<List<int>> GetAvailableYearsAsync(int storeId)
         {
             return await _context.Orders
@@ -192,7 +189,7 @@ namespace BidaTrader.Server.Services
                 var buffer = Convert.FromBase64String(base64String.Substring(dataIndex));
                 await File.WriteAllBytesAsync(filePath, buffer);
 
-                return $"/uploads/stores/https://localhost:7049{fileName}";
+                return $"/uploads/stores/{fileName}";
             }
             catch
             {
@@ -209,6 +206,7 @@ namespace BidaTrader.Server.Services
             try
             {
                 string logoPath = await SaveStoreLogoAsync(dto.LogoUrl, dto.Name);
+
                 var newStore = new Store
                 {
                     AccountId = userId,
@@ -220,24 +218,34 @@ namespace BidaTrader.Server.Services
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
                 };
+
                 _context.Stores.Add(newStore);
                 await _context.SaveChangesAsync();
 
                 var account = await _context.Accounts.FindAsync(userId);
                 if (account == null) throw new Exception("Không tìm thấy tài khoản.");
+
+                account.StoreId = newStore.Id;
+                _context.Accounts.Update(account);
+
                 var storeRole = await _context.Roles.FirstOrDefaultAsync(r => r.Code == "STORE");
+                if (storeRole == null) throw new Exception("Hệ thống chưa cấu hình Role STORE.");
 
-                bool hasRole = await _context.AccountRoles
-                    .AnyAsync(ar => ar.AccountId == userId && ar.RoleId == storeRole.Id);
+                var currentAccountRoles = await _context.AccountRoles
+                    .Where(ar => ar.AccountId == userId)
+                    .ToListAsync();
 
-                if (!hasRole)
+                if (currentAccountRoles.Any())
                 {
-                    _context.AccountRoles.Add(new AccountRole
-                    {
-                        AccountId = userId,
-                        RoleId = storeRole.Id
-                    });
+                    _context.AccountRoles.RemoveRange(currentAccountRoles);
                 }
+
+                var newAccountRole = new AccountRole
+                {
+                    AccountId = userId,
+                    RoleId = storeRole.Id
+                };
+                _context.AccountRoles.Add(newAccountRole);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -248,14 +256,54 @@ namespace BidaTrader.Server.Services
             {
                 await transaction.RollbackAsync();
 
+                Console.WriteLine($"Register Store Error: {ex}");
+
                 var innerException = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-
-                Console.WriteLine($"FULL ERROR: {ex.ToString()}");
-
                 return "Lỗi chi tiết: " + innerException;
             }
         }
-    
+
+        public async Task<string> EditStoreAsync(int userId, CreateStoreDto dto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.Name))
+                    return "Tên cửa hàng không được để trống.";
+
+                var myStore = await _context.Stores
+                    .FirstOrDefaultAsync(s => s.AccountId == userId);
+
+                if (myStore == null)
+                    return "Không tìm thấy cửa hàng của bạn.";
+
+                if (!string.IsNullOrEmpty(dto.LogoUrl))
+                {
+                    myStore.LogoUrl = await SaveStoreLogoAsync(dto.LogoUrl, dto.Name);
+                }
+
+                myStore.StoreName = dto.Name;
+                myStore.Description = dto.Description;
+                myStore.Address = dto.Address;
+                myStore.Phone = dto.Phone;
+                myStore.UpdatedAt = DateTime.UtcNow;
+
+                _context.Stores.Update(myStore);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return "SUCCESS";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                Console.WriteLine($"Edit Store Error: {ex}");
+
+                return "Lỗi chi tiết: " + (ex.InnerException?.Message ?? ex.Message);
+            }
+        }
+
 
         public async Task<StoreDetailDto> GetMyStore(int accountId)
         {
@@ -271,6 +319,9 @@ namespace BidaTrader.Server.Services
                 StoreName = myStore.StoreName,
                 Address = myStore.Address ?? "Chưa cập nhật địa chỉ",
                 AvatarUrl = myStore.LogoUrl,
+                CoverUrl = myStore.LogoUrl,
+                Phone= myStore.Phone ?? "Chưa cập nhật số điện thoại",
+                Description = myStore.Description ?? "Chưa có mô tả về cửa hàng",
                 TotalProducts = myStore.Products.Select(p => p.StoreId = myStore.Id).Count(),
                 Rating = 5,
                 Followers = 1000,

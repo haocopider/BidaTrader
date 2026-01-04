@@ -1,6 +1,6 @@
 ﻿@page "/store/{StoreId:int}"
 
-<PageTitle>@storeInfo.StoreName - BidaTrader</PageTitle>
+<PageTitle>Cửa hàng @storeInfo.StoreName</PageTitle>
 
 @if(loading)
 {
@@ -16,7 +16,10 @@ else
                 <div class="row align-items-end">
                     <div class="col-auto">
                         <div class="position-relative">
-                            <img src="@storeInfo.LogoUrl"
+                            @{
+                                var simg = "https://localhost:7049" + storeInfo.LogoUrl;
+                            }
+                            <img src="@simg"
                                  class="rounded-circle border border-4 border-white shadow"
                                  style="width: 120px; height: 120px; object-fit: cover;" alt="Logo">
                             <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-light rounded-circle" title="Online"></span>
@@ -42,22 +45,22 @@ else
                     <div class="col-md-auto ms-auto">
                         <div class="d-flex gap-4 text-center">
                             <div>
-                                <div class="fw-bold fs-5">@storeInfo.TotalProducts</div>
+                                <div class="fw-bold fs-5">99</div>
                                 <small class="text-muted">Sản phẩm</small>
                             </div>
                             <div class="border-start mx-1"></div>
                             <div>
-                                <div class="fw-bold fs-5 text-warning">@storeInfo.Rating <i class="bi bi-star-fill fs-6"></i></div>
+                                <div class="fw-bold fs-5 text-warning">4.9<i class="bi bi-star-fill fs-6"></i></div>
                                 <small class="text-muted">Đánh giá</small>
                             </div>
                             <div class="border-start mx-1"></div>
                             <div>
-                                <div class="fw-bold fs-5">@storeInfo.Followers</div>
+                                <div class="fw-bold fs-5">2503</div>
                                 <small class="text-muted">Người theo dõi</small>
                             </div>
                             <div class="border-start mx-1"></div>
                             <div>
-                                <div class="fw-bold fs-5">@((DateTime.Now - storeInfo.JoinDate).Days)</div>
+                                <div class="fw-bold fs-5">3 năm</div>
                                 <small class="text-muted">Ngày tham gia</small>
                             </div>
                         </div>
@@ -160,7 +163,10 @@ else
                             <div class="col">
                                 <div class="card h-100 shadow-sm border-0 product-card-hover">
                                     <div class="position-relative overflow-hidden">
-                                        <img src="@p.ImageUrl"
+                                        @{
+                                            var pimg = "https://localhost:7049" + p.ImageUrl;
+                                        }
+                                        <img src="@pimg"
                                              class="card-img-top" style="height: 180px; object-fit: cover;" alt="@p.Name">
                                         @if (p.Quantity == 0)
                                         {

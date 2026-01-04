@@ -19,27 +19,12 @@ namespace BidaTrader.Server.Services
             _env = env;
         }
 
-        // --- 1. Lấy thông tin chi tiết Account (bao gồm xử lý logic null) ---
-        public async Task<AccountDto?> GetAccountDetailAsync(int userId)
+        public async Task<ProfileDto?> GetAccountDetailAsync(int userId)
         {
             var account = await _context.Accounts.FindAsync(userId);
             if (account == null) return null;
 
-            return MapToDto(account);
-        }
-
-        public async Task<AccountDto?> GetAccountByUidAsync(string uid)
-        {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Uid == uid);
-            if (account == null) return null;
-
-            return MapToDto(account);
-        }
-
-        // Helper Map DTO (Dùng nội bộ để tránh lặp code)
-        private AccountDto MapToDto(Account account)
-        {
-            return new AccountDto
+            return new ProfileDto
             {
                 Id = account.Id,
                 UID = account.Uid,
@@ -52,11 +37,27 @@ namespace BidaTrader.Server.Services
                 AvatarUrl = account.AvatarUrl,
                 IsActive = account.IsActive,
                 DateOfBirth = account.DateOfBirth,
-                // Không trả về PasswordHash
+                StoreId = account.StoreId
             };
         }
 
-        // --- 2. Cập nhật Profile ---
+        public async Task<AccountDto?> GetAccountByUidAsync(string uid)
+        {
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Uid == uid);
+            if (account == null) return null;
+
+            return new AccountDto
+            {
+                Id = account.Id,
+                UID = account.Uid,
+                UserName = account.UserName,
+                Email = account.Email,
+                Phone = account.Phone,
+                IsActive = account.IsActive,
+            };
+        }
+
+
         public async Task<bool> UpdateProfileAsync(int userId, ProfileDto dto)
         {
             var account = await _context.Accounts.FindAsync(userId);
@@ -67,6 +68,7 @@ namespace BidaTrader.Server.Services
             account.Email = dto.Email;
             account.Phone = dto.Phone;
             account.Address = dto.Address;
+            account.DateOfBirth = dto.DateOfBirth;
 
             if (!string.IsNullOrWhiteSpace(dto.Passcode))
             {
@@ -87,7 +89,6 @@ namespace BidaTrader.Server.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        // --- 3. Lấy danh sách phân trang (Admin) ---
         public async Task<AccountPerPage> GetAccountsPaginationAsync(string? username, int pageIndex, int pageSize)
         {
             var query = _context.Accounts.AsQueryable();
@@ -102,7 +103,7 @@ namespace BidaTrader.Server.Services
             var accounts = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new AccountDto // Select thẳng ra DTO để tối ưu
+                .Select(p => new AccountDto
                 {
                     Id = p.Id,
                     UID = p.Uid,
@@ -120,10 +121,8 @@ namespace BidaTrader.Server.Services
             };
         }
 
-        // --- 4. Logic xóa tài khoản ---
         public async Task<bool> DeleteAccountAsync(int id)
         {
-            // Có thể thêm logic check ràng buộc (ví dụ: đang có đơn hàng thì không cho xóa)
             var account = await _context.Accounts.FindAsync(id);
             if (account == null) return false;
 
@@ -131,12 +130,11 @@ namespace BidaTrader.Server.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        // --- 5. Logic Passcode & Password ---
         public async Task<bool> HasPasscodeAsync(int userId)
         {
             var account = await _context.Accounts
                 .Where(a => a.Id == userId)
-                .Select(a => a.Passcode) // Chỉ lấy cột Passcode để nhẹ
+                .Select(a => a.Passcode)
                 .FirstOrDefaultAsync();
 
             return !string.IsNullOrEmpty(account);
@@ -165,7 +163,6 @@ namespace BidaTrader.Server.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        // --- 6. Logic Forgot Password (Giữ nguyên logic cũ của bạn, chỉ copy vào đây) ---
         public async Task<string> SendForgotPasswordOtpAsync(string email)
         {
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
@@ -175,7 +172,7 @@ namespace BidaTrader.Server.Services
             account.PasswordResetToken = otp;
             account.PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(5);
 
-            await _context.SaveChangesAsync(); // Lưu OTP trước khi gửi mail để tránh lỗi gửi xong ko lưu kịp
+            await _context.SaveChangesAsync();
 
             string subject = "[BidaTrader] Mã xác thực quên mật khẩu";
             string body = $@"<h3>Yêu cầu đặt lại mật khẩu</h3><p>Mã OTP: <b style='color:red'>{otp}</b></p>";
@@ -214,10 +211,8 @@ namespace BidaTrader.Server.Services
             return "SUCCESS";
         }
 
-        // --- Private Helpers ---
         private async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            // (Giữ nguyên code gửi mail cũ của bạn)
             var smtpConfig = _configuration.GetSection("Smtp");
             using var smtpClient = new SmtpClient
             {
@@ -241,7 +236,6 @@ namespace BidaTrader.Server.Services
 
         private async Task<string> SaveImageToFolder(string base64String, string username)
         {
-            // (Giữ nguyên code lưu ảnh cũ của bạn)
             if (string.IsNullOrEmpty(base64String) || !base64String.Contains("base64,")) return base64String;
             try
             {

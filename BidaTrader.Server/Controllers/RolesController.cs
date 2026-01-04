@@ -17,12 +17,14 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "ROLE.VIEW")]
         public async Task<ActionResult<List<RoleWithPermissionsDto>>> GetAll()
         {
             return Ok(await _roleService.GetAllRolesAsync());
         }
 
         [HttpPost]
+        [Authorize(Policy = "ROLE.CREATE")]
         public async Task<IActionResult> Create([FromBody] RoleDto dto)
         {
             var result = await _roleService.CreateRoleAsync(dto);
@@ -30,7 +32,8 @@ namespace BidaTrader.Server.Controllers
             return Ok(result.Data);
         }
 
-        [HttpPut] // Thêm API Update Role
+        [HttpPut]
+        [Authorize(Policy = "ROLE.UPDATE")]
         public async Task<IActionResult> Update([FromBody] RoleDto dto)
         {
             var result = await _roleService.UpdateRoleAsync(dto);
@@ -39,6 +42,7 @@ namespace BidaTrader.Server.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "ROLE.DELETE")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _roleService.DeleteRoleAsync(id);

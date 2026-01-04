@@ -16,29 +16,15 @@ namespace BidaTrader.Shared.DTOs
         [DataType(DataType.Password)]
         public string PasswordHash { get; set; }
 
-        [Required(ErrorMessage = "Vai trò là bắt buộc.")]
-        [StringLength(20, ErrorMessage = "Vai trò không được vượt quá 20 ký tự.")]
-        public string Role { get; set; } = "Customer";
-
         [Required(ErrorMessage = "Trạng thái kích hoạt là bắt buộc.")]
-        public bool? IsActive { get; set; }
+        public bool IsActive { get; set; }
         public string? Passcode { get; set; }
-
-        public string? FirstName { get; set; }
-
-        public string? LastName { get; set; }
-
         public string? Email { get; set; }
 
         public string? Phone { get; set; }
-
-        public string? Address { get; set; }
-
-        public string? AvatarUrl { get; set; }
-
-        public DateOnly? DateOfBirth { get; set; }
     }
   
+
     public class ProfileDto
     {
         public int Id { get; set; }
@@ -53,6 +39,7 @@ namespace BidaTrader.Shared.DTOs
         public DateOnly? DateOfBirth { get; set; }
         public string? Passcode { get; set; }
         public bool IsActive { get; set; }
+        public int? StoreId { get; set; }
     }
 
     public class AccountPerPage
@@ -116,8 +103,10 @@ namespace BidaTrader.Shared.DTOs
         public string Email { get; set; } = "";
         public string Otp { get; set; } = "";
 
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới")]
-        [MinLength(6, ErrorMessage = "Mật khẩu phải từ 6 ký tự")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu phải dài từ 8 đến 100 ký tự.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).{8,}$",
+    ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm: chữ hoa, chữ thường, số và ký tự đặc biệt.")]
+        [DataType(DataType.Password)]
         public string NewPassword { get; set; } = "";
 
         [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]

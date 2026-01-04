@@ -26,9 +26,17 @@ else
                         <li class="nav-item">
                             <a class="nav-link" href="/change-password"><i class="bx bx-bell me-1"></i>Đổi mật khẩu</a>
                         </li>
+                        @if(Model.StoreId.HasValue)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/edit-store"><i class="bx bx-link-alt me-1"></i> Cập nhật thông tin cửa hàng </a>
+                            </li>
+                        } else
+                        {
                         <li class="nav-item">
                             <a class="nav-link" href="/register-store"><i class="bx bx-link-alt me-1"></i> Bật bán hàng </a>
                         </li>
+                        }
                     </ul>
                     <div class="card mb-4">
                         <h5 class="card-header">Thông tin cá nhân</h5>
@@ -181,7 +189,7 @@ else
             Model.AvatarUrl = newImageUrl;
         }
 
-        var response = await Http.PutAsJsonAsync("api/accounts", Model);
+        var response = await Http.PutAsJsonAsync("api/accounts/profile", Model);
 
         if (response.IsSuccessStatusCode)
         {

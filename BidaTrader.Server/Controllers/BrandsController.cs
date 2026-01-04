@@ -30,6 +30,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "BRAND.VIEW")]
         public async Task<ActionResult<BrandPerPage>> GetBrands(string? search, int pageIndex = 1, int pageSize = 10)
         {
             var (items, total) = await ((BrandService)_brandService).GetItemsPerPage(search, pageIndex, pageSize);
@@ -55,6 +56,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Policy = "BRAND.VIEW")]
         public async Task<ActionResult<BrandDto>> GetBrand(int id)
         {
             var brand = await _brandService.GetItemByIdAsync(id);
@@ -73,6 +75,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "BRAND.CEATE")]
         public async Task<IActionResult> CreateBrand([FromBody] BrandDto dto)
         {
             var item = new Brand
@@ -89,6 +92,7 @@ namespace BidaTrader.API.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Policy = "BRAND.UPDATE")]
         public async Task<IActionResult> UpdateBrand(int id, [FromBody] BrandDto dto)
         {
             var item = await _brandService.GetItemByIdAsync(id);

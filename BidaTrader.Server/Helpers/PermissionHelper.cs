@@ -37,11 +37,16 @@ namespace BidaTrader.Server.Helpers
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
         {
-            var permissions = context.User.FindAll("permissions").Select(x => x.Value);
+            var permissionsClaim = context.User.FindFirst("permissions");
 
-            if (permissions.Any(x => x == requirement.Permission))
+            if (permissionsClaim != null && !string.IsNullOrEmpty(permissionsClaim.Value))
             {
-                context.Succeed(requirement);
+                var permissions = permissionsClaim.Value.Split(',');
+
+                if (permissions.Any(p => p.Trim() == requirement.Permission))
+                {
+                    context.Succeed(requirement);
+                }
             }
 
             return Task.CompletedTask;

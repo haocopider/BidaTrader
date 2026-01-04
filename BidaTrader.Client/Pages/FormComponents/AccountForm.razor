@@ -40,7 +40,6 @@
 
                 <!-- BODY -->
                 <div class="modal-body">
-
                     @if (IsLoading)
                     {
                         <div class="d-flex justify-content-center py-5">
@@ -52,71 +51,85 @@
                         <EditForm Model="Model" OnValidSubmit="HandleSubmit">
                             <DataAnnotationsValidator />
 
-                            <div class="row g-4">
-
-                                <!-- LEFT: AVATAR -->
-                                <div class="col-md-4 text-center border-end">
-
-                                    <img src="@(string.IsNullOrWhiteSpace(ImagePreviewUrl)
-                                                                                 ? (string.IsNullOrWhiteSpace(Model.AvatarUrl)
-                                                                                     ? "img/default-avatar.png"
-                                                                                     : Model.AvatarUrl)
-                                                                                 : ImagePreviewUrl)"
-                                         class="rounded-circle shadow-sm border mb-3"
-                                         style="width:160px;height:160px;object-fit:cover;"
-                                         alt="Avatar" />
-
-                                    <label class="form-label small">Ảnh đại diện</label>
-                                    <InputFile OnChange="HandleFileSelection"
-                                               class="form-control"
-                                               accept="image/*" />
-
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Tên đăng nhập <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bx bx-user"></i></span>
+                                        <InputText class="form-control" @bind-Value="Model.UserName" disabled="@(Id != 0)" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.UserName)" />
                                 </div>
 
-                                <!-- RIGHT: FORM -->
-                                <div class="col-md-8">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mật khẩu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bx bx-lock"></i></span>
+                                        <InputText type="password"
+                                                   class="form-control"
+                                                   @bind-Value="Model.PasswordHash"
+                                                   placeholder="@(Id != 0 ? "Để trống nếu không đổi" : "Nhập mật khẩu...")" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.PasswordHash)" />
+                                </div>
 
-                                    <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bx bx-envelope"></i></span>
+                                        <InputText class="form-control" @bind-Value="Model.Email" placeholder="example@mail.com" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.Email)" />
+                                </div>
 
-                                        <div class="col-md-6">
-                                            <label class="form-label">Tên đăng nhập</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bx bx-user"></i></span>
-                                                <InputText class="form-control"
-                                                           @bind-Value="Model.UserName"
-                                                           disabled />
+                                <div class="col-md-6">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bx bx-phone"></i></span>
+                                        <InputText class="form-control" @bind-Value="Model.Phone" placeholder="09xxxxxxxx" />
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.Phone)" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">PassCode</label>
+                                    <InputText class="form-control" @bind-Value="Model.Passcode" placeholder="Mã bảo mật phụ (nếu có)" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">UID (Hệ thống)</label>
+                                    <InputText class="form-control bg-light" @bind-Value="Model.UID" readonly />
+                                </div>
+
+                                <div class="col-12 mt-3">
+                                    <div class="form-check form-switch p-3 border rounded bg-light d-flex align-items-center">
+                                        <InputCheckbox class="form-check-input m-0 me-3"
+                                                       style="width: 2.5em; height: 1.5em;"
+                                                       @bind-Value="Model.IsActive"
+                                                       id="isActiveSwitch" />
+                                        <div>
+                                            <label class="form-check-label fw-bold text-dark" for="isActiveSwitch">
+                                                Kích hoạt tài khoản
+                                            </label>
+                                            <div class="text-muted small">
+                                                @(Model.IsActive ? "Người dùng có thể đăng nhập." : "Tài khoản đang bị khóa.")
                                             </div>
                                         </div>
-
-                                        <div class="col-md-6">
-                                            <label class="form-label">Mật khẩu</label>
-                                            <InputText type="password"
-                                                       class="form-control"
-                                                       @bind-Value="Model.PasswordHash"
-                                                       placeholder="Chỉ nhập khi tạo mới" />
-                                            <ValidationMessage For="@(() => Model.PasswordHash)" />
-                                        </div>
-
                                     </div>
-
+                                    <ValidationMessage For="@(() => Model.IsActive)" />
                                 </div>
                             </div>
 
-                            <!-- FOOTER -->
                             <div class="mt-4 text-end border-top pt-3">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="bx bx-save me-1"></i> Lưu
+                                <button type="submit" class="btn btn-primary me-2 px-4">
+                                    <i class="bx bx-save me-1"></i> Lưu thay đổi
                                 </button>
-                                <button type="button"
-                                        class="btn btn-outline-secondary"
-                                        @onclick="CLoseModal">
-                                    Hủy
+                                <button type="button" class="btn btn-outline-secondary px-4" @onclick="CLoseModal">
+                                    Hủy bỏ
                                 </button>
                             </div>
 
                         </EditForm>
                     }
-
                 </div>
             </div>
         </div>
@@ -217,37 +230,4 @@
         await OnClose.InvokeAsync();
     }
 
-    private async Task HandleFileSelection(InputFileChangeEventArgs e)
-    {
-        // 1. Lấy file đầu tiên được chọn
-        selectedFile = e.File;
-
-        if (selectedFile != null)
-        {
-            if (selectedFile.Size > MAX_FILE_SIZE)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Kích thước file quá lớn (tối đa 5MB).");
-                return;
-            }
-
-            // 2. Tạo Data URL để hiển thị ảnh
-            // Blazor cung cấp phương thức RequestImageFileAsync để tối ưu hóa việc tạo thumbnail
-            var imageFile = await selectedFile.RequestImageFileAsync(
-                selectedFile.ContentType,
-                100,
-                100);
-
-            using var fileStream = imageFile.OpenReadStream(MAX_FILE_SIZE);
-
-            using var memoryStream = new MemoryStream();
-            await fileStream.CopyToAsync(memoryStream);
-
-            var imageBase64 = Convert.ToBase64String(memoryStream.ToArray());
-
-            ImagePreviewUrl = $"data:{imageFile.ContentType};base64,{imageBase64}";
-
-            // 3. (TÙY CHỌN): Nếu bạn muốn Model.AvatarUrl lưu Data URL (Không nên nếu bạn upload)
-            // Model.AvatarUrl = ImagePreviewUrl;
-        }
-    }
 }
