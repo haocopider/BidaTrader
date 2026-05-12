@@ -28,7 +28,7 @@ Kiến trúc hệ thống được thiết kế để phục vụ 3 nhóm ngư�
 * **Quản lý tài khoản & Phân quyền**: Quản lý Account, Role và Permission.
 * **Quản lý danh mục & Thương hiệu**: Cấu hình các category, brand, và hệ thống tin tức (Post/News).
 
-## 🏗️ Kiến trúc & Công nghệ (Tech Stack)
+## 🏗️ Kiến trúc & Công nghệ
 
 Dự án được phân chia thành 3 phần chính theo mô hình Clean Architecture kết hợp Blazor WebAssembly:
 
@@ -36,7 +36,7 @@ Dự án được phân chia thành 3 phần chính theo mô hình Clean Archite
 * **`BidaTrader.Server`**: Ứng dụng Backend xây dựng bằng **ASP.NET Core Web API**.
 * **`BidaTrader.Shared`**: Thư viện dùng chung chứa DTOs, Models và Interfaces.
 
-## 📁 Cấu trúc thư mục (Project Structure)
+## 📁 Cấu trúc thư mục
 
 ```text
 BidaTrader/
@@ -63,3 +63,33 @@ BidaTrader/
     ├── DTOs/                   # Đối tượng truyền tải dữ liệu giữa Client & Server
     ├── Models/                 # Định nghĩa các Entity Database (EF Core)
     └── Services/               # Interfaces / Base Classes dùng chung
+
+## 🙋‍♂️ Giao diện Customer
+
+<img width="586" height="398" alt="Home" src="https://github.com/user-attachments/assets/4937b7ab-0c72-4fe2-96ca-94a4194172f9" />
+<img width="586" height="368" alt="Profile" src="https://github.com/user-attachments/assets/e57de565-b09b-488b-b503-1ae0a47b472a" />
+<img width="586" height="393" alt="ShopDetail" src="https://github.com/user-attachments/assets/e10cbe3e-3286-49c6-898c-731720ea280e" />
+<img width="586" height="396" alt="Cart" src="https://github.com/user-attachments/assets/70d9fae3-864f-498b-878b-bd261d725b5e" />
+<img width="586" height="397" alt="OrderHistory" src="https://github.com/user-attachments/assets/75d257d4-fd61-4a19-bdef-b3dadae4cdbf" />
+<img width="586" height="368" alt="RegisterShop" src="https://github.com/user-attachments/assets/0de24e01-9695-4d21-9d1f-a11dd807173e" />
+
+## 🏪 Giao diện StoreOwner
+
+<img width="586" height="400" alt="Dashboard" src="https://github.com/user-attachments/assets/20a07518-0540-482b-ab3d-42e9078b8a77" />
+<img width="586" height="399" alt="ManageItem" src="https://github.com/user-attachments/assets/7d7f4a98-eb05-496d-8c25-8202e8af2cb5" />
+<img width="586" height="373" alt="ManageOrder" src="https://github.com/user-attachments/assets/afdebb3b-31c2-4664-b5a5-53c736e94eb4" />
+
+## 🔧 Giao diện Admin
+
+<img width="586" height="366" alt="UpdateRole" src="https://github.com/user-attachments/assets/78958260-5068-4f6a-afd8-2c9ef410872d" />
+<img width="586" height="406" alt="UpdatePermission" src="https://github.com/user-attachments/assets/02787658-a87b-428d-a0db-100d40168365" />
+<img width="586" height="366" alt="ManageStore" src="https://github.com/user-attachments/assets/8d309102-ff22-4fba-b973-89fab7eae46d" />
+<img width="586" height="368" alt="ManageAccount" src="https://github.com/user-attachments/assets/807fef09-7fea-4287-999d-867d822110b6" />
+
+## 📧 Mail OTP
+
+<img width="586" height="376" alt="Opt" src="https://github.com/user-attachments/assets/528dd69f-554e-42ec-b036-26b805218ec9" />
+<img width="586" height="292" alt="otpmail" src="https://github.com/user-attachments/assets/3aa58793-3435-4e75-89bd-79ef14d77ee1" />
+
+---
+*Phát triển bởi haocopider*
