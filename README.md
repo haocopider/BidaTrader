@@ -63,6 +63,7 @@ BidaTrader/
     ├── DTOs/                   # Đối tượng truyền tải dữ liệu giữa Client & Server
     ├── Models/                 # Định nghĩa các Entity Database (EF Core)
     └── Services/               # Interfaces / Base Classes dùng chung
+```
 
 ## 🙋‍♂️ Giao diện Customer
 
