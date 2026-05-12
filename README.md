@@ -30,39 +30,36 @@ Kiến trúc hệ thống được thiết kế để phục vụ 3 nhóm ngư�
 
 ## 🏗️ Kiến trúc & Công nghệ (Tech Stack)
 
-Dự án được phân chia thành 3 thư mục chính theo mô hình kiến trúc tiêu chuẩn của .NET:
+Dự án được phân chia thành 3 phần chính theo mô hình Clean Architecture kết hợp Blazor WebAssembly:
 
-* **`BidaTrader.Client`**: Ứng dụng Frontend xây dựng bằng **Blazor**. Chứa các UI Components, Layout, và tích hợp các thư viện JavaScript/CSS (Bootstrap, TinyMCE, ApexCharts). Giao tiếp với Server thông qua các Generic API Services.
+* **`BidaTrader.Client`**: Ứng dụng Frontend xây dựng bằng **Blazor WebAssembly**.
 * **`BidaTrader.Server`**: Ứng dụng Backend xây dựng bằng **ASP.NET Core Web API**.
-  * Cung cấp các RESTful APIs.
-  * Tích hợp **Entity Framework Core** để quản lý cơ sở dữ liệu.
-  * Tích hợp xác thực **JWT (JSON Web Token)**.
-  * Xử lý luồng nghiệp vụ phức tạp: Tính toán giỏ hàng, xác thực tồn kho, và giao tiếp với VNPay API.
-* **`BidaTrader.Shared`**: Chứa các DTOs (Data Transfer Objects), Models (Account, Product, Order, Cart...), và Interfaces dùng chung giữa Client và Server, giúp đồng bộ hóa dữ liệu và giảm thiểu việc lặp lặp code.
+* **`BidaTrader.Shared`**: Thư viện dùng chung chứa DTOs, Models và Interfaces.
 
-## 📂 Cấu trúc thư mục
+## 📁 Cấu trúc thư mục (Project Structure)
 
+```text
 BidaTrader/
 ├── BidaTrader.Client/          # Ứng dụng Frontend (Blazor WebAssembly)
-│   ├── Auth/                   # Xử lý xác thực, phân giải JWT và quản lý trạng thái đăng nhập
-│   ├── Helpers/                # Các class tiện ích phía Client (Toast, Navigation...)
-│   ├── Layout/                 # Bố cục giao diện chung (Header, Footer, Sidebar, MainLayout)
+│   ├── Auth/                   # Xử lý xác thực, phân giải JWT & trạng thái đăng nhập
+│   ├── Helpers/                # Các class tiện ích phía Client
+│   ├── Layout/                 # Bố cục giao diện chung (Header, Footer, Sidebar)
 │   ├── Pages/                  # Chứa các trang giao diện (Views)
-│   │   ├── AdminArea/          # Khu vực dành riêng cho Admin (Quản lý Account, Category, Brand...)
-│   │   ├── Components/         # Các UI component tái sử dụng (CartWidget, Spinner, FeedbackModal...)
-│   │   ├── CustomerArea/       # Khu vực khách hàng (Giỏ hàng, Lịch sử mua hàng...)
+│   │   ├── AdminArea/          # Khu vực dành riêng cho Admin
+│   │   ├── Components/         # Các UI component tái sử dụng (Spinner, Toast...)
+│   │   ├── CustomerArea/       # Khu vực khách hàng (Giỏ hàng, Lịch sử mua...)
 │   │   ├── FormComponents/     # Các Form tái sử dụng để Thêm/Sửa dữ liệu
-│   │   └── StoreArea/          # Khu vực dành cho Chủ cửa hàng (Dashboard, Quản lý sản phẩm/đơn hàng)
-│   ├── Services/               # Các lớp Service để gọi API từ Server (giao tiếp qua HTTP)
-│   └── wwwroot/                # Chứa tài nguyên tĩnh (CSS, JS, Images, Bootstrap, ApexCharts...)
+│   │   └── StoreArea/          # Khu vực dành cho Chủ cửa hàng (Dashboard, Đơn hàng)
+│   ├── Services/               # Các lớp Service để gọi API từ Server
+│   └── wwwroot/                # Tài nguyên tĩnh (CSS, JS, Images, Bootstrap...)
 │
 ├── BidaTrader.Server/          # Ứng dụng Backend (ASP.NET Core Web API)
-│   ├── Controllers/            # Định nghĩa các RESTful API endpoints (Cart, Orders, Products...)
-│   ├── Helpers/                # Tiện ích Backend (Gửi email, Tích hợp VNPay, Tạo mã UID tự động...)
+│   ├── Controllers/            # Định nghĩa các RESTful API endpoints
+│   ├── Helpers/                # Tiện ích Backend (Gửi email, VNPay, tạo UID...)
 │   ├── Services/               # Tầng xử lý logic nghiệp vụ (Business Logic Layer)
-│   └── wwwroot/                # Thư mục lưu trữ file upload (Avatar, Ảnh sản phẩm, Logo cửa hàng...)
+│   └── wwwroot/                # Thư mục lưu trữ file upload (Ảnh sản phẩm, Logo...)
 │
 └── BidaTrader.Shared/          # Thư viện dùng chung (Shared Library)
-    ├── DTOs/                   # Đối tượng truyền tải dữ liệu (Data Transfer Objects) giữa Client & Server
-    ├── Models/                 # Định nghĩa các Entity Database & cấu hình AppDbContext (EF Core)
-    └── Services/               # Chứa các Interfaces / Base Classes dùng chung cho cả hai phía
+    ├── DTOs/                   # Đối tượng truyền tải dữ liệu giữa Client & Server
+    ├── Models/                 # Định nghĩa các Entity Database (EF Core)
+    └── Services/               # Interfaces / Base Classes dùng chung
