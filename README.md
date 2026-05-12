@@ -40,16 +40,29 @@ Dự án được phân chia thành 3 thư mục chính theo mô hình kiến tr
   * Xử lý luồng nghiệp vụ phức tạp: Tính toán giỏ hàng, xác thực tồn kho, và giao tiếp với VNPay API.
 * **`BidaTrader.Shared`**: Chứa các DTOs (Data Transfer Objects), Models (Account, Product, Order, Cart...), và Interfaces dùng chung giữa Client và Server, giúp đồng bộ hóa dữ liệu và giảm thiểu việc lặp lặp code.
 
-## 🚀 Hướng dẫn cài đặt
+## 📂 Cấu trúc thư mục
 
-### Yêu cầu hệ thống
-* [.NET 8.0 SDK](https://dotnet.microsoft.com/download) (hoặc phiên bản tương ứng cấu hình trong dự án).
-* SQL Server (Hoặc cơ sở dữ liệu tương ứng được cấu hình trong `AppDbContext`).
-* IDE: Visual Studio 2022, JetBrains Rider, hoặc VS Code.
-
-### Các bước chạy dự án (Local Development)
-
-1. **Clone repository:**
-   ```bash
-   git clone [https://github.com/yourusername/BidaTrader.git](https://github.com/yourusername/BidaTrader.git)
-   cd BidaTrader# BidaTrader
+BidaTrader/
+├── BidaTrader.Client/          # Ứng dụng Frontend (Blazor WebAssembly)
+│   ├── Auth/                   # Xử lý xác thực, phân giải JWT và quản lý trạng thái đăng nhập
+│   ├── Helpers/                # Các class tiện ích phía Client (Toast, Navigation...)
+│   ├── Layout/                 # Bố cục giao diện chung (Header, Footer, Sidebar, MainLayout)
+│   ├── Pages/                  # Chứa các trang giao diện (Views)
+│   │   ├── AdminArea/          # Khu vực dành riêng cho Admin (Quản lý Account, Category, Brand...)
+│   │   ├── Components/         # Các UI component tái sử dụng (CartWidget, Spinner, FeedbackModal...)
+│   │   ├── CustomerArea/       # Khu vực khách hàng (Giỏ hàng, Lịch sử mua hàng...)
+│   │   ├── FormComponents/     # Các Form tái sử dụng để Thêm/Sửa dữ liệu
+│   │   └── StoreArea/          # Khu vực dành cho Chủ cửa hàng (Dashboard, Quản lý sản phẩm/đơn hàng)
+│   ├── Services/               # Các lớp Service để gọi API từ Server (giao tiếp qua HTTP)
+│   └── wwwroot/                # Chứa tài nguyên tĩnh (CSS, JS, Images, Bootstrap, ApexCharts...)
+│
+├── BidaTrader.Server/          # Ứng dụng Backend (ASP.NET Core Web API)
+│   ├── Controllers/            # Định nghĩa các RESTful API endpoints (Cart, Orders, Products...)
+│   ├── Helpers/                # Tiện ích Backend (Gửi email, Tích hợp VNPay, Tạo mã UID tự động...)
+│   ├── Services/               # Tầng xử lý logic nghiệp vụ (Business Logic Layer)
+│   └── wwwroot/                # Thư mục lưu trữ file upload (Avatar, Ảnh sản phẩm, Logo cửa hàng...)
+│
+└── BidaTrader.Shared/          # Thư viện dùng chung (Shared Library)
+    ├── DTOs/                   # Đối tượng truyền tải dữ liệu (Data Transfer Objects) giữa Client & Server
+    ├── Models/                 # Định nghĩa các Entity Database & cấu hình AppDbContext (EF Core)
+    └── Services/               # Chứa các Interfaces / Base Classes dùng chung cho cả hai phía
